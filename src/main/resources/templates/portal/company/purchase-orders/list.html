@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>My Purchase Orders — DairyCoop Portal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+    <style>
+        *{box-sizing:border-box;margin:0;padding:0}
+        body{font-family:'Plus Jakarta Sans',sans-serif;background:#f4f6f4;min-height:100vh;color:#0f172a}
+        .topbar{background:#fff;border-bottom:1px solid #e5e7e5;padding:0 28px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+        .logo{display:flex;align-items:center;gap:9px;text-decoration:none}
+        .logo-dot{width:10px;height:10px;background:#1a6b2e;border-radius:50%}
+        .logo-text{font-size:15px;font-weight:700;color:#1a2b1a}
+        .co-chip{display:flex;align-items:center;gap:8px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:20px;padding:5px 12px 5px 6px}
+        .co-chip-av{width:24px;height:24px;background:#1a6b2e;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#fff}
+        .co-chip-name{font-size:12px;font-weight:700;color:#166534}
+        .btn-back{display:inline-flex;align-items:center;gap:5px;background:#fff;border:1px solid #e5e7e5;color:#6b7280;padding:7px 13px;border-radius:8px;font-size:12px;font-weight:600;text-decoration:none;transition:all .15s}
+        .btn-back:hover{background:#f4f6f4;color:#1a2b1a}
+        .main{max-width:1100px;margin:0 auto;padding:28px 24px}
+        .pg-head{margin-bottom:24px}
+        .pg-head h1{font-size:20px;font-weight:700;color:#1a2b1a;margin-bottom:2px}
+        .pg-head p{font-size:13px;color:#6b7280}
+        .alert-ok{background:#f0fdf4;border:1px solid #bbf7d0;color:#166534;padding:12px 16px;border-radius:9px;margin-bottom:18px;font-size:13px;display:flex;align-items:center;gap:8px}
+        .alert-err{background:#fef2f2;border:1px solid #fecaca;color:#dc2626;padding:12px 16px;border-radius:9px;margin-bottom:18px;font-size:13px;display:flex;align-items:center;gap:8px}
+        .filter-strip{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap}
+        .filter-btn{padding:9px 16px;background:#fff;border:1px solid #e5e7e5;border-radius:9px;font-size:12px;font-weight:600;color:#6b7280;cursor:pointer;text-decoration:none;transition:all .15s}
+        .filter-btn.active{background:#1a6b2e;color:#fff;border-color:#1a6b2e}
+        .filter-btn:hover:not(.active){background:#f4f6f4;color:#1a2b1a}
+        .badge-count{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;background:#e5e7e5;color:#374151;font-size:10px;font-weight:700;border-radius:10px;padding:0 5px;margin-left:6px}
+        .filter-btn.active .badge-count{background:rgba(255,255,255,0.25);color:#fff}
+        .card{background:#fff;border:1px solid #e5e7e5;border-radius:14px;overflow:hidden}
+        .tbl{width:100%;border-collapse:collapse;font-size:13px}
+        .tbl thead th{background:#f8faf8;color:#9ca3af;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:11px 16px;border-bottom:1px solid #f1f5f9;text-align:left;white-space:nowrap}
+        .tbl tbody td{padding:13px 16px;border-bottom:1px solid #f9fafb;vertical-align:middle}
+        .tbl tbody tr:last-child td{border-bottom:none}
+        .tbl tbody tr:hover td{background:#fafcfa}
+        .ref{font-family:'Courier New',monospace;font-size:11px;font-weight:700;background:#f1f5f9;padding:3px 7px;border-radius:5px;color:#374151}
+        .b{display:inline-block;font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px}
+        .b-DRAFT{background:#f3f4f6;color:#374151}
+        .b-SUBMITTED{background:#fef3c7;color:#92400e}
+        .b-APPROVED{background:#dcfce7;color:#166534}
+        .b-REJECTED{background:#fee2e2;color:#991b1b}
+        .act{display:inline-flex;align-items:center;gap:5px;padding:7px 13px;border-radius:8px;font-size:12px;font-weight:700;border:none;cursor:pointer;font-family:inherit;text-decoration:none;transition:all .15s}
+        .act-blue{background:#eff6ff;color:#1d4ed8;border:1px solid #dbeafe}
+        .act-blue:hover{background:#1d4ed8;color:#fff}
+        .act-green{background:#1a6b2e;color:#fff}
+        .act-green:hover{background:#155a26;color:#fff}
+        .empty{text-align:center;padding:60px 24px;color:#9ca3af}
+        .empty svg{width:48px;height:48px;opacity:0.3;margin-bottom:12px}
+        .empty p{margin-top:8px;font-size:13px}
+        .summary-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:20px}
+        .summary-card{background:#fff;border:1px solid #e5e7e5;border-radius:12px;padding:18px;text-align:center}
+        .summary-num{font-size:28px;font-weight:800;color:#1a2b1a;margin-bottom:6px}
+        .summary-lbl{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:#9ca3af}
+    </style>
+</head>
+<body>
+
+<!-- Top Bar -->
+<div class="topbar">
+    <a th:href="@{/portal/company/{id}(id=${company.id})}" class="logo">
+        <div class="logo-dot"></div>
+        <span class="logo-text">DairyCoop Portal</span>
+    </a>
+    <div class="co-chip">
+        <div class="co-chip-av" th:text="${#strings.substring(company.name,0,1).toUpperCase()}">P</div>
+        <span class="co-chip-name" th:text="${company.name}">Parmalat</span>
+    </div>
+</div>
+
+<!-- Main Content -->
+<main class="main">
+    <div style="margin-bottom:16px">
+        <a th:href="@{/portal/company/{id}(id=${company.id})}" class="btn-back">
+            ← Back to Dashboard
+        </a>
+    </div>
+
+    <div class="pg-head">
+        <h1>My Purchase Orders</h1>
+        <p>Manage and track your purchase orders</p>
+    </div>
+
+    <!-- Alerts -->
+    <div th:if="${successMessage}" class="alert-ok">
+        ✓ <span th:text="${successMessage}"></span>
+    </div>
+    <div th:if="${errorMessage}" class="alert-err">
+        ✗ <span th:text="${errorMessage}"></span>
+    </div>
+
+    <!-- Action Bar -->
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+        <div class="filter-strip" style="margin-bottom:0">
+            <a th:href="@{/portal/company/{id}/purchase-orders(id=${company.id})}"
+               class="filter-btn"
+               th:classappend="${selectedStatus == null || selectedStatus == 'ALL'} ? 'active' : ''">
+                All <span class="badge-count" th:text="${purchaseOrders.size()}">0</span>
+            </a>
+            <a th:href="@{/portal/company/{id}/purchase-orders(id=${company.id},status='DRAFT')}"
+               class="filter-btn"
+               th:classappend="${selectedStatus == 'DRAFT'} ? 'active' : ''">
+                Draft <span class="badge-count" th:text="${draftCount}">0</span>
+            </a>
+            <a th:href="@{/portal/company/{id}/purchase-orders(id=${company.id},status='SUBMITTED')}"
+               class="filter-btn"
+               th:classappend="${selectedStatus == 'SUBMITTED'} ? 'active' : ''">
+                Submitted <span class="badge-count" th:text="${submittedCount}">0</span>
+            </a>
+            <a th:href="@{/portal/company/{id}/purchase-orders(id=${company.id},status='APPROVED')}"
+               class="filter-btn"
+               th:classappend="${selectedStatus == 'APPROVED'} ? 'active' : ''">
+                Approved <span class="badge-count" th:text="${approvedCount}">0</span>
+            </a>
+            <a th:href="@{/portal/company/{id}/purchase-orders(id=${company.id},status='REJECTED')}"
+               class="filter-btn"
+               th:classappend="${selectedStatus == 'REJECTED'} ? 'active' : ''">
+                Rejected <span class="badge-count" th:text="${rejectedCount}">0</span>
+            </a>
+        </div>
+        <a th:href="@{/portal/company/{id}/inquiries/approved(id=${company.id})}" class="act act-green">
+            + Create New PO
+        </a>
+    </div>
+
+    <!-- Purchase Orders Table -->
+    <div class="card">
+        <table class="tbl">
+            <thead>
+            <tr>
+                <th>PO Number</th>
+                <th>Quantity</th>
+                <th>Total Amount</th>
+                <th>Delivery Date</th>
+                <th>Submitted</th>
+                <th>Status</th>
+                <th></th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:if="${#lists.isEmpty(purchaseOrders)}">
+                <td colspan="7">
+                    <div class="empty">
+                        <svg fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"></path>
+                            <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"></path>
+                        </svg>
+                        <p><strong>No purchase orders yet</strong></p>
+                        <p>Create your first PO from an approved inquiry</p>
+                    </div>
+                </td>
+            </tr>
+            <tr th:each="po : ${purchaseOrders}">
+                <td>
+                    <span class="ref" th:text="${po.poNumber}">PO-PAR-2026-0001</span>
+                </td>
+                <td>
+                    <strong th:text="${#numbers.formatDecimal(po.quantityLitres, 1, 2)} + ' L'">1,000.00 L</strong>
+                </td>
+                <td>
+                    <strong style="color:#166534" th:text="'ZMW ' + ${#numbers.formatDecimal(po.totalAmount, 1, 2)}">ZMW 10,000.00</strong>
+                </td>
+                <td th:text="${#temporals.format(po.deliveryDate, 'dd MMM yyyy')}">20 May 2026</td>
+                <td>
+                    <span th:if="${po.submittedAt != null}" th:text="${#temporals.format(po.submittedAt, 'dd MMM HH:mm')}">14 May 10:30</span>
+                    <small th:if="${po.submittedAt == null}" style="color:#9ca3af">Not submitted</small>
+                </td>
+                <td>
+                    <span class="b" th:classappend="${'b-' + po.status.name()}" th:text="${po.status.name()}">DRAFT</span>
+                </td>
+                <td style="text-align:right">
+                    <a th:href="@{/portal/company/{companyId}/purchase-orders/{poId}(companyId=${company.id},poId=${po.id})}"
+                       class="act act-blue">
+                        View →
+                    </a>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Summary Statistics -->
+    <div class="summary-grid">
+        <div class="summary-card">
+            <div class="summary-num" th:text="${draftCount}">0</div>
+            <div class="summary-lbl">Draft</div>
+        </div>
+        <div class="summary-card">
+            <div class="summary-num" th:text="${submittedCount}">0</div>
+            <div class="summary-lbl">Submitted</div>
+        </div>
+        <div class="summary-card">
+            <div class="summary-num" th:text="${approvedCount}">0</div>
+            <div class="summary-lbl">Approved</div>
+        </div>
+        <div class="summary-card">
+            <div class="summary-num" th:text="${rejectedCount}">0</div>
+            <div class="summary-lbl">Rejected</div>
+        </div>
+    </div>
+</main>
+
+</body>
+</html>

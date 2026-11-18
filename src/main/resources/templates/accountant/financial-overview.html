@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Financial Overview - DairyCoop Finance</title>
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap/dist/css/bootstrap.min.css}"/>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,700;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+    <link rel="stylesheet" th:href="@{/css/accountant-base.css}"/>
+    <link rel="stylesheet" th:href="@{/css/accountant-sidebar.css}"/>
+    <style>
+        /* Page-specific only */
+        .sect-divider{height:1px;background:var(--border);margin:24px 0}
+        .breakdown-header{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--green-dim);padding:8px 0 8px 12px;border-left:3px solid var(--green);margin-bottom:12px}
+        .grand-total-bar{background:linear-gradient(135deg,#0b1120,#1b3a63);color:#fff;border-radius:12px;padding:18px 24px;display:flex;align-items:center;justify-content:space-between;margin-top:16px;flex-wrap:wrap;gap:12px}
+        .grand-total-bar .lbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;opacity:.65}
+        .grand-total-bar .amt{font-family:'JetBrains Mono',monospace;font-size:24px;font-weight:800}
+        .all-time-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-top:4px}
+        .all-time-card{background:#f8fafc;border:1px solid var(--border);border-radius:8px;padding:14px 16px}
+        .all-time-label{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);margin-bottom:5px}
+        .all-time-amount{font-family:'JetBrains Mono',monospace;font-size:17px;font-weight:800;color:var(--ink)}
+    </style>
+</head>
+<body>
+
+<div th:replace="~{fragments/accountant-nav :: nav(active='financial-overview', pageTitle='Financial Overview')}"></div>
+
+<div class="sb-page">
+    <div class="pw-bar" th:if="${mustChangePassword}">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        Temporary password in use. <a th:href="@{/account/password}">Change it now</a>
+    </div>
+
+
+    <div class="pg-eyebrow">Accounts Officer</div>
+    <div class="pg-title">Financial <em>Overview</em></div>
+    <div style="font-size:13px;color:var(--muted);margin-top:-12px;margin-bottom:22px" th:text="'Period: ' + ${currentMonthYear}">Period</div>
+
+    <!-- KPI Summary -->
+    <div class="kpi-strip" style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px">
+        <div class="kpi blue">
+            <div class="kpi-label">COFA Balance</div>
+            <div class="kpi-num amount" style="font-size:16px;font-family:'JetBrains Mono',monospace;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" th:text="'ZMW ' + ${#numbers.formatDecimal(cofaBalance, 1, 'COMMA', 2, 'POINT')}">ZMW 0.00</div>
+            <div class="kpi-sub">Cooperative Fund Account</div>
+        </div>
+        <div class="kpi teal">
+            <div class="kpi-label">Cow Maintenance Fund</div>
+            <div class="kpi-num amount" style="font-size:16px;font-family:'JetBrains Mono',monospace;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" th:text="'ZMW ' + ${#numbers.formatDecimal(totalCurrentAllocations, 1, 'COMMA', 2, 'POINT')}">ZMW 0.00</div>
+            <div class="kpi-sub">Allocated (10% of milk revenue)</div>
+        </div>
+        <div class="kpi amber">
+            <div class="kpi-label">Staff Paid (this month)</div>
+            <div class="kpi-num" th:text="${staffCount}">0</div>
+            <div class="kpi-sub" th:text="'ZMW ' + ${#numbers.formatDecimal(totalStaffSalariesThisMonth, 1, 'COMMA', 2, 'POINT')} + ' total'">ZMW 0.00 total</div>
+        </div>
+        <div class="kpi green">
+            <div class="kpi-label">Members Paid (this month)</div>
+            <div class="kpi-num" th:text="${memberCount}">0</div>
+            <div class="kpi-sub" th:text="'ZMW ' + ${#numbers.formatDecimal(totalMemberPaymentsThisMonth, 1, 'COMMA', 2, 'POINT')} + ' total'">ZMW 0.00 total</div>
+        </div>
+    </div>
+
+    <!-- Monthly Expenditure -->
+    <div class="card">
+        <div class="card-head">
+            <div>
+                <div class="card-title">Monthly Salary Expenditure</div>
+                <div class="card-sub" th:text="'Period: ' + ${currentMonthYear}">Period</div>
+            </div>
+            <a th:href="@{/accountant/salaries}" class="btn-outline" style="font-size:12px">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+                Go to Pay Salaries
+            </a>
+        </div>
+        <div style="padding:22px 22px 8px">
+
+            <!-- Staff breakdown -->
+            <div class="breakdown-group">
+                <div class="breakdown-header" th:text="'Staff — ' + ${staffCount} + ' paid'">Staff</div>
+                <table class="tbl">
+                    <thead><tr><th>Name</th><th>Role</th><th style="text-align:right">Salary</th></tr></thead>
+                    <tbody>
+                    <tr th:each="s : ${staffPaymentBreakdown}">
+                        <td class="d-name" th:text="${s.name}">Name</td>
+                        <td class="d-muted" th:text="${s.role}">Role</td>
+                        <td style="text-align:right"><span class="d-amount">ZMW <span th:text="${#numbers.formatDecimal(s.salary,1,'COMMA',2,'POINT')}">0.00</span></span></td>
+                    </tr>
+                    <tr th:if="${staffPaymentBreakdown.isEmpty()}">
+                        <td colspan="3" class="empty-row">No staff salaries paid this month.</td>
+                    </tr>
+                    </tbody>
+                    <tfoot th:unless="${staffPaymentBreakdown.isEmpty()}">
+                    <tr style="background:#f8fafc">
+                        <td colspan="2" style="padding:12px 18px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)">Total Staff</td>
+                        <td style="text-align:right;padding:12px 18px"><span class="d-amount">ZMW <span th:text="${#numbers.formatDecimal(totalStaffSalariesThisMonth,1,'COMMA',2,'POINT')}">0.00</span></span></td>
+                    </tr>
+                    </tfoot>
+                </table>
+            </div>
+
+            <div class="sect-divider"></div>
+
+            <!-- Member breakdown -->
+            <div class="breakdown-group">
+                <div class="breakdown-header" th:text="'Members — ' + ${memberCount} + ' paid'">Members</div>
+                <table class="tbl">
+                    <thead><tr><th>Member</th><th>Gross</th><th>Deductions</th><th style="text-align:right">Net</th></tr></thead>
+                    <tbody>
+                    <tr th:each="m : ${memberPaymentBreakdown}">
+                        <td>
+                            <div class="d-name" th:text="${m.memberNumber + ': ' + m.name}">Member</div>
+                        </td>
+                        <td class="d-mono" th:text="'ZMW ' + ${#numbers.formatDecimal(m.grossAmount,1,'COMMA',2,'POINT')}">ZMW 0.00</td>
+                        <td class="d-mono" style="color:var(--red)" th:text="'ZMW ' + ${#numbers.formatDecimal(m.deductions,1,'COMMA',2,'POINT')}">ZMW 0.00</td>
+                        <td style="text-align:right"><span class="d-amount">ZMW <span th:text="${#numbers.formatDecimal(m.netAmount,1,'COMMA',2,'POINT')}">0.00</span></span></td>
+                    </tr>
+                    <tr th:if="${memberPaymentBreakdown.isEmpty()}">
+                        <td colspan="4" class="empty-row">No member payments made this month.</td>
+                    </tr>
+                    </tbody>
+                    <tfoot th:unless="${memberPaymentBreakdown.isEmpty()}">
+                    <tr style="background:#f8fafc">
+                        <td colspan="3" style="padding:12px 18px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)">Total Members</td>
+                        <td style="text-align:right;padding:12px 18px"><span class="d-amount">ZMW <span th:text="${#numbers.formatDecimal(totalMemberPaymentsThisMonth,1,'COMMA',2,'POINT')}">0.00</span></span></td>
+                    </tr>
+                    </tfoot>
+                </table>
+            </div>
+
+            <!-- Grand total -->
+            <div class="grand-total-bar">
+                <div>
+                    <div class="lbl">Total Monthly Expenditure</div>
+                    <div style="font-size:12px;color:rgba(255,255,255,.55);margin-top:2px" th:text="${currentMonthYear}">Month</div>
+                </div>
+                <div class="amt" th:text="'ZMW ' + ${#numbers.formatDecimal(monthlyExpenditureTotal,1,'COMMA',2,'POINT')}">ZMW 0.00</div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- All-time summary -->
+    <div class="card">
+        <div class="card-head">
+            <div class="card-title">All-Time Summary</div>
+        </div>
+        <div style="padding:22px">
+            <div class="all-time-grid">
+                <div class="all-time-card">
+                    <div class="all-time-label">Total Staff Salaries</div>
+                    <div class="all-time-amount" th:text="'ZMW ' + ${#numbers.formatDecimal(totalStaffSalariesAllTime,1,'COMMA',2,'POINT')}">ZMW 0.00</div>
+                </div>
+                <div class="all-time-card">
+                    <div class="all-time-label">Total Member Payments</div>
+                    <div class="all-time-amount" th:text="'ZMW ' + ${#numbers.formatDecimal(totalMemberPaymentsAllTime,1,'COMMA',2,'POINT')}">ZMW 0.00</div>
+                </div>
+                <div class="all-time-card">
+                    <div class="all-time-label">Total Loan Disbursements</div>
+                    <div class="all-time-amount" th:text="'ZMW ' + ${#numbers.formatDecimal(totalLoanDisbursementsAllTime,1,'COMMA',2,'POINT')}">ZMW 0.00</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+</div>
+
+
+</body>
+</html>

@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Apply for Loan - DairyCoop</title>
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap/dist/css/bootstrap.min.css}"/>
+    <link rel="stylesheet" th:href="@{/css/member-portal.css}"/>
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;1,9..144,400&display=swap');
+
+        /*  SIDEBAR  */
+                                                                                        .sb-status-pending{background:rgba(245,158,11,0.2);color:#fbbf24}
+        .sb-status-approved{background:rgba(34,197,94,0.2);color:#4ade80}
+        .sb-status-none{background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.5)}
+
+        /*  MAIN  */
+
+        /*  TOPBAR  */
+                .topbar-left h1{font-family:'Fraunces',serif;font-size:20px;font-weight:600;color:#111827}
+        .topbar-left p{font-size:12px;color:#6b7280;margin-top:1px}
+        .topbar-right{display:flex;align-items:center;gap:12px}
+
+        /*  CONTENT  */
+
+        /*  ALERTS  */
+        .alert-ok{background:#f0fdf4;border:1px solid #bbf7d0;color:#166534;padding:14px 18px;border-radius:12px;font-size:13.5px;display:flex;align-items:center;gap:10px;margin-bottom:24px}
+        .alert-err{background:#fef2f2;border:1px solid #fecaca;color:#dc2626;padding:14px 18px;border-radius:12px;font-size:13.5px;display:flex;align-items:center;gap:10px;margin-bottom:24px}
+
+        /*  INCOMPLETE PROFILE BANNER  */
+        .profile-banner{background:linear-gradient(135deg,#0a1628 0%,#1a3a5c 100%);border-radius:16px;padding:24px 28px;margin-bottom:28px;display:flex;align-items:center;justify-content:space-between;gap:20px}
+        .pb-text h3{font-family:'Fraunces',serif;font-size:20px;font-weight:600;color:#fff;margin-bottom:6px}
+        .pb-text p{font-size:13.5px;color:rgba(255,255,255,0.55);line-height:1.6}
+        .pb-btn{background:linear-gradient(135deg,#f5a623,#e8920d);color:#fff;border:none;padding:12px 24px;border-radius:10px;font-size:13.5px;font-weight:600;font-family:inherit;cursor:pointer;white-space:nowrap;transition:all .2s;flex-shrink:0}
+        .pb-btn:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(245,166,35,0.4)}
+
+        /*  STAT CARDS  */
+        .stat-card{background:#fff;border-radius:16px;padding:22px;border:1px solid #e5e7eb;box-shadow:0 1px 8px rgba(0,0,0,0.04)}
+        .sc-icon{width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;margin-bottom:16px}
+        .sc-val{font-family:'Fraunces',serif;font-size:30px;font-weight:600;color:#111827;line-height:1}
+        .sc-lbl{font-size:13px;color:#6b7280;margin-top:5px}
+
+        /*  PANEL  */
+        .panel{background:#fff;border-radius:16px;border:1px solid #e5e7eb;box-shadow:0 1px 8px rgba(0,0,0,0.04)}
+        .panel-head{padding:18px 22px;border-bottom:1px solid #f3f4f6;display:flex;align-items:center;justify-content:space-between}
+        .panel-title{font-size:15px;font-weight:600;color:#111827}
+        .empty-state{text-align:center;padding:40px 20px;color:#9ca3af;font-size:13.5px}
+
+        /*  STATUS BADGES  */
+        .badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px}
+        .badge-pending{background:#fef3c7;color:#d97706}
+        .badge-approved{background:#dcfce7;color:#16a34a}
+        .badge-rejected{background:#fee2e2;color:#dc2626}
+
+        /*  PROFILE STATUS CARD  */
+        .status-card{border-radius:16px;padding:24px;display:flex;align-items:center;gap:20px}
+        .status-pending{background:linear-gradient(135deg,#fef3c7,#fde68a);border:1px solid #fcd34d}
+        .status-approved{background:linear-gradient(135deg,#dcfce7,#bbf7d0);border:1px solid #86efac}
+        .status-rejected{background:linear-gradient(135deg,#fee2e2,#fecaca);border:1px solid #fca5a5}
+        .status-icon{width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+
+        /*  MODAL OVERLAY  */
+        .modal-overlay{position:fixed;inset:0;background:rgba(10,22,40,0.7);backdrop-filter:blur(4px);z-index:1000;display:flex;align-items:center;justify-content:center;padding:24px}
+        /* hidden by default */
+        .modal-overlay.hidden{display:none}
+        .modal-box{background:#fff;border-radius:20px;width:100%;max-width:600px;box-shadow:0 32px 80px rgba(0,0,0,0.4);overflow:hidden;animation:slideUp .3s ease}
+        @keyframes slideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+        .modal-head{background:linear-gradient(135deg,#0a1628 0%,#1a3a5c 100%);padding:28px 32px}
+        .modal-head h2{font-family:'Fraunces',serif;font-size:22px;font-weight:600;color:#fff;margin-bottom:4px}
+        .modal-head p{font-size:13px;color:rgba(255,255,255,0.5)}
+        .modal-        .modal-err{background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:12px 16px;margin-bottom:20px;font-size:13px;color:#dc2626;display:flex;gap:8px;align-items:center}
+        .reg-fieldset{border:none;border-top:1px solid #e5e7eb;padding:0;margin:0 0 24px 0}
+        .reg-legend{font-size:10.5px;font-weight:700;letter-spacing:1.6px;color:#6b7280;padding-right:12px;text-transform:uppercase}
+        .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-top:18px}
+        .row2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:18px}
+        .field-grp{display:flex;flex-direction:column;gap:6px}
+        .flbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#374151}
+        .req{color:#ef4444}
+        .finp{padding:11px 14px;font-size:14px;border:1.5px solid #e5e7eb;border-radius:10px;outline:none;background:#f9fafb;color:#111827;transition:all .2s;width:100%;font-family:inherit}
+        .finp:focus{border-color:#1a6b2e;background:#fff;box-shadow:0 0 0 3px rgba(26,107,46,.1)}
+        .finp::placeholder{color:#9ca3af}
+        .helper{font-size:11px;color:#9ca3af}
+        .modal-foot{padding:20px 32px 28px;display:flex;justify-content:flex-end;gap:12px;border-top:1px solid #f3f4f6;background:#fafafa}
+        .btn-submit{background:linear-gradient(135deg,#1a6b2e,#2d8a42);color:#fff;border:none;padding:12px 28px;border-radius:10px;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer;display:inline-flex;align-items:center;gap:8px;transition:all .2s}
+        .btn-submit:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(26,107,46,.3)}
+        .btn-close-modal{background:#fff;color:#6b7280;border:1.5px solid #e5e7eb;padding:11px 22px;border-radius:10px;font-size:13.5px;font-weight:600;font-family:inherit;cursor:pointer;transition:all .2s}
+        .btn-close-modal:hover{border-color:#9ca3af;color:#374151}
+        /* Processing overlay */
+        .processing-overlay{
+            display:none;position:fixed;inset:0;
+            background:rgba(13,40,24,.85);
+            z-index:9999;
+            flex-direction:column;
+            align-items:center;justify-content:center;
+            backdrop-filter:blur(6px);
+        }
+        .processing-overlay.active{display:flex}
+        .proc-card{
+            background:#fff;border-radius:20px;
+            padding:40px 48px;text-align:center;
+            width:340px;max-width:90vw;
+            box-shadow:0 24px 60px rgba(0,0,0,.3);
+        }
+        .proc-spinner{
+            width:56px;height:56px;
+            border:4px solid #e5e7eb;
+            border-top-color:#1a6b2e;
+            border-radius:50%;
+            animation:spin .8s linear infinite;
+            margin:0 auto 20px;
+        }
+        @keyframes spin{to{transform:rotate(360deg)}}
+        .proc-title{
+            font-family:'Sora',sans-serif;
+            font-size:16px;font-weight:700;color:#111827;
+            margin-bottom:8px;
+        }
+        .proc-sub{
+            font-size:13px;color:#6b7280;line-height:1.6;
+        }
+        .proc-dots::after{
+            content:'';animation:dots 1.5s steps(3,end) infinite;
+        }
+        @keyframes dots{
+            0%{content:'.'}
+            33%{content:'..'}
+            66%{content:'...'}
+        }
+    </style>
+    <style>
+        .content{padding:32px 36px;flex:1;background:#f4f3ef}
+
+        /*  SPLIT CARD  */
+        .split-card{
+            display:grid;
+            grid-template-columns:380px 1fr;
+            min-height:580px;
+            border-radius:20px;
+            overflow:hidden;
+            box-shadow:0 20px 60px rgba(0,0,0,.15);
+        }
+
+        /*  LEFT PANEL  dark forest  */
+        .left-panel{
+            background:#0d2818;
+            padding:40px 36px;
+            display:flex;
+            flex-direction:column;
+            position:relative;
+            overflow:hidden;
+        }
+        .left-panel::before{
+            content:'';
+            position:absolute;
+            width:300px;height:300px;
+            border-radius:50%;
+            background:rgba(168,255,62,.04);
+            top:-80px;right:-80px;
+        }
+        .left-panel::after{
+            content:'';
+            position:absolute;
+            width:200px;height:200px;
+            border-radius:50%;
+            background:rgba(168,255,62,.03);
+            bottom:-60px;left:-60px;
+        }
+
+        .lp-back{
+            display:inline-flex;align-items:center;gap:7px;
+            color:rgba(255,255,255,.4);
+            text-decoration:none;
+            font-family:'Sora',sans-serif;
+            font-size:12px;font-weight:500;
+            margin-bottom:36px;
+            transition:color .2s;
+        }
+        .lp-back:hover{color:rgba(255,255,255,.8)}
+
+        .lp-eyebrow{
+            font-family:'Sora',sans-serif;
+            font-size:9px;font-weight:700;
+            letter-spacing:.22em;text-transform:uppercase;
+            color:#a8ff3e;margin-bottom:10px;
+        }
+        .lp-title{
+            font-family:'Libre Baskerville',serif;
+            font-size:28px;font-weight:700;
+            color:#fff;line-height:1.2;
+            margin-bottom:8px;
+        }
+        .lp-title em{font-style:italic;color:#a8ff3e}
+        .lp-sub{
+            font-family:'Sora',sans-serif;
+            font-size:12px;color:rgba(255,255,255,.45);
+            line-height:1.7;margin-bottom:36px;
+        }
+
+        /* Live calculator */
+        .calc-box{
+            background:rgba(255,255,255,.04);
+            border:1px solid rgba(255,255,255,.08);
+            border-radius:16px;
+            padding:24px;
+            margin-bottom:24px;
+        }
+        .calc-lbl{
+            font-family:'Sora',sans-serif;
+            font-size:9px;font-weight:700;
+            letter-spacing:.18em;text-transform:uppercase;
+            color:rgba(255,255,255,.3);margin-bottom:14px;
+        }
+        .calc-row{
+            display:flex;align-items:center;justify-content:space-between;
+            padding:10px 0;
+            border-bottom:1px solid rgba(255,255,255,.06);
+        }
+        .calc-row:last-child{border-bottom:none;padding-bottom:0}
+        .calc-row-lbl{
+            font-family:'Sora',sans-serif;
+            font-size:12px;color:rgba(255,255,255,.5);
+        }
+        .calc-row-val{
+            font-family:'JetBrains Mono',monospace;
+            font-size:14px;font-weight:600;color:#fff;
+        }
+        .calc-row-val.accent{color:#a8ff3e}
+        .calc-row-val.amber{color:#fbbf24}
+
+        /* Big monthly number */
+        .monthly-big{
+            text-align:center;
+            padding:20px 0 8px;
+        }
+        .monthly-big-lbl{
+            font-family:'Sora',sans-serif;
+            font-size:9px;font-weight:700;
+            letter-spacing:.2em;text-transform:uppercase;
+            color:rgba(255,255,255,.3);margin-bottom:8px;
+        }
+        .monthly-big-num{
+            font-family:'Libre Baskerville',serif;
+            font-size:44px;font-weight:700;
+            color:#a8ff3e;line-height:1;
+        }
+        .monthly-big-sub{
+            font-family:'Sora',sans-serif;
+            font-size:11px;color:rgba(255,255,255,.3);
+            margin-top:6px;
+        }
+
+        /* Tier indicator */
+        .tier-bar{margin-top:auto;padding-top:24px}
+        .tier-bar-lbl{
+            font-family:'Sora',sans-serif;
+            font-size:9px;font-weight:700;
+            letter-spacing:.18em;text-transform:uppercase;
+            color:rgba(255,255,255,.25);margin-bottom:10px;
+        }
+        .tier-items{display:flex;flex-direction:column;gap:5px}
+        .tier-item{
+            display:flex;align-items:center;justify-content:space-between;
+            font-family:'Sora',sans-serif;font-size:11px;
+            color:rgba(255,255,255,.3);
+            padding:5px 10px;border-radius:7px;
+            transition:all .2s;
+        }
+        .tier-item.active{
+            background:rgba(168,255,62,.1);
+            color:#a8ff3e;
+            border:1px solid rgba(168,255,62,.2);
+        }
+        .tier-rate{font-family:'JetBrains Mono',monospace;font-weight:600}
+
+        /*  RIGHT PANEL  form  */
+        .right-panel{
+            background:#fff;
+            padding:40px 40px;
+            display:flex;
+            flex-direction:column;
+        }
+
+        .rp-section-lbl{
+            font-family:'Sora',sans-serif;
+            font-size:9px;font-weight:700;
+            letter-spacing:.2em;text-transform:uppercase;
+            color:#0d2818;
+            margin-bottom:18px;margin-top:28px;
+            display:flex;align-items:center;gap:10px;
+        }
+        .rp-section-lbl::after{content:'';flex:1;height:1px;background:#f0f0f0}
+        .rp-section-lbl:first-child{margin-top:0}
+
+        .flbl{
+            display:block;
+            font-family:'Sora',sans-serif;
+            font-size:10.5px;font-weight:700;
+            letter-spacing:.08em;text-transform:uppercase;
+            color:#374151;margin-bottom:8px;
+        }
+        .req{color:#ef4444}
+        .finp{
+            width:100%;
+            padding:13px 16px;
+            border:1.5px solid #e8e8e8;
+            border-radius:10px;
+            font-size:14px;
+            font-family:'Sora',sans-serif;
+            color:#111827;
+            background:#fafafa;
+            outline:none;
+            transition:all .22s;
+        }
+        .finp:focus{
+            border-color:#0d2818;
+            background:#fff;
+            box-shadow:0 0 0 3px rgba(13,40,24,.08);
+        }
+        .finp::placeholder{color:#b0b0b0}
+        .hint{
+            font-family:'Sora',sans-serif;
+            font-size:11px;color:#9ca3af;margin-top:5px;
+        }
+
+        /* Read-only rate field */
+        .rate-field{
+            width:100%;padding:13px 16px;
+            border:1.5px solid #e8e8e8;
+            border-radius:10px;
+            background:#f9fafb;
+            display:flex;align-items:center;justify-content:space-between;
+        }
+        .rate-field-num{
+            font-family:'JetBrains Mono',monospace;
+            font-size:18px;font-weight:700;
+            color:#0d2818;
+        }
+        .rate-field-tag{
+            font-family:'Sora',sans-serif;
+            font-size:10px;font-weight:600;
+            color:#9ca3af;text-transform:uppercase;letter-spacing:.1em;
+        }
+
+        /* Submit */
+        .btn-submit{
+            width:100%;
+            padding:15px;
+            background:#0d2818;
+            color:#a8ff3e;
+            border:none;
+            border-radius:12px;
+            font-family:'Sora',sans-serif;
+            font-size:15px;font-weight:700;
+            cursor:pointer;
+            transition:all .25s;
+            letter-spacing:.04em;
+            margin-top:auto;
+            display:flex;align-items:center;justify-content:center;gap:10px;
+        }
+        .btn-submit:hover{
+            background:#1a5c2e;
+            transform:translateY(-2px);
+            box-shadow:0 10px 30px rgba(13,40,24,.25);
+        }
+        .btn-submit svg{stroke:currentColor}
+
+        .alert-err{
+            background:#fff1f2;border-left:3px solid #ef4444;
+            color:#991b1b;padding:12px 16px;border-radius:0 8px 8px 0;
+            font-size:13px;display:flex;align-items:center;gap:8px;
+            margin-bottom:20px;font-family:'Sora',sans-serif;
+        }
+    </style>
+</head>
+<body>
+
+<div th:replace="~{fragments/member-nav :: nav(active='loans')}"></div>
+
+<!-- MAIN -->
+<div class="main">
+    <div class="topbar">
+        <div class="tb-greeting">Apply for a Loan</div>
+        <div class="tb-date" id="tbDate"></div>
+    </div>
+    <div class="content">
+        <div class="split-card">
+
+            <!--  LEFT: Live Calculator Panel  -->
+            <div class="left-panel">
+
+                <a th:href="@{/member/loans}" class="lp-back">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+                    Back to Loans
+                </a>
+
+                <div class="lp-eyebrow">Loan Calculator</div>
+                <div class="lp-title">Your <em>repayment</em><br>at a glance</div>
+                <div class="lp-sub">Fill in the form and watch your repayment plan update in real time as you type.</div>
+
+                <!-- Monthly big display -->
+                <div class="monthly-big">
+                    <div class="monthly-big-lbl">Monthly Instalment</div>
+                    <div class="monthly-big-num" id="monthlyBig">ZMW 0</div>
+                    <div class="monthly-big-sub" id="monthlyBigSub">Enter amount and term to calculate</div>
+                </div>
+
+                <!-- Breakdown -->
+                <div class="calc-box">
+                    <div class="calc-lbl">Breakdown</div>
+                    <div class="calc-row">
+                        <div class="calc-row-lbl">Principal</div>
+                        <div class="calc-row-val" id="cPrincipal">ZMW 0.00</div>
+                    </div>
+                    <div class="calc-row">
+                        <div class="calc-row-lbl">Interest Rate</div>
+                        <div class="calc-row-val amber" id="cRate">0%</div>
+                    </div>
+                    <div class="calc-row">
+                        <div class="calc-row-lbl">Interest Amount</div>
+                        <div class="calc-row-val amber" id="cInterest">ZMW 0.00</div>
+                    </div>
+                    <div class="calc-row">
+                        <div class="calc-row-lbl">Total Repayable</div>
+                        <div class="calc-row-val accent" id="cTotal">ZMW 0.00</div>
+                    </div>
+                    <div class="calc-row">
+                        <div class="calc-row-lbl">Repayment Period</div>
+                        <div class="calc-row-val" id="cTerm"> months</div>
+                    </div>
+                </div>
+
+                <!-- Interest tier reference -->
+                <div class="tier-bar">
+                    <div class="tier-bar-lbl">Interest Rate Tiers</div>
+                    <div class="tier-items">
+                        <div class="tier-item" id="tier1"><span>ZMW 500  999</span><span class="tier-rate">10%</span></div>
+                        <div class="tier-item" id="tier2"><span>ZMW 1,000  1,500</span><span class="tier-rate">15%</span></div>
+                        <div class="tier-item" id="tier3"><span>ZMW 1,600  2,000</span><span class="tier-rate">20%</span></div>
+                        <div class="tier-item" id="tier4"><span>ZMW 2,001  3,000</span><span class="tier-rate">25%</span></div>
+                        <div class="tier-item" id="tier5"><span>ZMW 3,001+</span><span class="tier-rate">30%+</span></div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!--  RIGHT: Form Panel  -->
+            <div class="right-panel">
+
+                <div class="alert-err" th:if="${loanError != null and !#strings.isEmpty(loanError)}">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0"><circle cx="12" cy="12" r="10"/></svg>
+                    <span th:text="${loanError}">Error</span>
+                </div>
+
+                <form th:action="@{/member/loans/apply}" method="post" style="display:flex;flex-direction:column;flex:1;gap:0">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+                    <div class="rp-section-lbl">Loan Details</div>
+
+                    <div class="row g-3" style="margin-bottom:20px">
+                        <div class="col-7">
+                            <label class="flbl" for="amount">Loan Amount (ZMW) <span class="req">*</span></label>
+                            <input type="number" id="amount" name="amount" class="finp"
+                                   placeholder="e.g. 500.00 minimum"
+                                   step="0.01" min="500" required
+                                   oninput="calc()"/>
+                            <div class="hint">Minimum ZMW 500</div>
+                            <div id="amountMsg" style="display:none;align-items:center;gap:8px;margin-top:8px;padding:10px 14px;border-radius:8px;font-size:12.5px;font-weight:600;border:1.5px solid;line-height:1.5">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0">
+                                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                                    <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+                                </svg>
+                                <span id="amountMsgText"></span>
+                            </div>
+                        </div>
+                        <div class="col-5">
+                            <label class="flbl">Interest Rate</label>
+                            <div class="rate-field">
+                                <span class="rate-field-num" id="rateDisplay">0%</span>
+                                <span class="rate-field-tag">Auto</span>
+                            </div>
+                            <div class="hint">Applied per amount tier</div>
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom:20px">
+                        <label class="flbl" for="repaymentMonths">Repayment Term <span class="req">*</span></label>
+                        <select id="repaymentMonths" name="repaymentMonths" class="finp" required onchange="calc()">
+                            <option value="">Select repayment period...</option>
+                            <option value="3">3 months</option>
+                            <option value="6">6 months</option>
+                            <option value="12">12 months</option>
+                            <option value="18">18 months</option>
+                            <option value="24">24 months</option>
+                            <option value="36">36 months</option>
+                        </select>
+                    </div>
+
+                    <div class="rp-section-lbl">Purpose</div>
+
+                    <div style="margin-bottom:28px">
+                        <label class="flbl" for="purpose">Purpose / Reason for Loan <span class="req">*</span></label>
+                        <textarea id="purpose" name="purpose" class="finp" rows="4"
+                                  placeholder="Describe what this loan is for e.g. purchasing livestock feed, veterinary costs, farm equipment repairs..."
+                                  required style="resize:none;line-height:1.7"></textarea>
+                        <div class="hint">Be specific to help the Accounts Officer make a faster decision</div>
+                    </div>
+
+                    <button type="submit" class="btn-submit" id="submitBtn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 2L11 13"/><path d="M22 2L15 22 11 13 2 9l20-7z"/></svg>
+                        Submit Application
+                    </button>
+                </form>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Processing overlay -->
+<div class="processing-overlay" id="processingOverlay">
+    <div class="proc-card">
+        <div class="proc-spinner"></div>
+        <div class="proc-title">Analysing Your Application</div>
+        <div class="proc-sub">
+            Running credit scoring engine<span class="proc-dots"></span><br/>
+            Checking delivery history for the last 2 months.
+        </div>
+    </div>
+</div>
+
+<script th:src="@{/webjars/bootstrap/dist/js/bootstrap.bundle.min.js}"></script>
+<script>
+    function getRate(a) {
+        if (a < 500)        return 0;
+        else if (a <= 999)  return 10;
+        else if (a <= 1500) return 15;
+        else if (a <= 2000) return 20;
+        else {
+            var extra = Math.floor((a - 2000) / 1000);
+            return 20 + (extra + 1) * 5;
+        }
+    }
+
+    function showAmountMsg(msg, type) {
+        var el = document.getElementById('amountMsg');
+        el.style.display = msg ? 'flex' : 'none';
+        var spanEl = document.getElementById('amountMsgText');
+        if (spanEl) spanEl.textContent = msg;
+        el.style.display = msg ? 'flex' : 'none';
+        el.style.background   = type === 'error' ? '#fef2f2' : '#fefce8';
+        el.style.borderColor  = type === 'error' ? '#fecaca' : '#fde68a';
+        el.style.color        = type === 'error' ? '#dc2626' : '#92400e';
+    }
+
+    function highlightTier(a) {
+        function setTier(id, min, max) {
+            var el = document.getElementById(id);
+            if (!el) return;
+            if (a >= min && a <= max) el.classList.add('active');
+            else el.classList.remove('active');
+        }
+        setTier('tier1', 500,  999);
+        setTier('tier2', 1000, 1500);
+        setTier('tier3', 1600, 2000);
+        setTier('tier4', 2001, 3000);
+        setTier('tier5', 3001, 999999);
+    }
+
+    function fmt(n) {
+        // Simple number format - avoid regex with curly braces that confuse Thymeleaf
+        var s = n.toFixed(2);
+        var parts = s.split('.');
+        var intPart = parts[0];
+        var dec = parts[1];
+        var out = '';
+        for (var i = 0; i < intPart.length; i++) {
+            if (i > 0 && (intPart.length - i) % 3 === 0) out += ',';
+            out += intPart[i];
+        }
+        return 'ZMW ' + out + '.' + dec;
+    }
+
+    function calc() {
+        var a = parseFloat(document.getElementById('amount').value) || 0;
+        var m = parseInt(document.getElementById('repaymentMonths').value) || 0;
+        var submitBtn = document.getElementById('submitBtn');
+        var msgEl = document.getElementById('amountMsg');
+
+        if (a > 0 && a < 500) {
+            if (msgEl) {
+                msgEl.style.display = 'flex';
+                msgEl.style.background = '#fef2f2';
+                msgEl.style.borderColor = '#fecaca';
+                msgEl.style.color = '#dc2626';
+                var sp = document.getElementById('amountMsgText');
+                if (sp) sp.textContent = 'Minimum loan amount is ZMW 500. Amounts below ZMW 500 cannot be processed.';
+            }
+            document.getElementById('rateDisplay').textContent = '0%';
+            document.getElementById('interestBox').style.display = 'none';
+            if (submitBtn) { submitBtn.disabled = true; submitBtn.style.opacity = '0.5'; submitBtn.style.cursor = 'not-allowed'; }
+            return;
+        } else {
+            if (msgEl) msgEl.style.display = 'none';
+            if (submitBtn) { submitBtn.disabled = false; submitBtn.style.opacity = '1'; submitBtn.style.cursor = 'pointer'; }
+        }
+        var rate     = getRate(a);
+        var interest = a * rate / 100;
+        var total    = a + interest;
+        var monthly  = m > 0 ? total / m : 0;
+
+        document.getElementById('rateDisplay').textContent    = rate + '%';
+        document.getElementById('cPrincipal').textContent     = fmt(a);
+        document.getElementById('cRate').textContent          = rate + '%';
+        document.getElementById('cInterest').textContent      = fmt(interest);
+        document.getElementById('cTotal').textContent         = fmt(total);
+        document.getElementById('cTerm').textContent          = m > 0 ? m + ' months' : ' months';
+        document.getElementById('monthlyBig').textContent     = monthly > 0 ? fmt(monthly) : 'ZMW 0';
+        document.getElementById('monthlyBigSub').textContent  = monthly > 0
+            ? m + ' payments of ' + fmt(monthly)
+            : 'Enter amount and term to calculate';
+
+        highlightTier(a);
+    }
+
+    document.getElementById('tbDate').textContent =
+        new Date().toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
+
+    // Intercept form submit  show processing overlay for 5 seconds
+    var loanForm = document.querySelector('form[th\\:action], form[action]');
+    if (!loanForm) {
+        // find form by submit button
+        var submitBtn = document.getElementById('submitBtn');
+        if (submitBtn) loanForm = submitBtn.closest('form');
+    }
+    if (loanForm) {
+        loanForm.addEventListener('submit', function(e) {
+            if (document.getElementById('submitBtn').disabled) return;
+            e.preventDefault();
+            var overlay = document.getElementById('processingOverlay');
+            overlay.classList.add('active');
+            var messages = [
+                'Fetching delivery records',
+                'Scoring April 2026 deliveries',
+                'Scoring March 2026 deliveries',
+                'Calculating credit score',
+                'Finalising decision'
+            ];
+            var sub = overlay.querySelector('.proc-sub');
+            var i = 0;
+            var interval = setInterval(function() {
+                i++;
+                if (i < messages.length) {
+                    sub.innerHTML = messages[i] + '<br/><span style="font-size:11px;color:#9ca3af">Please wait</span>';
+                }
+            }, 1000);
+            setTimeout(function() {
+                clearInterval(interval);
+                loanForm.submit();
+            }, 5000);
+        });
+    }
+</script>
+</body>
+</html>

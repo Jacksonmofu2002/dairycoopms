@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title th:text="'Invoice ' + ${inquiry.invoiceNo}">Invoice</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+    <style>
+        *{box-sizing:border-box;margin:0;padding:0}
+        body{font-family:'Plus Jakarta Sans',sans-serif;background:#e8f4fd;min-height:100vh;padding:32px 16px 48px}
+
+        /* Action bar - hidden on print */
+        .action-bar{max-width:780px;margin:0 auto 20px;display:flex;align-items:center;justify-content:space-between}
+        .btn-back{display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid #cbd5e1;color:#475569;padding:9px 18px;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none;font-family:inherit;cursor:pointer;transition:all .15s}
+        .btn-back:hover{background:#f1f5f9;color:#0f172a}
+        .btn-print{display:inline-flex;align-items:center;gap:6px;background:#0369a1;border:none;color:#fff;padding:9px 18px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:background .15s}
+        .btn-print:hover{background:#075985}
+
+        /* Invoice paper */
+        .invoice{background:#fff;max-width:780px;margin:0 auto;border-radius:4px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.12)}
+
+        /* Top blue band */
+        .inv-band{background:#0369a1;height:8px}
+
+        /* Header */
+        .inv-header{padding:36px 48px 28px;display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #e2f0fb}
+
+        .inv-company-name{font-size:26px;font-weight:800;color:#0369a1;letter-spacing:-.5px;margin-bottom:4px}
+        .inv-company-sub{font-size:12px;color:#64748b;text-transform:uppercase;letter-spacing:.1em}
+
+        .inv-number-box{text-align:right}
+        .inv-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:#94a3b8;margin-bottom:6px}
+        .inv-number{font-size:22px;font-weight:800;color:#0f172a}
+        .inv-date{font-size:12px;color:#64748b;margin-top:4px}
+
+        /* Status badge */
+        .inv-status-row{padding:10px 48px;border-bottom:1px solid #e2f0fb;display:flex;align-items:center;gap:8px}
+        .status-paid{display:inline-flex;align-items:center;gap:6px;background:#dcfce7;color:#166534;font-size:12px;font-weight:700;padding:5px 14px;border-radius:20px}
+        .status-pending{display:inline-flex;align-items:center;gap:6px;background:#fef9c3;color:#854d0e;font-size:12px;font-weight:700;padding:5px 14px;border-radius:20px}
+
+        /* Bill to / From section */
+        .inv-parties{display:grid;grid-template-columns:1fr 1fr;padding:28px 48px;gap:40px;border-bottom:1px solid #e2f0fb}
+        .party-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:#0369a1;margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid #bae6fd}
+        .party-name{font-size:15px;font-weight:700;color:#0f172a;margin-bottom:5px}
+        .party-detail{font-size:13px;color:#64748b;margin-bottom:3px}
+
+        /* Details row */
+        .inv-details{display:grid;grid-template-columns:repeat(3,1fr);padding:20px 48px;background:#f0f9ff;border-bottom:1px solid #bae6fd;gap:20px}
+        .detail-item-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#0369a1;margin-bottom:5px}
+        .detail-item-val{font-size:13px;font-weight:600;color:#0f172a}
+
+        /* Table */
+        .inv-table-wrap{padding:28px 48px 0}
+        .inv-table{width:100%;border-collapse:collapse}
+        .inv-table thead th{background:#0369a1;color:#fff;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:12px 16px;text-align:left}
+        .inv-table thead th:nth-child(2),
+        .inv-table thead th:nth-child(3),
+        .inv-table thead th:nth-child(4){text-align:right}
+        .inv-table tbody tr:nth-child(even) td{background:#f0f9ff}
+        .inv-table tbody td{padding:14px 16px;font-size:13px;color:#374151;border-bottom:1px solid #e2f0fb;vertical-align:top}
+        .inv-table tbody td:nth-child(2),
+        .inv-table tbody td:nth-child(3),
+        .inv-table tbody td:nth-child(4){text-align:right}
+        .item-desc{font-weight:600;color:#0f172a;margin-bottom:2px}
+        .item-sub{font-size:11px;color:#94a3b8}
+
+        /* Totals */
+        .inv-footer-wrap{padding:24px 48px 36px;display:flex;justify-content:flex-end}
+        .totals-table{width:280px}
+        .tot-row{display:flex;justify-content:space-between;padding:7px 0;font-size:13px;color:#64748b;border-bottom:1px solid #f1f5f9}
+        .tot-row.grand{border-top:2px solid #0369a1;border-bottom:none;margin-top:6px;padding-top:12px;font-size:16px;font-weight:800;color:#0369a1}
+
+        /* Bottom strip */
+        .inv-bottom{padding:20px 48px;background:#f0f9ff;border-top:2px solid #bae6fd;display:flex;align-items:center;justify-content:space-between}
+        .inv-note{font-size:12px;color:#64748b}
+        .inv-note strong{color:#0369a1}
+        .stamp-paid{border:3px solid #16a34a;color:#16a34a;font-size:14px;font-weight:900;letter-spacing:.2em;padding:6px 20px;border-radius:4px;transform:rotate(-8deg);display:inline-block;opacity:.85}
+
+        @media print{
+            body{background:#fff;padding:0}
+            .action-bar{display:none!important}
+            .invoice{box-shadow:none;border-radius:0;max-width:100%}
+        }
+    </style>
+</head>
+<body>
+
+<!-- Action bar -->
+<div class="action-bar">
+    <a class="btn-back" th:href="@{/portal/company/{id}(id=${company.id})}">← Back to Dashboard</a>
+    <div style="display:flex;gap:10px">
+        <a class="btn-back" th:if="${inquiry.status.name() == 'PAID'}"
+           th:href="@{/portal/company/{c}/receipt/{i}(c=${company.id},i=${inquiry.id})}">View Receipt</a>
+        <button class="btn-print" onclick="window.print()">🖨 Print / Save PDF</button>
+    </div>
+</div>
+
+<div class="invoice">
+
+    <!-- Top blue band -->
+    <div class="inv-band"></div>
+
+    <!-- Header -->
+    <div class="inv-header">
+        <div>
+            <div class="inv-company-name">DairyCoop</div>
+            <div class="inv-company-sub">Dairy Cooperative Management System</div>
+        </div>
+        <div class="inv-number-box">
+            <div class="inv-label">Invoice Number</div>
+            <div class="inv-number" th:text="${inquiry.invoiceNo}">INV-2026-0001</div>
+            <div class="inv-date"
+                 th:text="'Date: ' + ${inquiry.invoicedAt != null ? inquiry.invoicedAt.format(T(java.time.format.DateTimeFormatter).ofPattern('dd MMMM yyyy')) : T(java.time.LocalDate).now().format(T(java.time.format.DateTimeFormatter).ofPattern('dd MMMM yyyy'))}">
+                Date: 04 May 2026
+            </div>
+        </div>
+    </div>
+
+    <!-- Status -->
+    <div class="inv-status-row">
+        <span class="status-paid" th:if="${inquiry.status.name() == 'PAID'}">✓ PAID</span>
+        <span class="status-pending" th:if="${inquiry.status.name() == 'INVOICED'}">⏳ AWAITING PAYMENT</span>
+    </div>
+
+    <!-- Bill To / From -->
+    <div class="inv-parties">
+        <div>
+            <div class="party-label">Bill To</div>
+            <div class="party-name" th:text="${inquiry.companyName}">Parmalat Zambia Ltd</div>
+            <div class="party-detail" th:text="${inquiry.contactPerson}">Divine Kabanda</div>
+            <div class="party-detail" th:text="${inquiry.email}">email@company.com</div>
+            <div class="party-detail" th:text="${inquiry.phone}">+260 97...</div>
+        </div>
+        <div>
+            <div class="party-label">Issued By</div>
+            <div class="party-name">Dairy Cooperative</div>
+            <div class="party-detail">Cooperative Management System</div>
+            <div class="party-detail">Zambia</div>
+        </div>
+    </div>
+
+    <!-- Quick details -->
+    <div class="inv-details">
+        <div>
+            <div class="detail-item-label">Reference No</div>
+            <div class="detail-item-val" th:text="${inquiry.referenceNo}">INQ-2026-0001</div>
+        </div>
+        <div>
+            <div class="detail-item-label">Delivery Date</div>
+            <div class="detail-item-val"
+                 th:text="${inquiry.deliveredAt != null ? inquiry.deliveredAt.format(T(java.time.format.DateTimeFormatter).ofPattern('dd MMM yyyy')) : T(java.time.LocalDate).now().format(T(java.time.format.DateTimeFormatter).ofPattern('dd MMM yyyy'))}">
+                04 May 2026
+            </div>
+        </div>
+        <div>
+            <div class="detail-item-label">Due Date</div>
+            <div class="detail-item-val"
+                 th:if="${inquiry.status.name() == 'PAID' && inquiry.paidAt != null}"
+                 th:text="${inquiry.paidAt.format(T(java.time.format.DateTimeFormatter).ofPattern('dd MMM yyyy'))}">
+                04 May 2026
+            </div>
+            <div class="detail-item-val" th:if="${inquiry.status.name() != 'PAID' || inquiry.paidAt == null}">Upon receipt</div>
+        </div>
+    </div>
+
+    <!-- Table -->
+    <div class="inv-table-wrap">
+        <table class="inv-table">
+            <thead>
+            <tr>
+                <th>Description</th>
+                <th>Quantity</th>
+                <th>Unit Price</th>
+                <th>Amount</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td>
+                    <div class="item-desc">Fresh Milk Supply</div>
+                    <div class="item-sub"
+                         th:text="'Delivered: ' + ${inquiry.deliveredAt != null ? inquiry.deliveredAt.format(T(java.time.format.DateTimeFormatter).ofPattern('dd MMM yyyy')) : T(java.time.LocalDate).now().format(T(java.time.format.DateTimeFormatter).ofPattern('dd MMM yyyy'))}">
+                        Delivered: 04 May 2026
+                    </div>
+                </td>
+                <td th:text="${#numbers.formatDecimal(inquiry.requestedLitres,1,2)} + ' L'">300.00 L</td>
+                <td th:text="'ZMW ' + ${#numbers.formatDecimal(inquiry.pricePerLitre,1,2)}">ZMW 20.00</td>
+                <td><strong th:text="'ZMW ' + ${#numbers.formatDecimal(inquiry.totalAmount,1,'COMMA',2,'POINT')}">ZMW 6,000.00</strong></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Totals -->
+    <div class="inv-footer-wrap">
+        <div class="totals-table">
+            <div class="tot-row"><span>Subtotal</span><span th:text="'ZMW ' + ${#numbers.formatDecimal(inquiry.totalAmount,1,'COMMA',2,'POINT')}">ZMW 6,000.00</span></div>
+            <div class="tot-row"><span>Tax (0%)</span><span>ZMW 0.00</span></div>
+            <div class="tot-row grand"><span>TOTAL DUE</span><span th:text="'ZMW ' + ${#numbers.formatDecimal(inquiry.totalAmount,1,'COMMA',2,'POINT')}">ZMW 6,000.00</span></div>
+        </div>
+    </div>
+
+    <!-- Bottom -->
+    <div class="inv-bottom">
+        <div class="inv-note">
+            <strong>Thank you for your business.</strong><br>
+            For inquiries contact the Sales Department.
+        </div>
+        <!-- Accountant signature -->
+        <div th:if="${invoiceSignerName != null}" style="text-align:center">
+            <img th:if="${invoiceSignerSignature != null}"
+                 th:src="${invoiceSignerSignature}"
+                 style="max-height:55px;max-width:180px;display:block;margin:0 auto 6px" alt="Signature"/>
+            <div style="display:inline-block;border-top:1px solid #0369a1;padding-top:4px;min-width:150px;font-size:10px;color:#64748b"
+                 th:text="${invoiceSignerName}">Accountant</div>
+            <div style="font-size:9px;color:#94a3b8;margin-top:2px">Authorised Signature</div>
+        </div>
+
+    </div>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Reports - DairyCoop Finance</title>
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap/dist/css/bootstrap.min.css}"/>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,700;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+    <style>
+        *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+        :root{--navy:#0b1120;--green:#00c16a;--green-dim:#00a358;--amber:#f59e0b;--red:#f43f5e;--blue:#3b82f6;--bg:#f0f2f8;--border:#e2e8f0;--ink:#0f172a;--ink2:#334155;--muted:#64748b;--shadow:0 2px 12px rgba(11,17,32,.08);--shadow-lg:0 8px 32px rgba(11,17,32,.14)}
+        body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;display:flex;flex-direction:column}
+        /* Topbar */
+        /* Floating Nav */
+        /* Layout */
+        .main{flex:1;display:flex;flex-direction:column}
+        /* Page header */
+        .pg-eyebrow{font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--green-dim);margin-bottom:4px;display:flex;align-items:center;gap:6px}
+        .pg-eyebrow::before{content:'';width:14px;height:2px;background:var(--green-dim);border-radius:2px;display:inline-block}
+        .pg-title{font-family:'Playfair Display',serif;font-size:26px;color:var(--ink);margin-bottom:6px}
+        .pg-title em{font-style:italic;color:var(--green-dim)}
+        .pg-sub{font-size:13px;color:var(--muted);margin-bottom:28px;line-height:1.6}
+        /* Generate button */
+        .generate-wrap{display:flex;align-items:center;gap:16px;margin-bottom:32px;flex-wrap:wrap}
+        .btn-generate{background:linear-gradient(135deg,#0b1120,#1e3a5f);color:#fff;border:none;padding:14px 28px;border-radius:14px;font-size:14px;font-weight:800;font-family:'Outfit',sans-serif;cursor:pointer;display:inline-flex;align-items:center;gap:12px;box-shadow:0 4px 20px rgba(11,17,32,.25);transition:all .2s}
+        .btn-generate:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 8px 28px rgba(11,17,32,.35)}
+        .btn-generate:disabled{opacity:.65;cursor:not-allowed;transform:none}
+        .btn-gen-icon{width:36px;height:36px;background:rgba(0,193,106,.18);border:1px solid rgba(0,193,106,.3);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+        .generate-hint{font-size:12px;color:var(--muted);line-height:1.5}
+        /* Loading state */
+        #loadingBlock{display:none}
+        .loading-bar-wrap{height:6px;background:#e2e8f0;border-radius:6px;margin-top:8px;overflow:hidden;width:300px}
+        .loading-bar{height:100%;border-radius:6px;background:linear-gradient(90deg,#00c16a,#00a358);width:0%;transition:width .3s ease}
+        .loading-label{font-size:12px;color:var(--muted);margin-top:6px;font-family:"JetBrains Mono",monospace}
+        /* Report output */
+        #reportBlock{display:none}
+        .report-header{background:linear-gradient(135deg,#0b1120,#1e3a5f);border-radius:16px;padding:24px 28px;margin-bottom:24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px}
+        .report-header-left h2{font-family:'Playfair Display',serif;font-size:22px;color:#fff;margin-bottom:4px}
+        .report-header-left p{font-size:12px;color:rgba(255,255,255,.5)}
+        .report-meta{font-family:"JetBrains Mono",monospace;font-size:10px;color:rgba(255,255,255,.4);background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);padding:6px 14px;border-radius:8px;white-space:nowrap}
+        /* Summary strip */
+        .sum-strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:24px}
+        .sum-card{background:#fff;border-radius:12px;padding:14px 18px;border:1px solid var(--border);box-shadow:var(--shadow);position:relative;overflow:hidden}
+        .sum-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+        .sum-card.c-green::before{background:linear-gradient(90deg,#00c16a,#34d399)}
+        .sum-card.c-blue::before{background:linear-gradient(90deg,#3b82f6,#60a5fa)}
+        .sum-card.c-amber::before{background:linear-gradient(90deg,#f59e0b,#fbbf24)}
+        .sum-card.c-purple::before{background:linear-gradient(90deg,#8b5cf6,#a78bfa)}
+        .sum-num{font-size:26px;font-weight:800;color:var(--ink);line-height:1;margin-bottom:3px}
+        .sum-card.c-green .sum-num{color:#00a358}
+        .sum-card.c-blue .sum-num{color:#2563eb}
+        .sum-card.c-amber .sum-num{color:#d97706}
+        .sum-card.c-purple .sum-num{color:#7c3aed}
+        .sum-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)}
+        /* Report sections */
+        .rpt-section{background:#fff;border-radius:14px;border:1px solid var(--border);box-shadow:var(--shadow);margin-bottom:20px;overflow:hidden}
+        .rpt-head{padding:14px 20px;border-bottom:1px solid var(--border);background:#f8fafc;display:flex;align-items:center;gap:12px}
+        .rpt-head-icon{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+        .rpt-head-icon.ic-loans{background:#eff6ff;border:1px solid #bfdbfe}
+        .rpt-head-icon.ic-sal{background:#f0fdf4;border:1px solid #bbf7d0}
+        .rpt-head-icon.ic-milk{background:#fefce8;border:1px solid #fde68a}
+        .rpt-head-icon.ic-inq{background:#fdf4ff;border:1px solid #e9d5ff}
+        .rpt-head-icon.ic-audit{background:#fff7ed;border:1px solid #fed7aa}
+        .rpt-title{font-family:'Playfair Display',serif;font-size:16px;color:var(--ink)}
+        .rpt-kpis{display:flex;gap:0;border-bottom:1px solid var(--border);flex-wrap:wrap}
+        .rpt-kpi{padding:12px 20px;border-right:1px solid var(--border);flex:1;min-width:110px}
+        .rpt-kpi:last-child{border-right:none}
+        .rpt-kpi-num{font-size:20px;font-weight:800;color:var(--ink);line-height:1}
+        .rpt-kpi-lbl{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-top:3px}
+        /* Tables */
+        .rpt-tbl-wrap{overflow-x:auto;padding:0}
+        .rpt-tbl{width:100%;border-collapse:collapse}
+        .rpt-tbl thead th{background:#f8fafc;color:var(--muted);font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;padding:9px 16px;border-bottom:1px solid var(--border);text-align:left;white-space:nowrap}
+        .rpt-tbl tbody td{padding:11px 16px;font-size:12.5px;border-bottom:1px solid #f1f5f9;vertical-align:middle;color:var(--ink2)}
+        .rpt-tbl tbody tr:last-child td{border-bottom:none}
+        .rpt-tbl tbody tr:hover td{background:#f8fafc}
+        .mono{font-family:"JetBrains Mono",monospace;font-size:12px}
+        /* Status badges */
+        .badge{display:inline-block;font-size:9.5px;font-weight:700;padding:3px 9px;border-radius:20px;text-transform:uppercase;letter-spacing:.06em}
+        .badge-green{background:#dcfce7;color:#166534}
+        .badge-amber{background:#fef3c7;color:#92400e}
+        .badge-red{background:#fff1f2;color:#be123c}
+        .badge-blue{background:#eff6ff;color:#1d4ed8}
+        .badge-purple{background:#fdf4ff;color:#7c3aed}
+        .badge-grey{background:#f1f5f9;color:#475569}
+        /* Audit trail */
+        .audit-row{display:flex;align-items:center;gap:12px;padding:10px 20px;border-bottom:1px solid #f1f5f9}
+        .audit-row:last-child{border-bottom:none}
+        .audit-dot{width:8px;height:8px;border-radius:50%;background:#e2e8f0;flex-shrink:0}
+        .audit-action{font-size:12.5px;font-weight:600;color:var(--ink);flex:1}
+        .audit-entity{font-size:11px;color:var(--muted)}
+        .audit-by{font-size:11px;color:var(--green-dim);font-weight:600;white-space:nowrap}
+        .audit-time{font-size:10px;color:var(--muted);font-family:"JetBrains Mono",monospace;white-space:nowrap;flex-shrink:0}
+        /* Print */
+        @media print{.page{padding:0}.rpt-section{break-inside:avoid}}
+        @keyframes spin{to{transform:rotate(360deg)}}
+    </style>
+    <link rel="stylesheet" th:href="@{/css/accountant-base.css}"/>
+    <link rel="stylesheet" th:href="@{/css/accountant-sidebar.css}"/>
+</head>
+<body>
+
+<div th:replace="~{fragments/accountant-nav :: nav(active='reports', pageTitle='Reports')}"></div>
+
+<div class="sb-page">
+
+    <div class="pg-eyebrow">Accounts Officer</div>
+    <div class="pg-title">Finance <em>Reports</em></div>
+    <div class="pg-sub">
+        Generates Reports
+    </div>
+
+    <!-- Generate button -->
+    <div class="generate-wrap">
+        <button class="btn-generate" id="genBtn" onclick="generateReport()">
+            <div class="btn-gen-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00c16a" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            </div>
+            <div style="text-align:left">
+                <div style="font-size:14px;font-weight:800">Generate Report</div>
+                <div style="font-size:10px;font-weight:500;opacity:.6;margin-top:1px">Compile all financial data now</div>
+            </div>
+        </button>
+        <button class="btn-generate" id="pdfBtn" style="display:none;background:linear-gradient(135deg,#7c3aed,#6d28d9)" onclick="openPdfReport()">
+            <div class="btn-gen-icon" style="background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2)">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+            </div>
+            <div style="text-align:left">
+                <div style="font-size:14px;font-weight:800">Save as PDF</div>
+                <div style="font-size:10px;font-weight:500;opacity:.7;margin-top:1px">Clean report — no page design</div>
+            </div>
+        </button>
+        <button class="btn-generate" id="sendBtn" style="display:none;background:linear-gradient(135deg,#1e3a5f,#2563eb)" onclick="sendToAdmin()">
+            <div class="btn-gen-icon" style="background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.2)">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            </div>
+            <div style="text-align:left">
+                <div style="font-size:14px;font-weight:800">Send to Admin</div>
+                <div style="font-size:10px;font-weight:500;opacity:.7;margin-top:1px">Submit for admin review</div>
+            </div>
+        </button>
+    </div>
+
+    <!-- Loading -->
+    <div id="loadingBlock">
+        <div style="background:#fff;border-radius:16px;border:1px solid var(--border);padding:28px 32px;max-width:500px;box-shadow:var(--shadow)">
+            <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px">
+                <div style="width:36px;height:36px;border:3px solid var(--border);border-top-color:#00c16a;border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0"></div>
+                <div>
+                    <div style="font-size:14px;font-weight:700;color:var(--ink)">Compiling report data…</div>
+                    <div id="loadingLabel" class="loading-label" style="margin-top:3px">Connecting to database…</div>
+                </div>
+            </div>
+            <div class="loading-bar-wrap">
+                <div class="loading-bar" id="progressBar"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Report output -->
+    <div id="reportBlock">
+
+        <!-- Report header -->
+        <div class="report-header">
+            <div class="report-header-left">
+                <h2>DairyCoop Cooperative — Finance Report</h2>
+                <p>Comprehensive financial activity report · Generated <span id="rptGenAt"></span></p>
+            </div>
+            <div class="report-meta" id="rptMeta"></div>
+        </div>
+
+        <!-- Summary strip -->
+        <div class="sum-strip" id="sumStrip"></div>
+
+        <!-- COFA Balance -->
+        <div id="cofaBlock" style="background:linear-gradient(135deg,#f0fdf4,#ecfdf5);border:1.5px solid #bbf7d0;border-radius:14px;padding:18px 24px;margin-bottom:22px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+            <div>
+                <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#166534;margin-bottom:4px">Cooperative Fund Account (COFA)</div>
+                <div id="cofaName" style="font-size:13px;color:#065f46"></div>
+            </div>
+            <div style="text-align:right">
+                <div style="font-size:11px;color:#15803d;font-weight:600;margin-bottom:2px">Current Balance</div>
+                <div id="cofaBal" style="font-family:'JetBrains Mono',monospace;font-size:28px;font-weight:900;color:#065f46"></div>
+            </div>
+        </div>
+
+        <!-- Loans section -->
+        <div class="rpt-section" id="loansSection">
+            <div class="rpt-head">
+                <div class="rpt-head-icon ic-loans"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg></div>
+                <div><div class="rpt-title">Loan Applications</div><div style="font-size:11px;color:var(--muted)">All loan requests and disbursements</div></div>
+            </div>
+            <div class="rpt-kpis" id="loanKpis"></div>
+            <div class="rpt-tbl-wrap">
+                <table class="rpt-tbl">
+                    <thead><tr><th>Member</th><th>Amount (ZMW)</th><th>Status</th><th>Disbursement</th><th>Purpose</th><th>Date Applied</th></tr></thead>
+                    <tbody id="loanRows"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Salaries section -->
+        <div class="rpt-section" id="salSection">
+            <div class="rpt-head">
+                <div class="rpt-head-icon ic-sal"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div>
+                <div><div class="rpt-title">Staff Salaries</div><div style="font-size:11px;color:var(--muted)">All salary records and payments</div></div>
+            </div>
+            <div class="rpt-kpis" id="salKpis"></div>
+            <div class="rpt-tbl-wrap">
+                <table class="rpt-tbl">
+                    <thead><tr><th>Staff</th><th>Period</th><th>Basic (ZMW)</th><th>Deduction (ZMW)</th><th>Net (ZMW)</th><th>Method</th><th>Reference</th><th>Paid</th></tr></thead>
+                    <tbody id="salRows"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Member Milk Payments section -->
+        <div class="rpt-section" id="milkSection">
+            <div class="rpt-head">
+                <div class="rpt-head-icon ic-milk"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ca8a04" stroke-width="2"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg></div>
+                <div><div class="rpt-title">Member Milk Payments</div><div style="font-size:11px;color:var(--muted)">Monthly milk delivery payment records</div></div>
+            </div>
+            <div class="rpt-kpis" id="milkKpis"></div>
+            <div class="rpt-tbl-wrap">
+                <table class="rpt-tbl">
+                    <thead><tr><th>Member</th><th>Period</th><th>Gross (ZMW)</th><th>Deductions (ZMW)</th><th>Net (ZMW)</th><th>Status</th></tr></thead>
+                    <tbody id="milkRows"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Company Inquiries section -->
+        <div class="rpt-section" id="inqSection">
+            <div class="rpt-head">
+                <div class="rpt-head-icon ic-inq"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9333ea" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg></div>
+                <div><div class="rpt-title">External Milk Inquiries</div><div style="font-size:11px;color:var(--muted)">Company purchase requests and outcomes</div></div>
+            </div>
+            <div class="rpt-kpis" id="inqKpis"></div>
+            <div class="rpt-tbl-wrap">
+                <table class="rpt-tbl">
+                    <thead><tr><th>Reference</th><th>Company</th><th>Quantity</th><th>Amount (ZMW)</th><th>Status</th><th>Date</th></tr></thead>
+                    <tbody id="inqRows"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Audit Trail -->
+        <div class="rpt-section" id="auditSection">
+            <div class="rpt-head">
+                <div class="rpt-head-icon ic-audit"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ea580c" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+                <div><div class="rpt-title">Activity Audit Trail</div><div style="font-size:11px;color:var(--muted)">Last 50 system activities recorded</div></div>
+            </div>
+            <div id="auditRows" style="max-height:400px;overflow-y:auto"></div>
+        </div>
+
+    </div><!-- end #reportBlock -->
+</div>
+
+<script th:src="@{/webjars/bootstrap/dist/js/bootstrap.bundle.min.js}"></script>
+<script th:inline="javascript">
+    const CSRF_TOKEN = /*[[${_csrf.token}]]*/ '';
+    const CSRF_HEADER = /*[[${_csrf.headerName}]]*/ 'X-CSRF-TOKEN';
+
+    let _draftId = null;   // set after report is generated & saved as draft
+
+    const _tbDate = document.getElementById('tbDate');
+    if(_tbDate) _tbDate.textContent = new Date().toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'long',year:'numeric'});
+
+    const STEPS = [
+        'Connecting to database…',
+        'Loading loan records…',
+        'Reading salary records…',
+        'Compiling milk payments…',
+        'Fetching company inquiries…',
+        'Reading cooperative fund…',
+        'Loading audit trail…',
+        'Finalising report…',
+    ];
+
+    function statusBadge(status) {
+        if (!status) return '';
+        var s = status.toUpperCase();
+        var cls = s === 'APPROVED' || s === 'PAID' || s === 'DISBURSED' ? 'badge-green'
+                : s === 'PENDING' || s === 'PENDING_DISBURSEMENT' ? 'badge-amber'
+                : s === 'REJECTED' ? 'badge-red'
+                : s === 'INVOICED' ? 'badge-blue'
+                : s === 'UNPAID' ? 'badge-amber'
+                : 'badge-grey';
+        return '<span class="badge ' + cls + '">' + status.replace(/_/g,' ') + '</span>';
+    }
+
+    function kpi(num, label, color) {
+        return '<div class="rpt-kpi"><div class="rpt-kpi-num" style="color:' + color + '">' + num + '</div><div class="rpt-kpi-lbl">' + label + '</div></div>';
+    }
+
+    function generateReport() {
+        var btn = document.getElementById('genBtn');
+        btn.disabled = true;
+
+        document.getElementById('reportBlock').style.display = 'none';
+        document.getElementById('loadingBlock').style.display = 'block';
+
+        // Animate progress bar through steps
+        var step = 0;
+        var pct = 0;
+        var bar = document.getElementById('progressBar');
+        var lbl = document.getElementById('loadingLabel');
+
+        var interval = setInterval(function() {
+            if (step < STEPS.length) {
+                lbl.textContent = STEPS[step];
+                pct = Math.min(85, pct + (85 / STEPS.length));
+                bar.style.width = pct + '%';
+                step++;
+            }
+        }, 380);
+
+        fetch('/accountant/reports/generate', {
+            method: 'POST',
+            headers: { [CSRF_HEADER]: CSRF_TOKEN }
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            clearInterval(interval);
+            bar.style.width = '100%';
+            lbl.textContent = 'Report ready!';
+
+            setTimeout(function() {
+                document.getElementById('loadingBlock').style.display = 'none';
+                renderReport(data);
+                document.getElementById('reportBlock').style.display = 'block';
+                document.getElementById('pdfBtn').style.display = 'inline-flex';
+                document.getElementById('sendBtn').style.display = 'inline-flex';
+                btn.disabled = false;
+                btn.querySelector('div > div:first-child').textContent = 'Regenerate Report';
+
+                // Save as draft in background so Send button can reference it
+                fetch('/accountant/reports/save-draft', {
+                    method: 'POST',
+                    headers: { [CSRF_HEADER]: CSRF_TOKEN, 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                }).then(function(r){ return r.json(); })
+                  .then(function(d){ _draftId = d.id; });
+            }, 500);
+        })
+        .catch(function(err) {
+            clearInterval(interval);
+            document.getElementById('loadingBlock').style.display = 'none';
+            alert('Failed to generate report. Please try again.');
+            btn.disabled = false;
+        });
+    }
+
+    function renderReport(d) {
+        // Header
+        document.getElementById('rptGenAt').textContent = d.generatedAt;
+        document.getElementById('rptMeta').textContent = 'Generated: ' + d.generatedAt;
+
+        // Summary strip
+        var s = d.summary || {};
+        document.getElementById('sumStrip').innerHTML =
+            sumCard(s.totalMembers, 'Total Members', 'c-green') +
+            sumCard(s.activeMembers, 'Active Members', 'c-blue') +
+            sumCard(s.totalStaff, 'Finance Staff', 'c-amber') +
+            sumCard((d.loans||{}).total || 0, 'Loan Applications', 'c-purple');
+
+        // COFA
+        var cofa = d.cofa || {};
+        document.getElementById('cofaName').textContent = cofa.name || 'Cooperative Fund Account';
+        document.getElementById('cofaBal').textContent = 'ZMW ' + (cofa.balance || '0.00');
+
+        // LOANS
+        var l = d.loans || {};
+        document.getElementById('loanKpis').innerHTML =
+            kpi(l.total||0, 'Total Applications', '#2563eb') +
+            kpi(l.pending||0, 'Pending', '#d97706') +
+            kpi(l.approved||0, 'Approved', '#16a34a') +
+            kpi(l.rejected||0, 'Rejected', '#dc2626') +
+            kpi(l.disbursed||0, 'Disbursed', '#7c3aed') +
+            kpi('ZMW '+(l.totalAmountDisbursed||'0.00'), 'Total Disbursed', '#2563eb');
+        document.getElementById('loanRows').innerHTML = (l.recent||[]).map(function(r) {
+            return '<tr><td class="mono">' + r.member + '</td>' +
+                '<td class="mono">ZMW ' + r.amount + '</td>' +
+                '<td>' + statusBadge(r.status) + '</td>' +
+                '<td>' + statusBadge(r.disbStatus) + '</td>' +
+                '<td style="max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="' + (r.purpose||'') + '">' + (r.purpose||'—') + '</td>' +
+                '<td class="mono" style="color:var(--muted)">' + r.date + '</td></tr>';
+        }).join('') || '<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--muted)">No loan records found</td></tr>';
+
+        // SALARIES
+        var sal = d.salaries || {};
+        document.getElementById('salKpis').innerHTML =
+            kpi(sal.totalRecords||0, 'Total Records', '#16a34a') +
+            kpi(sal.paid||0, 'Paid', '#16a34a') +
+            kpi(sal.unpaid||0, 'Unpaid', '#d97706') +
+            kpi('ZMW '+(sal.totalPaid||'0.00'), 'Total Paid Out', '#16a34a') +
+            kpi('ZMW '+(sal.totalDeductions||'0.00'), 'Loan Deductions', '#dc2626');
+        document.getElementById('salRows').innerHTML = (sal.recent||[]).map(function(r) {
+            return '<tr><td>' + r.staff + '</td>' +
+                '<td class="mono">' + r.period + '</td>' +
+                '<td class="mono">ZMW ' + r.basic + '</td>' +
+                '<td class="mono" style="color:#dc2626">' + (parseFloat(r.deduction.replace(/,/g,'')) > 0 ? '− ZMW '+r.deduction : '—') + '</td>' +
+                '<td class="mono" style="color:#16a34a;font-weight:700">ZMW ' + r.net + '</td>' +
+                '<td>' + r.method + '</td>' +
+                '<td class="mono" style="color:var(--muted)">' + r.ref + '</td>' +
+                '<td class="mono" style="color:var(--muted)">' + r.paidAt + '</td></tr>';
+        }).join('') || '<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--muted)">No salary payment records found</td></tr>';
+
+        // MILK PAYMENTS
+        var mp = d.milkPayments || {};
+        document.getElementById('milkKpis').innerHTML =
+            kpi(mp.total||0, 'Total Records', '#ca8a04') +
+            kpi(mp.paid||0, 'Paid', '#16a34a') +
+            kpi(mp.unpaid||0, 'Unpaid', '#d97706') +
+            kpi('ZMW '+(mp.totalGross||'0.00'), 'Total Gross', '#ca8a04') +
+            kpi('ZMW '+(mp.totalNetPaid||'0.00'), 'Total Net Paid', '#16a34a');
+        document.getElementById('milkRows').innerHTML = (mp.recent||[]).map(function(r) {
+            return '<tr><td>' + r.member + '</td>' +
+                '<td class="mono">' + r.period + '</td>' +
+                '<td class="mono">ZMW ' + r.gross + '</td>' +
+                '<td class="mono" style="color:#dc2626">' + (parseFloat(r.deductions.replace(/,/g,'')) > 0 ? '− ZMW '+r.deductions : '—') + '</td>' +
+                '<td class="mono" style="color:#16a34a;font-weight:700">ZMW ' + r.net + '</td>' +
+                '<td>' + statusBadge(r.status) + '</td></tr>';
+        }).join('') || '<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--muted)">No milk payment records found</td></tr>';
+
+        // INQUIRIES
+        var inq = d.milkInquiries || {};
+        document.getElementById('inqKpis').innerHTML =
+            kpi(inq.total||0, 'Total Inquiries', '#9333ea') +
+            kpi(inq.pending||0, 'Pending', '#d97706') +
+            kpi(inq.approved||0, 'Approved', '#16a34a') +
+            kpi(inq.rejected||0, 'Rejected', '#dc2626') +
+            kpi(inq.paid||0, 'Paid', '#2563eb') +
+            kpi('ZMW '+(inq.totalRevenue||'0.00'), 'Revenue Received', '#9333ea');
+        document.getElementById('inqRows').innerHTML = (inq.recent||[]).map(function(r) {
+            return '<tr><td class="mono" style="font-weight:700">' + r.ref + '</td>' +
+                '<td>' + r.company + '</td>' +
+                '<td class="mono">' + r.qty + '</td>' +
+                '<td class="mono">ZMW ' + r.amount + '</td>' +
+                '<td>' + statusBadge(r.status) + '</td>' +
+                '<td class="mono" style="color:var(--muted)">' + r.date + '</td></tr>';
+        }).join('') || '<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--muted)">No inquiry records found</td></tr>';
+
+        // AUDIT TRAIL
+        var audit = d.auditTrail || [];
+        var auditColors = {Member:'#2563eb',Loan:'#7c3aed',StaffSalary:'#16a34a',Payment:'#ca8a04',MilkInquiry:'#9333ea',Cow:'#65a30d',CowAssignment:'#059669'};
+        document.getElementById('auditRows').innerHTML = audit.length === 0
+            ? '<div style="text-align:center;padding:24px;color:var(--muted)">No audit records found</div>'
+            : audit.map(function(a) {
+                var color = auditColors[a.entity] || '#94a3b8';
+                return '<div class="audit-row">' +
+                    '<div class="audit-dot" style="background:' + color + '"></div>' +
+                    '<div class="audit-action">' + a.action + '<span class="audit-entity" style="margin-left:7px;color:' + color + '">' + a.entity + '</span></div>' +
+                    '<div class="audit-by">' + a.by + '</div>' +
+                    '<div class="audit-time">' + a.at + '</div></div>';
+            }).join('');
+    }
+
+    function sumCard(num, lbl, cls) {
+        return '<div class="sum-card ' + cls + '"><div class="sum-num">' + num + '</div><div class="sum-lbl">' + lbl + '</div></div>';
+    }
+
+    function openPdfReport() {
+        window.open('/accountant/reports/pdf', '_blank');
+    }
+
+    function sendToAdmin() {
+        if (!_draftId) {
+            alert('Please generate the report first before sending.');
+            return;
+        }
+        var btn = document.getElementById('sendBtn');
+        btn.disabled = true;
+        btn.querySelector('div > div:first-child').textContent = 'Sending…';
+
+        fetch('/accountant/reports/send/' + _draftId, {
+            method: 'POST',
+            headers: { [CSRF_HEADER]: CSRF_TOKEN }
+        })
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+            if (d.status === 'sent') {
+                btn.style.background = 'linear-gradient(135deg,#065f46,#047857)';
+                btn.querySelector('div > div:first-child').textContent = '✓ Sent to Admin';
+                btn.querySelector('div > div:last-child').textContent = 'Admin has been notified on portal';
+                btn.disabled = true;
+            } else {
+                btn.disabled = false;
+                btn.querySelector('div > div:first-child').textContent = 'Send to Admin';
+                alert('Error: ' + (d.error || 'Unknown error'));
+            }
+        })
+        .catch(function(){
+            btn.disabled = false;
+            btn.querySelector('div > div:first-child').textContent = 'Send to Admin';
+        });
+    }
+</script>
+</body>
+</html>

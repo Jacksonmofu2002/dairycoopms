@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Loan Disbursements - DairyCoop Finance</title>
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap/dist/css/bootstrap.min.css}"/>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,700;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+    <style>
+        /* Page-specific only — common styles in accountant-base.css + accountant-sidebar.css */
+        .modal-header-icon{width:44px;height:44px;background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+        .section-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin:16px 0 8px}
+        .info-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+        .info-cell{background:#f8fafc;border-radius:8px;padding:10px 14px}
+        .info-key{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:3px}
+        .info-val{font-size:14px;font-weight:700;color:var(--ink)}
+        .info-val.big{font-family:'JetBrains Mono',monospace;font-size:16px}
+        .modal-header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:20px 24px 16px;border-bottom:1px solid var(--border)}
+        .modal-title{font-family:'Playfair Display',serif;font-size:20px;color:var(--ink)}
+        .modal-sub{font-size:12.5px;color:var(--muted);margin-top:3px}
+        .modal-body{padding:20px 24px}
+        .modal-footer{padding:16px 24px 20px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end}
+        .btn-cancel{background:#fff;border:1.5px solid var(--border);color:var(--ink2);padding:9px 16px;border-radius:8px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit}
+        .bank-card{background:#f8fafc;border:1px solid var(--border);border-radius:8px;padding:8px 12px}
+        .bank-card-row{display:flex;align-items:center;gap:8px;margin-bottom:3px}
+        .bank-card-row:last-child{margin-bottom:0}
+        .bk-key{font-size:10px;font-weight:700;color:var(--muted);width:48px;flex-shrink:0}
+        .bk-val{font-size:12.5px;font-weight:600;color:var(--ink)}
+        .bk-val.big{font-family:'JetBrains Mono',monospace;font-size:13px}
+        .no-bank-card{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:8px 12px;display:flex;align-items:flex-start;gap:8px}
+        .badge-pending{background:#fef3c7;color:#92400e;font-size:10.5px;font-weight:700;padding:3px 10px;border-radius:20px;text-transform:uppercase}
+        .ref-tag{font-family:'JetBrains Mono',monospace;font-size:11.5px;font-weight:600;background:#f1f5f9;padding:3px 8px;border-radius:5px}
+        .member-name{font-weight:700;font-size:13px;color:var(--ink)}
+        .member-no{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--muted);margin-top:2px}
+        .amount-big{font-family:'JetBrains Mono',monospace;font-weight:800;font-size:14px;color:var(--ink)}
+        .amount-meta{font-size:11px;color:var(--muted);margin-top:2px}
+        .balance-ok{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:8px 14px;display:flex;align-items:center;gap:8px;font-size:12.5px;color:#166534;font-weight:600}
+        .balance-low{background:#fff1f2;border:1px solid #fecdd3;border-radius:8px;padding:8px 14px;display:flex;align-items:center;gap:8px;font-size:12.5px;color:#be123c;font-weight:600}
+        @keyframes spin{to{transform:rotate(360deg)}}
+        @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+    </style>
+    <link rel="stylesheet" th:href="@{/css/accountant-base.css}"/>
+    <link rel="stylesheet" th:href="@{/css/accountant-sidebar.css}"/>
+</head>
+<body>
+
+
+<div th:replace="~{fragments/accountant-nav :: nav(active='disbursements', pageTitle='Loan Disbursements')}"></div>
+<div class="sb-page">
+    <div class="pw-bar" th:if="${mustChangePassword}">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        Temporary password in use. <a th:href="@{/account/password}">Change it now</a>
+    </div>
+
+
+    <div class="pg-eyebrow">Accounts Officer</div>
+    <div class="pg-title">Loan <em>Disbursements</em></div>
+
+    <!-- Alerts -->
+    <div class="alert-ok" th:if="${successMessage != null and !#strings.isEmpty(successMessage)}">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        <span th:text="${successMessage}"></span>
+    </div>
+    <div class="alert-err" th:if="${errorMessage != null and !#strings.isEmpty(errorMessage)}">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span th:text="${errorMessage}"></span>
+    </div>
+
+    <!--  COOPERATIVE FUND BALANCE  -->
+    <div style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:20px 28px;margin-bottom:24px;display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:16px">
+            <div style="width:46px;height:46px;background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                <span style="font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:800;color:var(--green-dim)">ZMW</span>
+            </div>
+            <div>
+                <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin-bottom:3px">Cooperative Fund Balance (COFA)</div>
+                <div style="font-family:'JetBrains Mono',monospace;font-size:26px;font-weight:800"
+                     th:style="'color:' + (${fundBalance != null and fundBalance.compareTo(T(java.math.BigDecimal).ZERO) > 0} ? 'var(--green-dim)' : '#ef4444')"
+                     th:text="'ZMW ' + ${#numbers.formatDecimal(fundBalance ?: 0, 1, 2)}">ZMW 0.00</div>
+            </div>
+        </div>
+        <!-- Top-up form -->
+        <form th:action="@{/accountant/fund/topup}" method="post" style="display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            <div>
+                <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--ink2);margin-bottom:6px">Top Up Amount (ZMW)</div>
+                <input type="number" name="amount" class="finp" style="width:160px;padding:10px 14px" placeholder="e.g. 50000" step="0.01" min="0.01" required/>
+            </div>
+            <button type="submit" class="btn-process">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Top Up
+            </button>
+        </form>
+    </div>
+
+    <!-- Stats -->
+    <div class="stat-strip" style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:24px">
+        <div class="stat amber">
+            <div class="stat-num" th:text="${pendingDisbursements != null ? #lists.size(pendingDisbursements) : 0}">0</div>
+            <div class="stat-lbl">Awaiting Disbursement</div>
+            <div class="stat-sub">Approved loans not yet paid out</div>
+        </div>
+        <div class="stat green">
+            <div class="stat-num" th:text="${disbursedLoans != null ? #lists.size(disbursedLoans) : 0}">0</div>
+            <div class="stat-lbl">Successfully Disbursed</div>
+            <div class="stat-sub">Payments processed</div>
+        </div>
+        <div class="stat blue">
+            <div class="stat-num" th:text="${pendingNoBank != null ? pendingNoBank : 0}">0</div>
+            <div class="stat-lbl">Awaiting Bank Details</div>
+            <div class="stat-sub">Members yet to add account</div>
+        </div>
+    </div>
+
+    <!--  APPROVED LOANS AWAITING DISBURSEMENT  -->
+    <div class="card">
+        <div class="card-head">
+            <div>
+                <div class="card-title">Approved Loans - Ready for Disbursement</div>
+                <div class="card-sub">Verify member bank details before processing payment</div>
+            </div>
+        </div>
+        <div style="overflow-x:auto">
+            <table class="tbl">
+                <thead>
+                <tr>
+                    <th>Member</th>
+                    <th>Loan Amount</th>
+                    <th>Term</th>
+                    <th>Bank Account</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="loan : ${pendingDisbursements}">
+                    <td>
+                        <div class="member-name" th:text="${loan.member.name}">Name</div>
+                        <div class="member-no" th:text="${loan.member.memberNumber}">MEM-001</div>
+                    </td>
+                    <td>
+                        <div class="amount-big" th:text="'ZMW ' + ${#numbers.formatDecimal(loan.amount,1,2)}">ZMW 0.00</div>
+                        <div class="amount-meta" th:text="'Monthly: ZMW ' + ${#numbers.formatDecimal(loan.monthlyInstalment,1,2)}">ZMW 0/mo</div>
+                    </td>
+                    <td>
+                        <div style="font-weight:600" th:text="${loan.repaymentMonths} + ' months'">0 months</div>
+                        <div style="font-size:12px;color:var(--muted)" th:text="${loan.interestRate} + '% p.a.'">0%</div>
+                    </td>
+                    <td style="min-width:200px">
+                        <div class="bank-card" th:if="${loan.member.accountNumber != null}">
+                            <div class="bank-card-row">
+                                <span class="bk-key">Bank</span>
+                                <span class="bk-val" th:text="${loan.member.bankName ?: '-'}">-</span>
+                            </div>
+                            <div class="bank-card-row">
+                                <span class="bk-key">Account</span>
+                                <span class="bk-val big" th:text="${loan.member.accountNumber}">-</span>
+                            </div>
+                        </div>
+                        <div class="no-bank-card" th:if="${loan.member.accountNumber == null}">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2.5" style="flex-shrink:0;margin-top:1px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/></svg>
+                            <div style="font-size:12px;color:#92400e">No bank details</div>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="badge-pending">Pending</span>
+                    </td>
+                    <td>
+                        <button type="button" class="btn-process"
+                                th:attr="data-id=${loan.id},
+                                             data-member=${loan.member.name},
+                                             data-memberno=${loan.member.memberNumber},
+                                             data-amount=${loan.amount},
+                                             data-monthly=${loan.monthlyInstalment},
+                                             data-term=${loan.repaymentMonths},
+                                             data-rate=${loan.interestRate},
+                                             data-hasfunds=${fundBalance != null and fundBalance.compareTo(loan.amount) >= 0},
+                                             data-fundbal=${fundBalance ?: 0},
+                                             data-hasbank=${loan.member.accountNumber != null},
+                                             data-bank=${loan.member.bankName ?: ''},
+                                             data-accname=${loan.member.accountName ?: ''},
+                                             data-accnum=${loan.member.accountNumber ?: ''},
+                                             data-branch=${loan.member.branchName ?: ''}"
+                                onclick="openModal(this)">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                            Review
+                        </button>
+                    </td>
+                </tr>
+                <tr th:if="${pendingDisbursements == null or #lists.isEmpty(pendingDisbursements)}">
+                    <td colspan="6" class="empty-state">
+                        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" stroke-width="1.5" style="display:block;margin:0 auto 14px"><polyline points="20 6 9 17 4 12"/></svg>
+                        All approved loans have been disbursed
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!--  DISBURSEMENT HISTORY  -->
+    <div class="card">
+        <div class="card-head">
+            <div>
+                <div class="card-title">Disbursement History</div>
+                <div class="card-sub" th:text="${disbursedLoans != null ? #lists.size(disbursedLoans) : 0} + ' payments processed'">0</div>
+            </div>
+        </div>
+        <div style="overflow-x:auto">
+            <table class="tbl">
+                <thead>
+                <tr>
+                    <th>Member</th>
+                    <th>Amount</th>
+                    <th>Bank</th>
+                    <th>Reference</th>
+                    <th>Processed By</th>
+                    <th>Date</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="loan : ${disbursedLoans}">
+                    <td>
+                        <div class="member-name" th:text="${loan.member.name}">Name</div>
+                        <div class="member-no" th:text="${loan.member.memberNumber}">MEM</div>
+                    </td>
+                    <td>
+                        <div class="amount-big" th:text="'ZMW ' + ${#numbers.formatDecimal(loan.amount,1,2)}">ZMW 0.00</div>
+                    </td>
+                    <td>
+                        <div style="font-weight:600;font-size:13px" th:text="${loan.member.bankName ?: '-'}">-</div>
+                        <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted)" th:text="${loan.member.accountNumber ?: '-'}">-</div>
+                    </td>
+                    <td>
+                        <span class="ref-tag" th:text="${loan.disbursementReference ?: '-'}">REF</span>
+                    </td>
+                    <td style="font-size:13px;color:var(--muted)" th:text="${loan.disbursedBy != null ? loan.disbursedBy.fullName : '-'}">Officer</td>
+                    <td style="font-size:13px;color:var(--muted);white-space:nowrap" th:text="${loan.disbursedAt != null ? loan.disbursedAt.format(T(java.time.format.DateTimeFormatter).ofPattern('dd MMM yyyy HH:mm')) : '-'}">Date</td>
+                </tr>
+                <tr th:if="${disbursedLoans == null or #lists.isEmpty(disbursedLoans)}">
+                    <td colspan="6" class="empty-state">No disbursements recorded yet</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<!--  DISBURSEMENT MODAL  -->
+<div class="modal-overlay" id="disburseModal" onclick="if(event.target===this)closeModal()">
+    <div class="modal-box" style="display:flex;flex-direction:column;max-height:90vh;overflow:hidden">
+        <div class="modal-header" style="flex-shrink:0">
+            <div>
+                <div class="modal-title">Process Disbursement</div>
+                <div class="modal-sub" id="modal-member">Member Name</div>
+            </div>
+            <button type="button" onclick="closeModal()" class="btn-cancel" style="padding:8px;min-width:36px">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+
+        <div class="modal-body" style="overflow-y:auto;flex:1;min-height:0">
+            <!-- Loan Details -->
+            <div class="section-label">Loan Details</div>
+            <div class="info-grid">
+                <div class="info-cell">
+                    <div class="info-key">Member</div>
+                    <div class="info-val" id="info-member">-</div>
+                </div>
+                <div class="info-cell">
+                    <div class="info-key">Member No.</div>
+                    <div class="info-val mono" id="info-memberno">-</div>
+                </div>
+                <div class="info-cell">
+                    <div class="info-key">Loan Amount</div>
+                    <div class="info-val big" id="info-amount">ZMW 0.00</div>
+                </div>
+                <div class="info-cell">
+                    <div class="info-key">Monthly Payment</div>
+                    <div class="info-val mono" id="info-monthly">ZMW 0.00</div>
+                </div>
+                <div class="info-cell">
+                    <div class="info-key">Term</div>
+                    <div class="info-val" id="info-term">0 months</div>
+                </div>
+                <div class="info-cell">
+                    <div class="info-key">Interest Rate</div>
+                    <div class="info-val" id="info-rate">0%</div>
+                </div>
+            </div>
+
+            <!-- Fund Check -->
+            <div class="section-label">Fund Availability</div>
+            <div class="fund-ok" id="fund-ok" style="display:none">
+                <div style="display:flex;align-items:center;gap:8px">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                    <span style="font-weight:700;color:#166534;font-size:13px">Funds Available</span>
+                    <span style="font-size:13px;color:#166534;margin-left:auto">
+                        Balance: <span id="fund-bal-ok" style="font-weight:700">ZMW 0</span> | Required: <span id="fund-req-ok" style="font-weight:700">ZMW 0</span>
+                    </span>
+                </div>
+            </div>
+            <div class="fund-low" id="fund-low" style="display:none">
+                <div style="display:flex;align-items:center;gap:8px">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/></svg>
+                    <span style="font-weight:700;color:#92400e;font-size:13px">Insufficient Funds</span>
+                    <span style="font-size:13px;color:#92400e;margin-left:auto">
+                        Balance: <span id="fund-bal-low" style="font-weight:700">ZMW 0</span> | Required: <span id="fund-req-low" style="font-weight:700">ZMW 0</span>
+                    </span>
+                </div>
+            </div>
+
+            <!-- Bank Details -->
+            <div class="section-label">Bank Account</div>
+            <div id="bank-details" class="info-grid" style="display:none">
+                <div class="info-cell">
+                    <div class="info-key">Bank Name</div>
+                    <div class="info-val" id="info-bank">-</div>
+                </div>
+                <div class="info-cell">
+                    <div class="info-key">Account Name</div>
+                    <div class="info-val" id="info-accname">-</div>
+                </div>
+                <div class="info-cell">
+                    <div class="info-key">Account Number</div>
+                    <div class="info-val mono" id="info-accnum">-</div>
+                </div>
+            </div>
+            <div id="no-bank" class="fund-low" style="display:none">
+                <div style="display:flex;align-items:center;gap:8px">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    <span style="font-weight:700;color:#92400e;font-size:13px">No bank account on file - Member must add bank details first</span>
+                </div>
+            </div>
+
+            <!-- Payment Form -->
+            <div id="payment-form" style="display:none">
+                <div class="section-label">Payment Details</div>
+                <form id="disburseForm" method="post">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                    <div style="margin-bottom:16px;background:#ecfdf5;border:1px solid #a7f3d0;border-radius:8px;padding:10px 14px;display:flex;align-items:center;gap:8px">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                        <span style="font-size:12px;font-weight:600;color:#065f46">Reference auto-generated (DIS-YYYY-NNNN)</span>
+                    </div>
+                    <div>
+                        <label class="flbl">Notes (optional)</label>
+                        <textarea id="notes" name="notes" class="finp" rows="2" placeholder="Any additional notes..." style="resize:none;background:#fff"></textarea>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="modal-footer" style="flex-shrink:0">
+            <button type="button" class="btn-cancel" onclick="closeModal()">Cancel</button>
+            <button type="submit" form="disburseForm" id="btn-disburse" class="btn-confirm" style="display:none">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                Confirm Disbursement
+            </button>
+        </div>
+    </div>
+</div>
+
+<script th:src="@{/webjars/bootstrap/dist/js/bootstrap.bundle.min.js}"></script>
+<script>
+    // Set today's date
+    const _tbDate = document.getElementById('tbDate'); if(_tbDate) _tbDate.textContent = new Date().toLocaleDateString('en-GB', {
+        weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+    });
+
+    // Format number as ZMW currency
+    function formatZMW(num) {
+        return 'ZMW ' + parseFloat(num).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    }
+
+    // Open modal with loan data
+    function openModal(btn) {
+        var loanId = btn.getAttribute('data-id');
+        var member = btn.getAttribute('data-member');
+        var memberNo = btn.getAttribute('data-memberno');
+        var amount = parseFloat(btn.getAttribute('data-amount'));
+        var monthly = parseFloat(btn.getAttribute('data-monthly'));
+        var term = btn.getAttribute('data-term');
+        var rate = btn.getAttribute('data-rate');
+        var hasFunds = btn.getAttribute('data-hasfunds') === 'true';
+        var fundBal = parseFloat(btn.getAttribute('data-fundbal'));
+        var hasBank = btn.getAttribute('data-hasbank') === 'true';
+        var bank = btn.getAttribute('data-bank');
+        var accName = btn.getAttribute('data-accname');
+        var accNum = btn.getAttribute('data-accnum');
+
+        // Set form action
+        document.getElementById('disburseForm').action = '/accountant/disbursements/' + loanId + '/process';
+
+        // Populate loan info
+        document.getElementById('modal-member').textContent = member;
+        document.getElementById('info-member').textContent = member;
+        document.getElementById('info-memberno').textContent = memberNo;
+        document.getElementById('info-amount').textContent = formatZMW(amount);
+        document.getElementById('info-monthly').textContent = formatZMW(monthly);
+        document.getElementById('info-term').textContent = term + ' months';
+        document.getElementById('info-rate').textContent = rate + '% p.a.';
+
+        // Fund check
+        if (hasFunds) {
+            document.getElementById('fund-ok').style.display = 'block';
+            document.getElementById('fund-low').style.display = 'none';
+            document.getElementById('fund-bal-ok').textContent = formatZMW(fundBal);
+            document.getElementById('fund-req-ok').textContent = formatZMW(amount);
+        } else {
+            document.getElementById('fund-ok').style.display = 'none';
+            document.getElementById('fund-low').style.display = 'block';
+            document.getElementById('fund-bal-low').textContent = formatZMW(fundBal);
+            document.getElementById('fund-req-low').textContent = formatZMW(amount);
+        }
+
+        // Bank details
+        if (hasBank) {
+            document.getElementById('bank-details').style.display = 'grid';
+            document.getElementById('no-bank').style.display = 'none';
+            document.getElementById('info-bank').textContent = bank || '-';
+            document.getElementById('info-accname').textContent = accName || '-';
+            document.getElementById('info-accnum').textContent = accNum || '-';
+        } else {
+            document.getElementById('bank-details').style.display = 'none';
+            document.getElementById('no-bank').style.display = 'block';
+        }
+
+        // Show payment form only if funds OK and has bank
+        if (hasFunds && hasBank) {
+            document.getElementById('payment-form').style.display = 'block';
+            document.getElementById('btn-disburse').style.display = 'flex';
+        } else {
+            document.getElementById('payment-form').style.display = 'none';
+            document.getElementById('btn-disburse').style.display = 'none';
+        }
+
+        // Clear form
+        document.getElementById('notes').value = '';
+
+        // Show modal
+        document.getElementById('disburseModal').classList.add('open');
+    }
+
+    function closeModal() {
+        document.getElementById('disburseModal').classList.remove('open');
+    }
+
+    // Form submission with confirmation
+    document.getElementById('disburseForm').addEventListener('submit', function(e) {
+        var amount = document.getElementById('info-amount').textContent;
+        var member = document.getElementById('info-member').textContent;
+
+        var confirmed = confirm(
+            'CONFIRM DISBURSEMENT\n\n' +
+            'Amount: ' + amount + '\n' +
+            'Member: ' + member + '\n\n' +
+            'Reference will be auto-generated (DIS-YYYY-NNNN)\n\n' +
+            'This will deduct from COFA and cannot be undone.\n\nProceed?'
+        );
+
+        if (!confirmed) {
+            e.preventDefault();
+            return false;
+        }
+
+        // Disable button
+        var btn = document.getElementById('btn-disburse');
+        btn.disabled = true;
+        btn.innerHTML = 'Processing...';
+
+        return true;
+    });
+</script>
+</div>
+</body>
+</html>

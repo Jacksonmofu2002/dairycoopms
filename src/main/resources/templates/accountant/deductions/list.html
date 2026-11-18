@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Deduction Types - DairyCoop Finance</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,700;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+    <style>
+        *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+        :root{
+            --navy:#0b1120;--green:#00c16a;--green-dim:#00a358;
+            --amber:#f59e0b;--red:#f43f5e;--blue:#3b82f6;
+            --bg:#f0f2f8;--white:#fff;--border:#e2e8f0;
+            --ink:#0f172a;--ink2:#334155;--muted:#64748b;
+            --shadow:0 2px 12px rgba(11,17,32,.08);
+            --shadow-lg:0 8px 32px rgba(11,17,32,.14);
+        }
+        body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;display:flex;flex-direction:column}
+
+        /* Topbar */
+
+        /* Content */
+        .content{padding:28px}
+        .pg-eyebrow{font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--green-dim);margin-bottom:4px}
+        .pg-title{font-family:'Playfair Display',serif;font-size:26px;color:var(--ink);margin-bottom:18px}
+
+        /* Alerts */
+        .alert-ok{background:#f0fdf4;border-left:4px solid var(--green);color:#065f46;padding:11px 14px;border-radius:0 10px 10px 0;font-size:13px;margin-bottom:18px}
+        .alert-err{background:#fff1f2;border-left:4px solid var(--red);color:#9f1239;padding:11px 14px;border-radius:0 10px 10px 0;font-size:13px;margin-bottom:18px}
+
+        /* Buttons */
+        .btn-process{background:var(--green-dim);color:#fff;border:none;padding:10px 18px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+        .btn-process:hover{background:#007a42}
+
+        /* Card */
+        .card{background:#fff;border-radius:14px;border:1px solid var(--border);overflow:hidden;box-shadow:var(--shadow);margin-bottom:20px}
+        .card-head{padding:16px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:#f8fafc}
+        .card-title{font-family:'Playfair Display',serif;font-size:18px;color:var(--ink)}
+
+        /* Table */
+        .tbl{width:100%;border-collapse:collapse}
+        .tbl thead th{background:#f8fafc;color:var(--muted);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;padding:10px 18px;border-bottom:1px solid var(--border);text-align:left}
+        .tbl tbody td{padding:13px 18px;font-size:13px;border-bottom:1px solid #f1f5f9}
+        .tbl tbody tr:hover td{background:#f8fafc}
+
+        .deduction-name{font-weight:700;color:var(--ink)}
+        .deduction-desc{font-size:11.5px;color:var(--muted);margin-top:2px}
+        .rate-badge{background:#dcfce7;color:#166534;font-weight:700;padding:5px 11px;border-radius:7px;font-size:13px}
+        .status-active{background:#dcfce7;color:#166534;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;text-transform:uppercase}
+        .status-inactive{background:#fee2e2;color:#991b1b;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;text-transform:uppercase}
+        .flag-badge{font-size:10px;padding:3px 7px;border-radius:5px;margin-right:4px;font-weight:600}
+        .flag-mandatory{background:#fef3c7;color:#92400e}
+        .flag-recurring{background:#dbeafe;color:#1e40af}
+
+        .btn-sm{padding:6px 12px;border-radius:7px;font-size:12px;font-weight:600;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:4px;margin-right:6px;font-family:inherit}
+        .btn-edit{background:#dbeafe;color:#1e40af}
+        .btn-toggle{background:#fef3c7;color:#92400e}
+        .btn-toggle.activate{background:#dcfce7;color:#166534}
+
+        /* Modal */
+        .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;align-items:center;justify-content:center}
+        .modal-box{background:#fff;border-radius:18px;padding:32px;width:480px;max-width:95vw;box-shadow:var(--shadow-lg)}
+        .modal-heading{font-family:'Playfair Display',serif;font-size:22px;margin-bottom:5px}
+        .modal-desc{font-size:13px;color:var(--muted);margin-bottom:20px}
+        .flbl{display:block;font-size:11px;font-weight:700;text-transform:uppercase;color:var(--ink2);margin-bottom:6px}
+        .finp{width:100%;padding:10px 13px;border:1.5px solid var(--border);border-radius:9px;font-size:13.5px;font-family:inherit}
+        .finp:focus{outline:none;border-color:var(--green)}
+        .modal-actions{display:flex;gap:10px;margin-top:20px;justify-content:flex-end}
+        .btn-cancel{background:#f1f5f9;color:var(--ink2);border:none;padding:9px 16px;border-radius:8px;font-weight:600;cursor:pointer;font-family:inherit}
+        .btn-confirm{background:var(--green-dim);color:#fff;border:none;padding:9px 16px;border-radius:8px;font-weight:700;cursor:pointer;font-family:inherit}
+
+        /* Empty state */
+        .empty{text-align:center;padding:60px 20px;color:var(--muted)}
+        .empty svg{width:64px;height:64px;margin-bottom:16px;opacity:.3}
+
+        /* Floating nav */
+    </style>
+    <link rel="stylesheet" th:href="@{/css/accountant-base.css}"/>
+    <link rel="stylesheet" th:href="@{/css/accountant-sidebar.css}"/>
+</head>
+<body>
+
+
+<div th:replace="~{fragments/accountant-nav :: nav(active='deductions', pageTitle='Deductions')}"></div>
+
+<!-- Main Content -->
+<div class="sb-page">
+    <!-- Alerts -->
+    <div th:if="${successMessage}" class="alert-ok" th:text="${successMessage}"></div>
+    <div th:if="${errorMessage}" class="alert-err" th:text="${errorMessage}"></div>
+
+    <!-- Page Header -->
+    <div class="pg-eyebrow">COOPERATIVE EXPENSES</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+        <h1 class="pg-title">Expense Types</h1>
+        <a th:href="@{/accountant/deductions/add}" class="btn-process">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>Add Expense Type
+        </a>
+    </div>
+
+    <!-- Fund Summary Cards -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-bottom:24px">
+        <!-- COFA Balance Card -->
+        <div style="background:#fff;border-radius:14px;border:1px solid var(--border);padding:20px;box-shadow:var(--shadow)">
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--muted);margin-bottom:8px">COFA Balance</div>
+            <div style="font-size:28px;font-weight:800;color:var(--ink);font-family:'JetBrains Mono',monospace">
+                ZMW <span th:text="${#numbers.formatDecimal(cofaBalance, 1, 2)}">0.00</span>
+            </div>
+            <div style="font-size:11px;color:var(--muted);margin-top:8px">Total Cooperative Funds</div>
+        </div>
+
+        <!-- Monthly Allocations Card -->
+        <div style="background:#fff;border-radius:14px;border:1px solid var(--border);padding:20px;box-shadow:var(--shadow)">
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--muted);margin-bottom:8px">This Month Allocations</div>
+            <div style="font-size:28px;font-weight:800;color:var(--green-dim);font-family:'JetBrains Mono',monospace">
+                ZMW <span th:text="${#numbers.formatDecimal(totalCurrentAllocations, 1, 2)}">0.00</span>
+            </div>
+            <div style="font-size:11px;color:var(--muted);margin-top:8px">Allocated this month</div>
+        </div>
+
+        <!-- Total Accumulated Card -->
+        <div style="background:#fff;border-radius:14px;border:1px solid var(--border);padding:20px;box-shadow:var(--shadow)">
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Total Accumulated</div>
+            <div style="font-size:28px;font-weight:800;color:var(--blue);font-family:'JetBrains Mono',monospace">
+                ZMW <span th:text="${#numbers.formatDecimal(grandTotal, 1, 2)}">0.00</span>
+            </div>
+            <div style="font-size:11px;color:var(--muted);margin-top:8px">All-time total allocated</div>
+        </div>
+    </div>
+
+    <!-- Deduction Types Table -->
+    <div class="card" th:if="${deductionTypes != null and !deductionTypes.isEmpty()}">
+        <div class="card-head">
+            <div>
+                <div class="card-title">Cooperative Expenses Configuration</div>
+                <div class="card-sub">Monthly expenses paid from COFA during salary processing</div>
+            </div>
+        </div>
+        <table class="tbl">
+            <thead>
+            <tr>
+                <th>EXPENSE TYPE</th>
+                <th>RATE</th>
+                <th>THIS MONTH</th>
+                <th>ACCUMULATED</th>
+                <th>PROPERTIES</th>
+                <th>STATUS</th>
+                <th style="text-align:right">ACTIONS</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="type : ${deductionTypes}">
+                <td>
+                    <div class="deduction-name" th:text="${type.name}">Cow Maintenance Fund</div>
+                    <div class="deduction-desc" th:text="${type.description ?: 'No description'}">Monthly contribution</div>
+                </td>
+                <td><span class="rate-badge" th:text="${#numbers.formatDecimal(type.rate, 1, 2)} + '%'">5.00%</span></td>
+                <td style="font-family:'JetBrains Mono',monospace;font-weight:600;color:var(--green-dim)">
+                    ZMW <span th:text="${#numbers.formatDecimal(currentAllocations[type.id] ?: 0, 1, 2)}">0.00</span>
+                </td>
+                <td style="font-family:'JetBrains Mono',monospace;font-weight:600;color:var(--blue)">
+                    ZMW <span th:text="${#numbers.formatDecimal(totalAccumulated[type.id] ?: 0, 1, 2)}">0.00</span>
+                </td>
+                <td>
+                    <span th:if="${type.recurring}" class="flag-badge flag-recurring">RECURRING</span>
+                </td>
+                <td>
+                    <span th:classappend="${type.active ? 'status-active' : 'status-inactive'}" th:text="${type.active ? 'Active' : 'Inactive'}">Active</span>
+                </td>
+                <td style="text-align:right">
+                    <button class="btn-sm btn-edit"
+                            th:data-id="${type.id}"
+                            th:data-name="${type.name}"
+                            th:data-rate="${type.rate}"
+                            onclick="openEditModal(this.dataset.id, this.dataset.name, this.dataset.rate)">Edit Rate</button>
+                    <form th:action="@{/accountant/deductions/{id}/toggle(id=${type.id})}" method="post" style="display:inline">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                        <input type="hidden" name="active" th:value="${!type.active}"/>
+                        <button type="submit" class="btn-sm btn-toggle" th:classappend="${type.active ? '' : 'activate'}" th:text="${type.active ? 'Deactivate' : 'Activate'}">Deactivate</button>
+                    </form>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Empty State -->
+    <div class="empty" th:if="${deductionTypes == null or deductionTypes.isEmpty()}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/>
+        </svg>
+        <div style="font-size:16px;font-weight:600;color:var(--ink);margin-bottom:8px">No Expense Types Configured</div>
+        <div style="font-size:13px;margin-bottom:20px">Create your first expense type to track cooperative operating costs</div>
+        <a th:href="@{/accountant/deductions/add}" class="btn-process">Add First Expense Type</a>
+    </div>
+</div>
+
+<!-- Edit Rate Modal -->
+<div id="editModal" class="modal">
+    <div class="modal-box">
+        <h2 class="modal-heading">Update Deduction Rate</h2>
+        <div class="modal-desc">Changing rate for: <strong id="editTypeName">Deduction Type</strong></div>
+        <form id="editForm" method="post">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            <label class="flbl" for="newRate">NEW RATE (%)</label>
+            <input type="number" id="newRate" name="rate" class="finp" step="0.01" min="0.01" max="100" required/>
+            <div style="font-size:11px;color:var(--muted);margin-top:4px">Enter percentage between 0.01 and 100</div>
+            <div class="modal-actions">
+                <button type="button" class="btn-cancel" onclick="closeEditModal()">Cancel</button>
+                <button type="submit" class="btn-confirm">Update Rate</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openEditModal(id, name, currentRate) {
+        document.getElementById('editTypeName').textContent = name;
+        document.getElementById('newRate').value = currentRate;
+        document.getElementById('editForm').action = '/accountant/deductions/' + id + '/rate';
+        document.getElementById('editModal').style.display = 'flex';
+    }
+    function closeEditModal() {
+        document.getElementById('editModal').style.display = 'none';
+    }
+    document.getElementById('editModal').addEventListener('click', function(e) {
+        if (e.target === this) closeEditModal();
+    });
+</script>
+
+</div>
+</body>
+</html>

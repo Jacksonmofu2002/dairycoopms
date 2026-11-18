@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>COFA Reconciliation - DairyCoop Finance</title>
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap/dist/css/bootstrap.min.css}"/>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,700;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+    <style>
+        *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+        :root{--green:#00c16a;--green-dim:#00a358;--amber:#f59e0b;--red:#f43f5e;--blue:#3b82f6;--bg:#f0f2f8;--border:#e2e8f0;--ink:#0f172a;--ink2:#334155;--muted:#64748b;--shadow:0 2px 12px rgba(11,17,32,.08)}
+        body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;display:flex;flex-direction:column}
+        /* Floating nav */
+        /* Topbar */
+        /* Layout */
+        .main{flex:1;display:flex;flex-direction:column}
+        /* Header */
+        .pg-eyebrow{font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--green-dim);margin-bottom:4px;display:flex;align-items:center;gap:6px}
+        .pg-eyebrow::before{content:'';width:14px;height:2px;background:var(--green-dim);border-radius:2px;display:inline-block}
+        .pg-title{font-family:'Playfair Display',serif;font-size:26px;color:var(--ink);margin-bottom:4px}
+        .pg-title em{font-style:italic;color:var(--green-dim)}
+        .pg-sub{font-size:13px;color:var(--muted);margin-bottom:22px}
+        /* Stats */
+        .stat-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px}
+        .stat{background:#fff;border-radius:12px;padding:16px 18px;border:1px solid var(--border);box-shadow:var(--shadow);position:relative;overflow:hidden}
+        .stat::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+        .stat.s-amber::before{background:linear-gradient(90deg,var(--amber),#fbbf24)}
+        .stat.s-green::before{background:linear-gradient(90deg,var(--green),#34d399)}
+        .stat.s-blue::before{background:linear-gradient(90deg,var(--blue),#60a5fa)}
+        .stat.s-red::before{background:linear-gradient(90deg,var(--red),#f87171)}
+        .stat-num{font-family:'JetBrains Mono',monospace;font-size:22px;line-height:1;margin-bottom:5px;font-weight:800}
+        .stat.s-amber .stat-num{color:var(--amber)}
+        .stat.s-green .stat-num{color:var(--green-dim)}
+        .stat.s-blue  .stat-num{color:var(--blue)}
+        .stat.s-red   .stat-num{color:var(--red)}
+        .stat-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)}
+        /* Cards */
+        .card{background:#fff;border-radius:14px;border:1px solid var(--border);overflow:hidden;box-shadow:var(--shadow);margin-bottom:20px}
+        .card-head{padding:16px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:#f8fafc}
+        .card-title{font-family:'Playfair Display',serif;font-size:18px;color:var(--ink)}
+        .card-sub{font-size:12px;color:var(--muted);margin-top:2px}
+        .card-body{padding:22px}
+        /* Alerts */
+        .alert-ok{background:#f0fdf4;border-left:4px solid var(--green);color:#065f46;padding:11px 16px;border-radius:0 10px 10px 0;font-size:13px;display:flex;align-items:center;gap:8px;margin-bottom:18px;font-weight:500}
+        .alert-err{background:#fff1f2;border-left:4px solid var(--red);color:#9f1239;padding:11px 16px;border-radius:0 10px 10px 0;font-size:13px;display:flex;align-items:center;gap:8px;margin-bottom:18px;font-weight:500}
+        .alert-warn{background:#fffbeb;border-left:4px solid var(--amber);color:#92400e;padding:11px 16px;border-radius:0 10px 10px 0;font-size:13px;display:flex;align-items:center;gap:8px;margin-bottom:18px;font-weight:500}
+        /* Table */
+        .tbl{width:100%;border-collapse:collapse}
+        .tbl thead th{background:#f8fafc;color:var(--muted);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;padding:11px 18px;border-bottom:1px solid var(--border);text-align:left}
+        .tbl tbody td{padding:14px 18px;font-size:13px;border-bottom:1px solid #f1f5f9;vertical-align:middle}
+        .tbl tbody tr:last-child td{border-bottom:none}
+        .tbl tbody tr:hover td{background:#fafcff}
+        /* Info box */
+        .info-box{background:#eff6ff;border:1.5px solid #dbeafe;border-radius:12px;padding:18px 22px;margin-bottom:20px;display:flex;gap:14px;align-items:flex-start}
+        .info-box-icon{width:38px;height:38px;background:#dbeafe;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:18px}
+        .info-box-title{font-size:13px;font-weight:700;color:var(--blue);margin-bottom:6px}
+        .info-box p{font-size:12.5px;color:var(--ink2);margin-bottom:6px;line-height:1.7}
+        .info-box p:last-child{margin-bottom:0}
+        /* Data rows */
+        .data-row{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--border)}
+        .data-row:last-child{border-bottom:none}
+        .data-label{font-size:12px;font-weight:600;color:var(--muted)}
+        .data-value{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:var(--ink)}
+        /* Action cards */
+        .action-card{border:1px solid var(--border);border-radius:12px;padding:18px 20px}
+        .action-card.warn-card{background:#fffbeb;border-color:#fde68a}
+        .action-title{font-size:14px;font-weight:700;margin-bottom:6px;color:var(--ink)}
+        .action-desc{font-size:12.5px;color:var(--muted);margin-bottom:14px;line-height:1.7}
+        .btn-action{background:linear-gradient(135deg,#00a358,#00c16a);color:#fff;border:none;padding:10px 20px;border-radius:9px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;display:inline-flex;align-items:center;gap:7px;box-shadow:0 3px 10px rgba(0,163,88,.25);transition:all .18s}
+        .btn-action:hover{transform:translateY(-1px)}
+        .btn-action:disabled{opacity:.5;cursor:not-allowed;transform:none}
+        .btn-danger{background:linear-gradient(135deg,#dc2626,#ef4444);color:#fff;border:none;padding:10px 20px;border-radius:9px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;display:inline-flex;align-items:center;gap:7px;box-shadow:0 3px 10px rgba(220,38,38,.25);transition:all .18s}
+        .btn-danger:hover{transform:translateY(-1px)}
+    </style>
+    <link rel="stylesheet" th:href="@{/css/accountant-base.css}"/>
+    <link rel="stylesheet" th:href="@{/css/accountant-sidebar.css}"/>
+</head>
+<body>
+
+
+<div th:replace="~{fragments/accountant-nav :: nav(active='cofa', pageTitle='COFA Reconciliation')}"></div>
+
+
+<div class="sb-page">
+
+    <div class="alert-ok" th:if="${successMessage != null}">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        <span th:text="${successMessage}"></span>
+    </div>
+    <div class="alert-err" th:if="${errorMessage != null}">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/></svg>
+        <span th:text="${errorMessage}"></span>
+    </div>
+
+    <div class="pg-eyebrow">Accounts Officer</div>
+    <div class="pg-title">COFA <em>Reconciliation</em></div>
+    <div class="pg-sub">Verify and fix Cooperative Fund Account balance discrepancies</div>
+
+    <div class="stat-strip">
+        <div class="stat s-blue">
+            <div class="stat-num">ZMW <span th:text="${#numbers.formatDecimal(currentBalance ?: 0, 1, 'COMMA', 2, 'POINT')}">0.00</span></div>
+            <div class="stat-lbl">Current Balance</div>
+        </div>
+        <div class="stat s-green">
+            <div class="stat-num">ZMW <span th:text="${#numbers.formatDecimal(calculatedBalance ?: 0, 1, 'COMMA', 2, 'POINT')}">0.00</span></div>
+            <div class="stat-lbl">Calculated from Transactions</div>
+        </div>
+        <div class="stat" th:classappend="${hasDiscrepancy ? 's-red' : 's-green'}">
+            <div class="stat-num">ZMW <span th:text="${#numbers.formatDecimal(discrepancy ?: 0, 1, 'COMMA', 2, 'POINT')}">0.00</span></div>
+            <div class="stat-lbl">Discrepancy</div>
+        </div>
+        <div class="stat s-amber">
+            <div class="stat-num" th:text="${paidInquiriesWithoutTransaction ?: 0}">0</div>
+            <div class="stat-lbl">Missing Transactions</div>
+        </div>
+    </div>
+
+    <div class="alert-warn" th:if="${hasDiscrepancy}">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <span><strong>Balance Mismatch Detected.</strong> Use the tools below to fix.</span>
+    </div>
+
+    <div class="info-box">
+        <div class="info-box-icon">ℹ️</div>
+        <div>
+            <div class="info-box-title">About Reconciliation</div>
+            <p><strong>What this does:</strong> Checks if all paid company orders are recorded in COFA. Missing payments can be added automatically.</p>
+            <p><strong>Safe to use:</strong> Only <em>adds</em> missing records — never deletes or modifies existing data.</p>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-head">
+            <div><div class="card-title">Transaction Breakdown</div><div class="card-sub">COFA transactions grouped by type</div></div>
+        </div>
+        <div class="card-body">
+            <div th:each="entry : ${transactionBreakdown}" class="data-row">
+                <div class="data-label" th:text="${entry.key}">Type</div>
+                <div style="display:flex;gap:20px;align-items:center">
+                    <span style="font-size:11px;color:var(--muted)"><span th:text="${entry.value.count}">0</span> transactions</span>
+                    <div class="data-value">ZMW <span th:text="${#numbers.formatDecimal(entry.value.total, 1, 'COMMA', 2, 'POINT')}">0.00</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card" th:if="${paidInquiriesWithoutTransaction > 0}">
+        <div class="card-head">
+            <div><div class="card-title" style="color:var(--amber)">⚠ Missing Payment Records</div><div class="card-sub">Paid company orders not yet recorded in COFA</div></div>
+            <span style="background:#fef3c7;color:#d97706;font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;border:1px solid #fde68a" th:text="${paidInquiriesWithoutTransaction} + ' missing'">0 missing</span>
+        </div>
+        <div style="overflow-x:auto">
+            <table class="tbl">
+                <thead><tr><th>Reference / Invoice</th><th>Company</th><th>Amount</th><th>Paid On</th></tr></thead>
+                <tbody>
+                <tr th:each="inq : ${missingInquiries}">
+                    <td>
+                        <div style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700" th:text="${inq.referenceNo}">REF</div>
+                        <div style="font-size:11px;color:var(--muted);margin-top:2px" th:text="${inq.invoiceNo}">INV</div>
+                    </td>
+                    <td>
+                        <div style="font-weight:600" th:text="${inq.companyName}">Company</div>
+                        <div style="font-size:11px;color:var(--muted);margin-top:2px" th:text="${inq.email}">email</div>
+                    </td>
+                    <td><div style="font-family:'JetBrains Mono',monospace;font-weight:800;color:var(--green-dim)">ZMW <span th:text="${#numbers.formatDecimal(inq.totalAmount, 1, 'COMMA', 2, 'POINT')}">0.00</span></div></td>
+                    <td><span style="font-size:12px;color:var(--muted)" th:text="${inq.paidAt != null ? inq.paidAt.format(T(java.time.format.DateTimeFormatter).ofPattern('dd MMM yyyy HH:mm')) : '-'}">Date</span></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-head"><div><div class="card-title">Reconciliation Actions</div><div class="card-sub">Tools to fix COFA balance discrepancies</div></div></div>
+        <div class="card-body" style="display:flex;flex-direction:column;gap:16px">
+            <div class="action-card">
+                <div class="action-title"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#00a358" stroke-width="2.5" style="display:inline;margin-right:4px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add Missing Company Payments</div>
+                <div class="action-desc">Scans all paid inquiries and adds any missing COFA transactions. Will increase balance by <strong style="color:var(--green-dim)">ZMW <span th:text="${#numbers.formatDecimal(missingAmount ?: 0, 1, 'COMMA', 2, 'POINT')}">0.00</span></strong>.</div>
+                <form th:action="@{/accountant/cofa-reconciliation/add-missing}" method="post">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                    <button type="submit" class="btn-action" th:disabled="${paidInquiriesWithoutTransaction == 0}">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                        Add <span th:text="${paidInquiriesWithoutTransaction}">0</span> Missing Transactions
+                    </button>
+                </form>
+            </div>
+            <div class="action-card warn-card">
+                <div class="action-title" style="color:var(--amber)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2.5" style="display:inline;margin-right:4px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/></svg>Recalculate Balance from Transactions</div>
+                <div class="action-desc"><strong>Advanced use only.</strong> Overwrites current balance by summing all transactions. Current: <strong>ZMW <span th:text="${#numbers.formatDecimal(currentBalance, 1, 'COMMA', 2, 'POINT')}">0.00</span></strong> → Will become: <strong>ZMW <span th:text="${#numbers.formatDecimal(calculatedBalance, 1, 'COMMA', 2, 'POINT')}">0.00</span></strong>. Cannot be undone.</div>
+                <form th:action="@{/accountant/cofa-reconciliation/recalculate}" method="post" onsubmit="return confirm('⚠️ This will overwrite the COFA balance. Continue?')">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                    <button type="submit" class="btn-danger">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                        Recalculate Balance
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+</div></div>
+
+<script th:src="@{/webjars/bootstrap/dist/js/bootstrap.bundle.min.js}"></script>
+<script>
+    var el = document.getElementById('tbDate');
+    if (el) el.textContent = new Date().toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'long',year:'numeric'});
+</script>
+</div>
+</body>
+</html>

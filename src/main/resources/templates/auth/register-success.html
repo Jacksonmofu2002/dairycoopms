@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Registration Submitted – DairyCoop MS</title>
+  <link th:href="@{/webjars/bootstrap/5.3.3/dist/css/bootstrap.min.css}" rel="stylesheet"/>
+  <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600&family=Fraunces:wght@300;600&display=swap');
+        *{box-sizing:border-box;margin:0;padding:0}
+        body{font-family:'Plus Jakarta Sans',sans-serif;min-height:100vh;background:#f4f6f3;display:flex;align-items:center;justify-content:center;padding:24px}
+        .card{background:#fff;border-radius:16px;border:1px solid #e2e8df;padding:56px 48px;max-width:520px;width:100%;text-align:center;box-shadow:0 4px 24px rgba(0,0,0,.07)}
+        .icon{width:72px;height:72px;background:#dcfce7;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 28px}
+        .icon svg{color:#16a34a}
+        h1{font-family:'Fraunces',serif;font-size:28px;font-weight:600;color:#1a2b1c;margin-bottom:12px}
+        p{font-size:14px;color:#6b7f6d;line-height:1.7;margin-bottom:8px}
+        .steps{background:#f4f6f3;border-radius:10px;padding:20px 24px;margin:28px 0;text-align:left}
+        .step{display:flex;align-items:flex-start;gap:12px;font-size:13px;color:#1a2b1c;margin-bottom:10px}
+        .step:last-child{margin-bottom:0}
+        .step-num{width:22px;height:22px;border-radius:50%;background:#1a6b2e;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+        .btn{display:inline-block;padding:11px 28px;background:#1a6b2e;color:#fff;border-radius:9px;text-decoration:none;font-size:14px;font-weight:600;transition:background .2s,transform .15s}
+        .btn:hover{background:#0f4a1e;color:#fff;transform:translateY(-1px)}
+    </style>
+</head>
+<body>
+<div class="card">
+  <div class="icon">
+    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="20 6 9 17 4 12"/>
+    </svg>
+  </div>
+
+  <h1>Registration submitted!</h1>
+  <p>Your account request has been received successfully.</p>
+  <p>You will be able to log in once an administrator reviews and approves your account.</p>
+
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <span>Your registration request has been saved with status <strong>Pending Approval</strong></span>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <span>An administrator will review your details and your selected role</span>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <span>Once approved, you can sign in with your email and password</span>
+    </div>
+  </div>
+
+  <a th:href="@{/login}" class="btn">Back to login</a>
+</div>
+</body>
+</html>

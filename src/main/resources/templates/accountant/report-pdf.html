@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title th:text="'DairyCoop Finance Report — ' + ${reportDate}">DairyCoop Finance Report</title>
+    <style>
+        /* ── Clean PDF-friendly report — no sidebars, no chrome ── */
+        *{box-sizing:border-box;margin:0;padding:0}
+        body{font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#111;background:#fff;padding:20px 28px}
+
+        /* Cover / Header */
+        .report-header{border-bottom:3px solid #0a1f0e;padding-bottom:14px;margin-bottom:20px}
+        .report-org{font-size:20px;font-weight:700;color:#0a1f0e;letter-spacing:.5px}
+        .report-title{font-size:15px;font-weight:600;color:#1a6b2e;margin-top:3px}
+        .report-meta{font-size:10px;color:#555;margin-top:6px;display:flex;gap:24px;flex-wrap:wrap}
+        .report-meta span{display:inline-flex;align-items:center;gap:4px}
+
+        /* Section headers */
+        .section{margin-bottom:20px;page-break-inside:avoid}
+        .section-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;
+            color:#fff;background:#0a1f0e;padding:6px 12px;border-radius:4px;margin-bottom:8px}
+        .section-title.green{background:#1a6b2e}
+        .section-title.blue{background:#1e3a5f}
+        .section-title.amber{background:#92400e}
+        .section-title.red{background:#7f1d1d}
+
+        /* Summary row */
+        .summary-row{display:flex;gap:12px;margin-bottom:10px;flex-wrap:wrap}
+        .summary-box{flex:1;min-width:120px;border:1px solid #d1d5db;border-radius:6px;padding:8px 11px}
+        .summary-box .lbl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#6b7280;margin-bottom:3px}
+        .summary-box .val{font-size:14px;font-weight:700;color:#111}
+        .summary-box .val.green{color:#166534}
+        .summary-box .val.red{color:#991b1b}
+        .summary-box .val.blue{color:#1e40af}
+        .summary-box .val.amber{color:#92400e}
+
+        /* Tables */
+        table{width:100%;border-collapse:collapse;margin-bottom:6px;font-size:10.5px}
+        thead th{background:#f3f4f6;font-weight:700;font-size:9.5px;text-transform:uppercase;
+            letter-spacing:.5px;padding:6px 8px;text-align:left;
+            border-top:1px solid #d1d5db;border-bottom:1px solid #d1d5db}
+        tbody td{padding:5px 8px;border-bottom:1px solid #f1f5f9;vertical-align:top}
+        tbody tr:nth-child(even) td{background:#fafafa}
+        .mono{font-family:'Courier New',monospace;font-size:10px}
+        .badge-paid{color:#166534;font-weight:700}
+        .badge-unpaid{color:#92400e;font-weight:700}
+        .badge-pending{color:#92400e;font-weight:700}
+        .badge-approved{color:#166534;font-weight:700}
+        .badge-rejected{color:#991b1b;font-weight:700}
+        .badge-disbursed{color:#1e40af;font-weight:700}
+
+        /* Footer */
+        .report-footer{margin-top:28px;border-top:2px solid #e5e7eb;padding-top:10px;
+            font-size:9.5px;color:#6b7280;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+
+        @media print{
+            body{padding:12px 16px}
+            .no-print{display:none!important}
+            .section{page-break-inside:avoid}
+            @page{margin:15mm 12mm;size:A4}
+        }
+    </style>
+</head>
+<body>
+
+<!-- Print button (hidden on print) -->
+<div class="no-print" style="margin-bottom:18px;display:flex;gap:10px">
+    <button onclick="window.print()" style="background:#0a1f0e;color:#fff;border:none;padding:10px 22px;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer">
+        🖨 Print / Save as PDF
+    </button>
+    <button onclick="window.close()" style="background:#f3f4f6;color:#111;border:1px solid #d1d5db;padding:10px 18px;border-radius:7px;font-size:13px;cursor:pointer">
+        Close
+    </button>
+    <span style="font-size:11px;color:#6b7280;align-self:center">
+        In the print dialog, choose <strong>Save as PDF</strong> as the destination.
+    </span>
+</div>
+
+<!-- ── Report Header ─────────────────────────────────────────── -->
+<div class="report-header">
+    <div class="report-org">🌿 DairyCoop Cooperative Society</div>
+    <div class="report-title">Finance &amp; Operations Report</div>
+    <div class="report-meta">
+        <span><strong>Generated:</strong> <span th:text="${reportDate}">—</span></span>
+        <span><strong>Prepared by:</strong> <span th:text="${officer}">—</span></span>
+        <span><strong>Role:</strong> Accounts Officer</span>
+    </div>
+</div>
+
+<!-- ── 1. Executive Summary ──────────────────────────────────── -->
+<div class="section">
+    <div class="section-title">1. Executive Summary</div>
+    <div class="summary-row">
+        <div class="summary-box">
+            <div class="lbl">Active Members</div>
+            <div class="val green" th:text="${summary.activeMembers}">0</div>
+        </div>
+        <div class="summary-box">
+            <div class="lbl">COFA Balance</div>
+            <div class="val green" th:text="'ZMW ' + ${cofa.balance}">ZMW 0.00</div>
+        </div>
+        <div class="summary-box">
+            <div class="lbl">Total COFA Inflows</div>
+            <div class="val blue" th:text="'ZMW ' + ${cofa.totalInflows}">ZMW 0.00</div>
+        </div>
+        <div class="summary-box">
+            <div class="lbl">Total COFA Outflows</div>
+            <div class="val red" th:text="'ZMW ' + ${cofa.totalOutflows}">ZMW 0.00</div>
+        </div>
+        <div class="summary-box">
+            <div class="lbl">Total Milk Delivered</div>
+            <div class="val" th:text="${milkDeliveries.totalLitres} + ' L'">0 L</div>
+        </div>
+        <div class="summary-box">
+            <div class="lbl">Active Loans</div>
+            <div class="val amber" th:text="${loanPortfolio.activeCount}">0</div>
+        </div>
+    </div>
+</div>
+
+<!-- ── 2. Loans Overview ──────────────────────────────────────── -->
+<div class="section">
+    <div class="section-title green">2. Loan Applications</div>
+    <div class="summary-row">
+        <div class="summary-box"><div class="lbl">Total Applications</div><div class="val" th:text="${loans.total}">0</div></div>
+        <div class="summary-box"><div class="lbl">Pending Review</div><div class="val amber" th:text="${loans.pending}">0</div></div>
+        <div class="summary-box"><div class="lbl">Approved</div><div class="val green" th:text="${loans.approved}">0</div></div>
+        <div class="summary-box"><div class="lbl">Rejected</div><div class="val red" th:text="${loans.rejected}">0</div></div>
+        <div class="summary-box"><div class="lbl">Disbursed</div><div class="val blue" th:text="${loans.disbursed}">0</div></div>
+        <div class="summary-box"><div class="lbl">Total Disbursed</div><div class="val green" th:text="'ZMW ' + ${loans.totalAmountDisbursed}">ZMW 0.00</div></div>
+    </div>
+    <table>
+        <thead><tr>
+            <th>Member</th><th>Amount</th><th>Status</th><th>Disbursement</th><th>Date</th><th>Purpose</th>
+        </tr></thead>
+        <tbody>
+        <tr th:each="l : ${loans.recent}">
+            <td th:text="${l.member}">—</td>
+            <td class="mono" th:text="'ZMW ' + ${l.amount}">—</td>
+            <td th:text="${l.status}"
+                th:class="${'badge-' + l.status.toLowerCase()}">—</td>
+            <td th:text="${l.disbStatus}">—</td>
+            <td th:text="${l.date}">—</td>
+            <td th:text="${l.purpose}">—</td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- ── 3. Active Loan Portfolio ──────────────────────────────── -->
+<div class="section">
+    <div class="section-title blue">3. Active Loan Portfolio (Outstanding)</div>
+    <div class="summary-row">
+        <div class="summary-box"><div class="lbl">Active Loans</div><div class="val" th:text="${loanPortfolio.activeCount}">0</div></div>
+        <div class="summary-box"><div class="lbl">Total Original Value</div><div class="val" th:text="'ZMW ' + ${loanPortfolio.totalOriginal}">ZMW 0.00</div></div>
+        <div class="summary-box"><div class="lbl">Total Outstanding</div><div class="val red" th:text="'ZMW ' + ${loanPortfolio.totalOutstanding}">ZMW 0.00</div></div>
+    </div>
+    <table>
+        <thead><tr>
+            <th>Member</th><th>Original Loan</th><th>Remaining Balance</th><th>Monthly Instalment</th><th>Months</th><th>Disbursed</th>
+        </tr></thead>
+        <tbody>
+        <tr th:each="l : ${loanPortfolio.loans}">
+            <td th:text="${l.member}">—</td>
+            <td class="mono" th:text="'ZMW ' + ${l.original}">—</td>
+            <td class="mono" style="color:#991b1b;font-weight:700" th:text="'ZMW ' + ${l.remaining}">—</td>
+            <td class="mono" th:text="'ZMW ' + ${l.instalment}">—</td>
+            <td th:text="${l.months} + ' mo'">—</td>
+            <td th:text="${l.disbursed}">—</td>
+        </tr>
+        <tr th:if="${loanPortfolio.loans == null or loanPortfolio.loans.isEmpty()}">
+            <td colspan="6" style="text-align:center;color:#6b7280">No active loans with outstanding balance</td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- ── 4. Loan Repayments Collected ─────────────────────────── -->
+<div class="section">
+    <div class="section-title">4. Loan Repayments Collected</div>
+    <div class="summary-row">
+        <div class="summary-box"><div class="lbl">Total Repayment Records</div><div class="val" th:text="${loanRepayments.totalRecords}">0</div></div>
+        <div class="summary-box"><div class="lbl">Total Repaid to COFA</div><div class="val green" th:text="'ZMW ' + ${loanRepayments.totalRepaid}">ZMW 0.00</div></div>
+    </div>
+    <table>
+        <thead><tr>
+            <th>Member</th><th>Period</th><th>Instalment Paid</th><th>Balance After</th><th>Date</th>
+        </tr></thead>
+        <tbody>
+        <tr th:each="r : ${loanRepayments.recent}">
+            <td th:text="${r.member}">—</td>
+            <td th:text="${r.period}">—</td>
+            <td class="mono" th:text="'ZMW ' + ${r.amount}">—</td>
+            <td class="mono" th:text="'ZMW ' + ${r.balance}">—</td>
+            <td th:text="${r.date}">—</td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- ── 5. Member Milk Payments (Salaries) ───────────────────── -->
+<div class="section">
+    <div class="section-title green">5. Member Monthly Salary Payments</div>
+    <div class="summary-row">
+        <div class="summary-box"><div class="lbl">Total Records</div><div class="val" th:text="${milkPayments.total}">0</div></div>
+        <div class="summary-box"><div class="lbl">Paid</div><div class="val green" th:text="${milkPayments.paid}">0</div></div>
+        <div class="summary-box"><div class="lbl">Unpaid</div><div class="val red" th:text="${milkPayments.unpaid}">0</div></div>
+        <div class="summary-box"><div class="lbl">Total Gross (ZMW 3,000 × members)</div><div class="val" th:text="'ZMW ' + ${milkPayments.totalGross}">ZMW 0.00</div></div>
+        <div class="summary-box"><div class="lbl">Total Net Paid</div><div class="val green" th:text="'ZMW ' + ${milkPayments.totalNetPaid}">ZMW 0.00</div></div>
+    </div>
+    <table>
+        <thead><tr>
+            <th>Member</th><th>Period</th><th>Gross (Salary)</th><th>Loan Deduction</th><th>Net Paid</th><th>Status</th>
+        </tr></thead>
+        <tbody>
+        <tr th:each="p : ${milkPayments.recent}">
+            <td th:text="${p.member}">—</td>
+            <td th:text="${p.period}">—</td>
+            <td class="mono" th:text="'ZMW ' + ${p.gross}">—</td>
+            <td class="mono" style="color:#991b1b" th:text="'ZMW ' + ${p.deductions}">—</td>
+            <td class="mono" style="color:#166534;font-weight:700" th:text="'ZMW ' + ${p.net}">—</td>
+            <td th:text="${p.status}"
+                th:class="${'badge-' + p.status.toLowerCase()}">—</td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- ── 6. Staff Salaries ─────────────────────────────────────── -->
+<div class="section">
+    <div class="section-title blue">6. Staff Salary Disbursements</div>
+    <div class="summary-row">
+        <div class="summary-box"><div class="lbl">Total Records</div><div class="val" th:text="${salaries.totalRecords}">0</div></div>
+        <div class="summary-box"><div class="lbl">Paid</div><div class="val green" th:text="${salaries.paid}">0</div></div>
+        <div class="summary-box"><div class="lbl">Unpaid</div><div class="val red" th:text="${salaries.unpaid}">0</div></div>
+        <div class="summary-box"><div class="lbl">Total Disbursed</div><div class="val green" th:text="'ZMW ' + ${salaries.totalPaid}">ZMW 0.00</div></div>
+    </div>
+    <table>
+        <thead><tr>
+            <th>Staff Member</th><th>Period</th><th>Basic</th><th>Deductions</th><th>Net</th><th>Method</th><th>Reference</th><th>Paid On</th>
+        </tr></thead>
+        <tbody>
+        <tr th:each="s : ${salaries.recent}">
+            <td th:text="${s.staff}">—</td>
+            <td th:text="${s.period}">—</td>
+            <td class="mono" th:text="'ZMW ' + ${s.basic}">—</td>
+            <td class="mono" th:text="'ZMW ' + ${s.deduction}">—</td>
+            <td class="mono" style="font-weight:700" th:text="'ZMW ' + ${s.net}">—</td>
+            <td th:text="${s.method}">—</td>
+            <td class="mono" th:text="${s.ref}">—</td>
+            <td th:text="${s.paidAt}">—</td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- ── 7. Company Milk Inquiries ─────────────────────────────── -->
+<div class="section">
+    <div class="section-title">7. Company Milk Inquiries (Revenue)</div>
+    <div class="summary-row">
+        <div class="summary-box"><div class="lbl">Total Inquiries</div><div class="val" th:text="${milkInquiries.total}">0</div></div>
+        <div class="summary-box"><div class="lbl">Pending</div><div class="val amber" th:text="${milkInquiries.pending}">0</div></div>
+        <div class="summary-box"><div class="lbl">Approved</div><div class="val green" th:text="${milkInquiries.approved}">0</div></div>
+        <div class="summary-box"><div class="lbl">Paid/Confirmed</div><div class="val green" th:text="${milkInquiries.paid}">0</div></div>
+        <div class="summary-box"><div class="lbl">Total Revenue</div><div class="val green" th:text="'ZMW ' + ${milkInquiries.totalRevenue}">ZMW 0.00</div></div>
+    </div>
+    <table>
+        <thead><tr>
+            <th>Reference</th><th>Company</th><th>Qty Requested</th><th>Amount</th><th>Status</th><th>Date</th>
+        </tr></thead>
+        <tbody>
+        <tr th:each="i : ${milkInquiries.recent}">
+            <td class="mono" th:text="${i.ref}">—</td>
+            <td th:text="${i.company}">—</td>
+            <td th:text="${i.qty}">—</td>
+            <td class="mono" th:text="'ZMW ' + ${i.amount}">—</td>
+            <td th:text="${i.status}">—</td>
+            <td th:text="${i.date}">—</td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- ── 8. Milk Delivery Statistics ───────────────────────────── -->
+<div class="section">
+    <div class="section-title green">8. Milk Delivery Statistics</div>
+    <div class="summary-row">
+        <div class="summary-box"><div class="lbl">Total Delivery Records</div><div class="val" th:text="${milkDeliveries.totalRecords}">0</div></div>
+        <div class="summary-box"><div class="lbl">Total Litres Delivered</div><div class="val green" th:text="${milkDeliveries.totalLitres} + ' L'">0 L</div></div>
+        <div class="summary-box"><div class="lbl">Members Delivering</div><div class="val" th:text="${milkDeliveries.membersDelivering}">0</div></div>
+    </div>
+</div>
+
+<!-- ── 9. COFA Summary ───────────────────────────────────────── -->
+<div class="section">
+    <div class="section-title blue">9. Cooperative Fund (COFA) Summary</div>
+    <div class="summary-row">
+        <div class="summary-box"><div class="lbl">Current Balance</div><div class="val green" th:text="'ZMW ' + ${cofa.balance}">ZMW 0.00</div></div>
+        <div class="summary-box"><div class="lbl">Total Transactions</div><div class="val" th:text="${cofa.totalTxns}">0</div></div>
+        <div class="summary-box"><div class="lbl">Total Inflows</div><div class="val green" th:text="'ZMW ' + ${cofa.totalInflows}">ZMW 0.00</div></div>
+        <div class="summary-box"><div class="lbl">Total Outflows</div><div class="val red" th:text="'ZMW ' + ${cofa.totalOutflows}">ZMW 0.00</div></div>
+    </div>
+</div>
+
+<!-- ── 10. Audit Trail ───────────────────────────────────────── -->
+<div class="section">
+    <div class="section-title">10. Recent Activity Audit Trail</div>
+    <table>
+        <thead><tr>
+            <th>Entity</th><th>Action</th><th>Performed By</th><th>Timestamp</th>
+        </tr></thead>
+        <tbody>
+        <tr th:each="a : ${auditTrail}">
+            <td th:text="${a.entity}">—</td>
+            <td th:text="${a.action}">—</td>
+            <td th:text="${a.by}">—</td>
+            <td class="mono" th:text="${a.at}">—</td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- ── Report Footer ─────────────────────────────────────────── -->
+<div class="report-footer">
+    <span>DairyCoop Cooperative Society — Finance Department</span>
+    <span>Generated: <span th:text="${reportDate}">—</span> | Prepared by: <span th:text="${officer}">—</span></span>
+    <span>CONFIDENTIAL — For internal use only</span>
+</div>
+
+</body>
+</html>

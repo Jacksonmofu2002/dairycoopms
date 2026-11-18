@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Loan Management - DairyCoop Finance</title>
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap/dist/css/bootstrap.min.css}"/>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,700;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+    <style>
+
+        /* Reset */
+        *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+        :root{
+            --navy:#0b1120;--green:#00c16a;--green-dim:#00a358;
+            --amber:#f59e0b;--red:#f43f5e;--blue:#3b82f6;
+            --bg:#f0f2f8;--white:#fff;--border:#e2e8f0;
+            --ink:#0f172a;--ink2:#334155;--muted:#64748b;
+            --shadow:0 2px 12px rgba(11,17,32,.08);
+            --shadow-lg:0 8px 32px rgba(11,17,32,.14);
+        }
+        body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;display:flex;flex-direction:column}
+
+        /* ── Topbar ───────────────────────────────────────────────────────── */
+
+        /* Loans-specific */
+        .modal-overlay.open{display:flex;align-items:center;justify-content:center}
+        @keyframes fadeUp{from{transform:translateY(14px);opacity:0}to{transform:translateY(0);opacity:1}}
+        /* ── Floating nav button ──────────────────────────────────────── */
+        /* ─────────────────────────────────────────────────────────────── */
+        /* ── KPI strip (milk-payments & dashboard) ────────────────────── */
+        .kpi-strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;margin-bottom:24px}
+        .kpi{background:#fff;border-radius:14px;padding:18px 20px;border:1px solid var(--border);box-shadow:var(--shadow);position:relative;overflow:hidden}
+        .kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:3px 3px 0 0}
+        .kpi.amber::before{background:linear-gradient(90deg,var(--amber),#fbbf24)}
+        .kpi.green::before{background:linear-gradient(90deg,#00c16a,#34d399)}
+        .kpi.teal::before{background:linear-gradient(90deg,#06b6d4,#38bdf8)}
+        .kpi.red::before{background:linear-gradient(90deg,#f43f5e,#fb7185)}
+        .kpi.blue::before{background:linear-gradient(90deg,#3b82f6,#60a5fa)}
+        .kpi-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);margin-bottom:8px}
+        .kpi-num{font-size:28px;font-weight:800;color:var(--ink);line-height:1;margin-bottom:5px}
+        .kpi.amber .kpi-num{color:var(--amber)}
+        .kpi.green .kpi-num{color:#00a358}
+        .kpi.teal .kpi-num{color:#0891b2}
+        .kpi.red .kpi-num{color:#e11d48}
+        .kpi.blue .kpi-num{color:#2563eb}
+        .kpi-sub{font-size:11px;color:var(--muted)}
+        /* ── Panel (dashboard) ────────────────────────────────────────── */
+        .panel{background:#fff;border-radius:14px;border:1px solid var(--border);overflow:hidden;box-shadow:var(--shadow);margin-bottom:20px}
+        .panel-head{padding:16px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px;background:#f8fafc;flex-wrap:wrap}
+        .panel-title{font-family:'Playfair Display',serif;font-size:18px;color:var(--ink)}
+        .panel-sub{font-size:12px;color:var(--muted);margin-top:2px}
+        /* ── Misc dashboard buttons ───────────────────────────────────── */
+        .btn-approve{background:#dcfce7;color:#166534;border:1.5px solid #bbf7d0;padding:5px 12px;border-radius:7px;font-size:11.5px;font-weight:700;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
+        .btn-reject{background:#fff1f2;color:#be123c;border:1.5px solid #fecdd3;padding:5px 12px;border-radius:7px;font-size:11.5px;font-weight:700;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
+        .btn-outline{display:inline-flex;align-items:center;gap:5px;padding:7px 13px;border-radius:8px;border:1.5px solid var(--border);background:#fff;color:var(--ink2);font-size:12px;font-weight:600;text-decoration:none;transition:all .13s;white-space:nowrap}
+        .btn-outline:hover{background:#f1f5f9}
+        .ftabs{display:flex;align-items:center;gap:8px;margin-bottom:18px;flex-wrap:wrap}
+        .ftab{display:inline-flex;align-items:center;gap:4px;padding:7px 13px;border-radius:8px;border:1.5px solid var(--border);background:#fff;color:var(--ink2);font-size:12px;font-weight:600;text-decoration:none;transition:all .13s;white-space:nowrap}
+        .ftab:hover{background:#f1f5f9;color:var(--ink)}
+        .ftab.active,.f-all.active{background:var(--green-dim);color:#fff;border-color:var(--green-dim)}
+        .f-pending.active{background:#fef3c7;color:#92400e;border-color:#fde68a}
+        .f-approved.active{background:#dbeafe;color:#1e40af;border-color:#bfdbfe}
+        .f-rejected.active{background:#fee2e2;color:#991b1b;border-color:#fecaca}
+        .d-name{font-weight:700;font-size:13.5px;color:var(--ink)}
+        .d-id{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--muted);margin-top:2px}
+        .d-amount{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:13px;color:var(--ink)}
+        .d-mono{font-family:'JetBrains Mono',monospace;font-size:12.5px;color:var(--ink2)}
+        .d-muted{font-size:12.5px;color:var(--muted)}
+        /* ─────────────────────────────────────────────────────────────── */
+    </style>
+    <link rel="stylesheet" th:href="@{/css/accountant-base.css}"/>
+    <link rel="stylesheet" th:href="@{/css/accountant-sidebar.css}"/>
+</head>
+<body>
+
+
+<div th:replace="~{fragments/accountant-nav :: nav(active='loans', pageTitle='Loan Management')}"></div>
+<div class="sb-page">
+    <div class="pw-bar" th:if="${mustChangePassword}">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        You are using a temporary password.
+        <a th:href="@{/account/password}">Change it now</a>
+    </div>
+
+    <!-- Content -->
+    <div class="content">
+
+        <div class="alert-ok" th:if="${successMessage != null and !#strings.isEmpty(successMessage)}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg><span th:text="${successMessage}"></span></div>
+        <div class="alert-err" th:if="${errorMessage != null and !#strings.isEmpty(errorMessage)}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/></svg><span th:text="${errorMessage}"></span></div>
+
+        <div class="sec-header">
+            <div class="sec-eyebrow">Accounts Officer</div>
+            <div class="sec-title">Loan <em>Management</em></div>
+        </div>
+
+        <div class="ftabs">
+            <a th:href="@{/accountant/disbursements}" class="btn-outline">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+                ZMW Disbursements
+            </a>
+            <div style="display:flex;align-items:center;gap:4px;margin-left:auto">
+                <a th:href="@{/accountant/loans}" th:class="${filterStatus == null} ? 'ftab f-all active' : 'ftab f-all'">All <span th:text="'(' + ${totalCount} + ')'"></span></a>
+                <a th:href="@{/accountant/loans(status=PENDING)}" th:class="${filterStatus == 'PENDING'} ? 'ftab f-pending active' : 'ftab f-pending'">Pending <span th:text="'(' + ${pendingCount} + ')'"></span></a>
+                <a th:href="@{/accountant/loans(status=APPROVED)}" th:class="${filterStatus == 'APPROVED'} ? 'ftab f-approved active' : 'ftab f-approved'">Approved <span th:text="'(' + ${approvedCount} + ')'"></span></a>
+                <a th:href="@{/accountant/loans(status=REJECTED)}" th:class="${filterStatus == 'REJECTED'} ? 'ftab f-rejected active' : 'ftab f-rejected'">Rejected</a>
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-head">
+                <div class="panel-title">Loan Applications</div>
+                <div class="panel-sub" th:text="${#lists.size(loans)} + ' records'">0</div>
+            </div>
+            <div style="overflow-x:auto">
+                <table class="tbl">
+                    <thead><tr><th>Member</th><th>Score</th><th>Amount (ZMW)</th><th>Rate</th><th>Monthly (ZMW)</th><th>Balance</th><th>Term</th><th>Purpose</th><th>Status</th><th>Applied</th><th>Action / Notes</th></tr></thead>
+                    <tbody>
+                    <tr th:each="loan : ${loans}" th:if="${loan != null}">
+                        <td><div class="d-name" th:text="${loan.member.name}">Name</div><div class="d-id" th:text="${loan.member.memberNumber}">MEM</div></td>
+                        <td>
+                            <div th:if="${loan.creditScore != null}" style="text-align:center">
+                                <div th:style="'display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:50%;font-weight:800;font-size:13px;border:2px solid ' + (${loan.creditScore >= 5} ? '#16a34a' : '#ef4444') + ';color:' + (${loan.creditScore >= 5} ? '#16a34a' : '#ef4444')"
+                                     th:text="${loan.creditScore} + '/10'">0</div>
+                                <div style="font-size:9px;font-weight:700;margin-top:2px"
+                                     th:style="'color:' + (${loan.creditScore >= 5} ? '#16a34a' : '#ef4444')"
+                                     th:text="${loan.scoreQualifyingDays != null ? loan.scoreQualifyingDays + ' days' : ''}">-</div>
+                            </div>
+                            <span th:if="${loan.creditScore == null}" style="color:#9ca3af;font-size:11px"></span>
+                        </td>
+                        <td><span class="d-amount" th:text="${#numbers.formatDecimal(loan.amount,1,2)}">0.00</span></td>
+                        <td><span class="d-mono" th:text="${#numbers.formatDecimal(loan.monthlyInstalment,1,2)}">0.00</span></td>
+                        <td><span class="d-mono" th:text="${#numbers.formatDecimal(loan.remainingBalance,1,2)}">0.00</span></td>
+                        <td><span class="d-muted" th:text="${loan.repaymentMonths} + ' mo'">0</span></td>
+                        <td><div style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px;color:var(--ink2)" th:text="${loan.purpose}">Purpose</div></td>
+                        <td>
+                            <span class="badge badge-pending"  th:if="${loan.status == 'PENDING'}">Pending</span>
+                            <span class="badge badge-approved" th:if="${loan.status == 'APPROVED'}">Approved</span>
+                            <span class="badge badge-rejected" th:if="${loan.status == 'REJECTED'}">Rejected</span>
+                        </td>
+                        <td><span class="d-muted" th:text="${loan.requestDate.format(T(java.time.format.DateTimeFormatter).ofPattern('dd MMM yyyy'))}">Date</span></td>
+                        <td>
+                            <!-- System decision is final  read only -->
+                            <div th:if="${loan.status == 'APPROVED'}">
+                                    <span style="background:#dcfce7;color:#166534;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;display:inline-flex;align-items:center;gap:4px">
+                                        <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                                        System Approved
+                                    </span>
+                                <div style="font-size:11px;color:var(--muted);margin-top:4px"
+                                     th:text="${loan.approvedDate != null ? loan.approvedDate.format(T(java.time.format.DateTimeFormatter).ofPattern('dd MMM yyyy')) : ''}">-</div>
+                            </div>
+                            <div th:if="${loan.status == 'REJECTED'}">
+                                    <span style="background:#fee2e2;color:#991b1b;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;display:inline-flex;align-items:center;gap:4px">
+                                        <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                        System Rejected
+                                    </span>
+                            </div>
+                            <span th:if="${loan.status == 'PENDING'}"
+                                  style="font-size:12px;color:var(--amber)">Scoring...</span>
+                        </td>
+                        <!-- Schedule toggle button -->
+                        <td th:if="${loan.status == 'APPROVED' or loan.status == 'DISBURSED' or loan.disbursementStatus == 'DISBURSED'}">
+                            <button type="button"
+                                    th:data-id="${loan.id}"
+                                    onclick="toggleSchedule(this.dataset.id)"
+                                    style="background:#f0fdf4;color:#00a358;border:1px solid #bbf7d0;padding:5px 10px;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:4px">
+                                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                                Schedule
+                            </button>
+                        </td>
+                    </tr>
+                    <!-- Amortization schedule collapsible row -->
+                    <tr th:if="${loan != null and (loan.status == 'APPROVED' or loan.status == 'DISBURSED' or loan.disbursementStatus == 'DISBURSED')}"
+                        th:id="'sched-' + ${loan.id}" style="display:none">
+                        <td colspan="10" style="padding:0;background:#f8fafc;border-bottom:2px solid var(--border)">
+                            <div style="padding:18px 24px">
+                                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+                                    <div>
+                                        <div style="font-family:'Playfair Display',serif;font-size:16px;color:var(--ink)">Repayment Schedule — <em style="color:var(--green-dim)" th:text="${loan.member.name}">Member</em></div>
+                                        <div style="font-size:12px;color:var(--muted);margin-top:2px">
+                                            Monthly instalment: <strong style="font-family:'JetBrains Mono',monospace" th:text="'ZMW ' + ${#numbers.formatDecimal(loan.monthlyInstalment,1,'COMMA',2,'POINT')}">ZMW 0</strong>
+                                            · Remaining balance: <strong style="font-family:'JetBrains Mono',monospace;color:var(--green-dim)" th:text="'ZMW ' + ${#numbers.formatDecimal(loan.remainingBalance,1,'COMMA',2,'POINT')}">ZMW 0</strong>
+                                        </div>
+                                    </div>
+                                    <div th:if="${loan.remainingBalance.compareTo(T(java.math.BigDecimal).ZERO) == 0}"
+                                         style="background:#dcfce7;color:#166534;font-size:12px;font-weight:700;padding:5px 14px;border-radius:20px;border:1px solid #bbf7d0">
+                                        ✓ Fully Repaid
+                                    </div>
+                                    <div th:if="${loan.remainingBalance.compareTo(T(java.math.BigDecimal).ZERO) > 0}"
+                                         style="background:#fff7ed;color:#c2410c;font-size:12px;font-weight:700;padding:5px 14px;border-radius:20px;border:1px solid #fed7aa"
+                                         th:text="'ZMW ' + ${#numbers.formatDecimal(loan.remainingBalance,1,'COMMA',2,'POINT')} + ' outstanding'">outstanding</div>
+                                </div>
+
+                                <!-- Repayment history -->
+                                <div th:with="repayments=${repaymentMap.get(loan.id)}">
+                                    <table style="width:100%;border-collapse:collapse;font-size:12.5px" th:if="${repayments != null and !#lists.isEmpty(repayments)}">
+                                        <thead>
+                                        <tr>
+                                            <th style="background:#f0fdf4;color:#15803d;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:9px 14px;border-bottom:1.5px solid #bbf7d0;text-align:left">#</th>
+                                            <th style="background:#f0fdf4;color:#15803d;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:9px 14px;border-bottom:1.5px solid #bbf7d0;text-align:left">Period</th>
+                                            <th style="background:#f0fdf4;color:#15803d;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:9px 14px;border-bottom:1.5px solid #bbf7d0;text-align:left">Instalment Paid</th>
+                                            <th style="background:#f0fdf4;color:#15803d;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:9px 14px;border-bottom:1.5px solid #bbf7d0;text-align:left">Balance After</th>
+                                            <th style="background:#f0fdf4;color:#15803d;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:9px 14px;border-bottom:1.5px solid #bbf7d0;text-align:left">Date</th>
+                                            <th style="background:#f0fdf4;color:#15803d;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:9px 14px;border-bottom:1.5px solid #bbf7d0;text-align:left">Status</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        <tr th:each="rep, iStat : ${repayments}" style="border-bottom:1px solid #f0fdf4">
+                                            <td style="padding:9px 14px;color:var(--muted)" th:text="${iStat.count}">1</td>
+                                            <td style="padding:9px 14px;font-weight:600" th:text="${rep.periodMonth + '/' + rep.periodYear}">01/2026</td>
+                                            <td style="padding:9px 14px;font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--ink)"
+                                                th:text="'ZMW ' + ${#numbers.formatDecimal(rep.repaymentAmount,1,'COMMA',2,'POINT')}">ZMW 0</td>
+                                            <td style="padding:9px 14px;font-family:'JetBrains Mono',monospace;font-weight:700"
+                                                th:style="${rep.balanceAfter.compareTo(T(java.math.BigDecimal).ZERO) == 0} ? 'padding:9px 14px;font-family:JetBrains Mono,monospace;font-weight:700;color:#15803d' : 'padding:9px 14px;font-family:JetBrains Mono,monospace;font-weight:700;color:var(--ink)'"
+                                                th:text="'ZMW ' + ${#numbers.formatDecimal(rep.balanceAfter,1,'COMMA',2,'POINT')}">ZMW 0</td>
+                                            <td style="padding:9px 14px;color:var(--muted)"
+                                                th:text="${rep.repaymentDate != null ? rep.repaymentDate.format(T(java.time.format.DateTimeFormatter).ofPattern('dd MMM yyyy')) : '-'}">—</td>
+                                            <td style="padding:9px 14px">
+                                                <span style="background:#dcfce7;color:#166534;font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px" th:if="${rep.status == 'PAID'}">✓ Paid</span>
+                                            </td>
+                                        </tr>
+                                        </tbody>
+                                    </table>
+                                    <div th:if="${repayments == null or #lists.isEmpty(repayments)}"
+                                         style="background:#fff;border:1px dashed #bbf7d0;border-radius:10px;padding:24px;text-align:center;color:var(--muted);font-size:13px">
+                                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#bbf7d0" stroke-width="1.5" style="display:block;margin:0 auto 8px"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                                        No repayments recorded yet. Instalments will appear here each month after milk payments are processed.
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr th:if="${loans == null or #lists.isEmpty(loans)}"><td colspan="9" class="empty-state"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" stroke-width="1.5" style="display:block;margin:0 auto 12px"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>No loans found</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="modal-overlay" id="rejectModal">
+            <div class="modal-box">
+                <div class="modal-icon-wrap">
+                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#f43f5e" stroke-width="2.5">
+                        <circle cx="12" cy="12" r="10"/>
+                        <line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
+                    </svg>
+                </div>
+                <div class="modal-heading">Reject Loan Application</div>
+                <div class="modal-desc">The rejection reason will be displayed to the member on their portal, helping them understand the decision and what steps they may take next.</div>
+                <form id="rejectForm" method="post">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                    <div style="margin-bottom:24px">
+                        <label class="flbl" for="reason">Rejection Reason <span class="req">*</span></label>
+                        <textarea id="reason" name="reason" class="finp" rows="3"
+                                  placeholder="e.g. Insufficient income basis, previous outstanding loan balance..."
+                                  required style="resize:none"></textarea>
+                    </div>
+                    <div style="display:flex;gap:12px;justify-content:flex-end">
+                        <button type="button" class="btn-outline" onclick="closeReject()">Cancel</button>
+                        <button type="submit" style="font-family:'Syne',sans-serif;background:var(--red);color:#fff;border:none;padding:12px 26px;border-radius:10px;font-size:13.5px;font-weight:700;cursor:pointer;transition:all .2s" onmouseover="this.style.background='#dc2626'" onmouseout="this.style.background='var(--red)'">
+                            Confirm Rejection
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script th:src="@{/webjars/bootstrap/dist/js/bootstrap.bundle.min.js}"></script>
+<script>
+    const _tbDate = document.getElementById('tbDate'); if(_tbDate) _tbDate.textContent =
+        new Date().toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'long',year:'numeric'});
+    function toggleSchedule(id) {
+        var row = document.getElementById('sched-' + id);
+        if (!row) return;
+        row.style.display = (row.style.display === 'none' || !row.style.display) ? 'table-row' : 'none';
+    }
+
+    function openReject(btn){
+        document.getElementById('rejectForm').action='/accountant/loans/'+btn.getAttribute('data-id')+'/reject';
+        document.getElementById('rejectModal').classList.add('open');
+    }
+    function closeReject(){document.getElementById('rejectModal').classList.remove('open')}
+</script>
+</div>
+</body>
+</html>

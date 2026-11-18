@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>My Cows - DairyCoop</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css"/>
+    <link rel="stylesheet" th:href="@{/css/member-portal.css}"/>
+    <link href="https://fonts.googleapis.com/css2?family=Cabinet+Grotesk:wght@400;500;600;700;800&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+    <style>
+        :root{
+            --forest:#0a1f0e;
+            --forest2:#132b18;
+            --green:#1a6b2e;
+            --green-mid:#2d8a42;
+            --lime:#b8f566;
+            --cream:#f7f5f0;
+            --cream2:#eeece6;
+            --ink:#0f1a10;
+            --ink2:#2d3a2e;
+            --muted:#6b7a6c;
+            --border:#ddd9cf;
+            --white:#ffffff;
+        }
+
+        /*  SIDEBAR  */
+                                .sb-logo-icon svg{stroke:var(--forest)}
+
+        /*  MAIN  */
+
+        /* Page header */
+        .page-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:32px}
+        .page-title{font-family:'Instrument Serif',serif;font-size:32px;color:var(--ink);margin-bottom:8px}
+        .page-sub{font-size:14px;color:var(--muted)}
+        .stats-row{display:flex;gap:12px;align-items:center}
+        .stat-badge{font-family:'JetBrains Mono',monospace;font-size:11px;background:var(--white);border:1px solid var(--border);padding:6px 14px;border-radius:20px;font-weight:600}
+        .stat-badge strong{color:var(--green)}
+
+        /* Cow cards grid */
+        .cows-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:20px}
+        .cow-card{background:var(--white);border:1px solid var(--border);border-radius:16px;overflow:hidden;transition:all .2s}
+        .cow-card:hover{border-color:var(--green-mid);box-shadow:0 4px 20px rgba(26,107,46,.1);transform:translateY(-2px)}
+        .cow-card.inactive{opacity:.7}
+
+        .cow-image{width:100%;height:220px;background:linear-gradient(135deg,var(--cream2),var(--cream));display:flex;align-items:center;justify-content:center;font-size:80px;position:relative;overflow:hidden}
+        .cow-image img{width:100%;height:100%;object-fit:cover}
+        .cow-image::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 30% 30%,rgba(184,245,102,.08),transparent 70%)}
+
+        .cow-        .cow-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px}
+        .cow-tag{font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:700;color:var(--ink)}
+        .cow-status{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;text-transform:uppercase;letter-spacing:.04em}
+        .cow-status.active{background:#f0fdf4;color:#166534;border:1px solid #bbf7d0}
+        .cow-status.inactive,.cow-status.retired,.cow-status.deceased{background:#f3f4f6;color:#6b7280;border:1px solid #e5e7eb}
+
+        .cow-name{font-family:'Instrument Serif',serif;font-size:22px;color:var(--ink);margin-bottom:12px}
+
+        .cow-details{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:16px 0;border-top:1px solid var(--cream2);border-bottom:1px solid var(--cream2)}
+        .detail-item{display:flex;flex-direction:column;gap:4px}
+        .detail-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+        .detail-value{font-size:14px;font-weight:600;color:var(--ink)}
+
+        .cow-notes{margin-top:14px;padding:12px;background:var(--cream2);border-radius:8px;font-size:13px;color:var(--ink2);line-height:1.5}
+        .cow-notes strong{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:4px}
+
+        .cow-footer{margin-top:14px;display:flex;align-items:center;justify-content:space-between}
+        .assigned-date{font-size:11px;color:var(--muted)}
+        .assigned-date svg{vertical-align:middle;margin-right:4px}
+        .revoked-badge{font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;background:#fef2f2;color:#dc2626;border:1px solid #fecaca}
+
+        /* Empty state */
+        .empty-state{text-align:center;padding:80px 20px;color:var(--muted)}
+        .empty-state svg{display:block;margin:0 auto 20px}
+        .empty-state h3{font-size:20px;margin-bottom:8px;color:var(--ink2)}
+    </style>
+</head>
+<body>
+
+<div th:replace="~{fragments/member-nav :: nav(active='cows')}"></div>
+
+<!-- MAIN -->
+<div class="main">
+    <div class="topbar">
+        <div class="tb-greeting">My Cows</div>
+        <div class="tb-date" id="tbDate"></div>
+    </div>
+    <div class="content">
+        <div class="page-header">
+            <div>
+                <div class="page-title">🐂 My Cows</div>
+                <div class="page-sub">View all cows assigned to you by the cooperative</div>
+            </div>
+            <div class="stats-row">
+                <div class="stat-badge">
+                    <strong th:text="${activeCount}">0</strong> Active
+                </div>
+                <div class="stat-badge">
+                    <strong th:text="${totalCount}">0</strong> Total
+                </div>
+            </div>
+        </div>
+
+        <!-- Empty state when no cows assigned -->
+        <div th:if="${cowAssignments == null or #lists.isEmpty(cowAssignments)}" class="empty-state">
+            <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M12 1v6m0 6v6m5.3-13.3l-4.2 4.2m-2.2 2.2l-4.2 4.2m0-13.3l4.2 4.2m2.2 2.2l4.2 4.2"/>
+            </svg>
+            <h3>No Cows Assigned Yet</h3>
+            <p>You don't have any cows assigned to you at the moment.<br/>Contact the cooperative administrator for more information.</p>
+        </div>
+
+        <!-- Cows Grid - Dynamic -->
+        <div th:if="${cowAssignments != null and not #lists.isEmpty(cowAssignments)}" class="cows-grid">
+            <!-- Loop through each cow assignment -->
+            <div th:each="assignment : ${cowAssignments}"
+                 class="cow-card"
+                 th:classappend="${!assignment.active ? 'inactive' : ''}">
+
+                <!-- Cow Image/Portrait -->
+                <div class="cow-image">
+                    <img th:if="${assignment.cow.portrait != null and !#strings.isEmpty(assignment.cow.portrait)}"
+                         th:src="${assignment.cow.portrait}"
+                         alt="Cow portrait"/>
+                    <span th:if="${assignment.cow.portrait == null or #strings.isEmpty(assignment.cow.portrait)}">🐂</span>
+                </div>
+
+                <div class="cow-body">
+                    <!-- Header: Tag Number + Status -->
+                    <div class="cow-header">
+                        <div class="cow-tag" th:text="${assignment.cow.tagNumber}">TAG-2026-0001</div>
+                        <span class="cow-status"
+                              th:classappend="${assignment.cow.status == 'ACTIVE' ? 'active' : 'inactive'}">
+                            <svg width="6" height="6" viewBox="0 0 8 8" fill="currentColor"><circle cx="4" cy="4" r="4"/></svg>
+                            <span th:text="${assignment.cow.status}">ACTIVE</span>
+                        </span>
+                    </div>
+
+                    <!-- Cow Name -->
+                    <div class="cow-name" th:text="${assignment.cow.name != null ? assignment.cow.name : 'Unnamed'}">Cow Name</div>
+
+                    <!-- Cow Details Grid -->
+                    <div class="cow-details">
+                        <div class="detail-item">
+                            <div class="detail-label">Breed</div>
+                            <div class="detail-value" th:text="${assignment.cow.breed != null ? assignment.cow.breed : 'Not specified'}">Not specified</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Gender</div>
+                            <div class="detail-value" th:text="${assignment.cow.gender != null ? assignment.cow.gender : 'Not specified'}">Not specified</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Purchase Date</div>
+                            <div class="detail-value" th:text="${assignment.cow.purchaseDate != null ? #temporals.format(assignment.cow.purchaseDate, 'dd MMM yyyy') : 'Not recorded'}">Not recorded</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Acquisition Date</div>
+                            <div class="detail-value" th:text="${assignment.cow.acquisitionDate != null ? #temporals.format(assignment.cow.acquisitionDate, 'dd MMM yyyy') : 'Not recorded'}">Not recorded</div>
+                        </div>
+                    </div>
+
+                    <!-- Cow Notes (if any) -->
+                    <div th:if="${assignment.cow.notes != null and !#strings.isEmpty(assignment.cow.notes)}" class="cow-notes">
+                        <strong>Notes</strong>
+                        <span th:text="${assignment.cow.notes}">Notes about the cow</span>
+                    </div>
+
+                    <!-- Footer: Assignment Info -->
+                    <div class="cow-footer">
+                        <div class="assigned-date">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            Assigned <span th:text="${#temporals.format(assignment.assignedAt, 'dd MMM yyyy')}">03 May 2026</span>
+                        </div>
+                        <div th:if="${!assignment.active}" class="revoked-badge">
+                            Revoked <span th:if="${assignment.revokedAt != null}" th:text="${#temporals.format(assignment.revokedAt, 'dd MMM yyyy')}"></span>
+                        </div>
+                    </div>
+
+                    <!-- Revoke Reason (if revoked) -->
+                    <div th:if="${!assignment.active and assignment.revokeReason != null}" class="cow-notes" style="margin-top:8px;background:#fef2f2;border:1px solid #fecaca">
+                        <strong style="color:#dc2626">Revocation Reason</strong>
+                        <span th:text="${assignment.revokeReason}" style="color:#7f1d1d">Reason</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('tbDate').textContent =
+        new Date().toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
+</script>
+</body>
+</html>

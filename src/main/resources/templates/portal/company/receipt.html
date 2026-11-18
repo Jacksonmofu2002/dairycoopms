@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title th:text="'Receipt ' + ${inquiry.receiptNo}">Receipt</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:'Courier New','Roboto Mono',monospace;background:#e8e8e8;min-height:100vh;padding:24px 16px;display:flex;flex-direction:column;align-items:center}
+        .action-bar{width:100%;max-width:440px;display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px}
+        .btn-back{display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid #ccc;color:#333;padding:8px 16px;border-radius:6px;font-size:12px;font-weight:600;text-decoration:none;font-family:'Courier New',monospace;cursor:pointer}
+        .btn-back:hover{background:#f5f5f5}
+        .btn-print{background:#000;color:#fff;border:none;padding:8px 16px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Courier New',monospace;text-transform:uppercase;letter-spacing:.04em}
+        .btn-print:hover{background:#333}
+        .receipt{width:100%;max-width:400px;background:#fff;border:2px dashed #000;box-shadow:0 8px 32px rgba(0,0,0,.15)}
+        .rec-head{border-bottom:2px solid #000;padding:20px;text-align:center}
+        .store-name{font-size:18px;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px}
+        .store-sub{font-size:11px;color:#555;margin-bottom:12px;letter-spacing:.5px}
+        .divider{border-top:1px dashed #000;margin:10px 0}
+        .rec-title{font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+        .rec-badge{display:inline-block;background:#000;color:#fff;padding:5px 12px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px}
+        .rec-no{font-size:11px;margin-top:6px}
+        .rec-body{padding:20px}
+        .sec-head{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin:16px 0 10px;padding-bottom:6px;border-bottom:2px solid #000}
+        .rec-row{display:flex;justify-content:space-between;font-size:12px;padding:6px 0;border-bottom:1px solid #f0f0f0}
+        .rlbl{color:#333;font-weight:500;text-transform:uppercase;font-size:11px;letter-spacing:.3px}
+        .rval{text-align:right;font-weight:600;font-family:'Courier New',monospace}
+        .rval.mono{font-size:11px;letter-spacing:.5px}
+        .co-box{margin:14px 0;padding:12px;background:#f9f9f9;border:1px solid #ddd;font-size:12px;line-height:1.5}
+        .co-name{font-weight:700;text-transform:uppercase;margin-bottom:4px}
+        .co-det{font-size:11px;color:#555}
+        .item-line{display:flex;justify-content:space-between;font-size:12px;padding:8px 0;border-bottom:1px solid #f0f0f0}
+        .item-desc{flex:1;font-weight:600}
+        .item-qty{text-align:center;width:60px;font-size:11px}
+        .totals{margin-top:16px;padding-top:12px;border-top:2px solid #000;border-bottom:2px double #000}
+        .tot-row{display:flex;justify-content:space-between;font-size:16px;font-weight:700;padding:12px 0}
+        .tot-lbl{text-transform:uppercase;letter-spacing:.5px}
+        .stamp-wrap{text-align:center;margin:16px 0}
+        .stamp{display:inline-block;border:2px solid #000;padding:8px 20px;font-weight:700;text-transform:uppercase;font-size:12px;letter-spacing:1px;transform:rotate(-8deg)}
+        .rec-foot{text-align:center;padding:16px;font-size:11px;color:#666;line-height:1.6;border-top:1px dashed #000}
+        .ty{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+        .rec-ref{font-size:10px;letter-spacing:.5px;margin-top:8px;color:#333}
+        .ts{font-size:10px;color:#666;margin-top:4px}
+        .print-wrap{text-align:center;margin-top:20px;width:100%;max-width:400px}
+        .btn-print-lg{background:#000;color:#fff;border:none;padding:10px 28px;font-size:12px;font-weight:700;cursor:pointer;text-transform:uppercase;letter-spacing:.5px;font-family:'Courier New',monospace}
+        .btn-print-lg:hover{background:#333}
+        @media print{
+            body{background:#fff;padding:0}
+            .action-bar,.print-wrap{display:none!important}
+            .receipt{box-shadow:none;width:400px;margin:0 auto}
+        }
+    </style>
+</head>
+<body>
+
+<div class="action-bar">
+    <a class="btn-back" th:href="@{/portal/company/{id}(id=${company.id})}">← Back to Dashboard</a>
+    <button class="btn-print" onclick="window.print()">🖨 Print</button>
+</div>
+
+<div class="receipt">
+    <div class="rec-head">
+        <div class="store-name">DAIRYCOOP</div>
+        <div class="store-sub">Dairy Cooperative Management System</div>
+        <div class="divider"></div>
+        <div class="rec-title">Payment Receipt</div>
+        <div class="rec-badge">✓ PAID</div>
+        <div class="divider"></div>
+        <div class="rec-no" th:text="'Receipt: ' + ${inquiry.receiptNo}">RCP-2026-0001</div>
+    </div>
+
+    <div class="rec-body">
+        <div class="sec-head">Transaction Details</div>
+        <div class="rec-row">
+            <span class="rlbl">Date</span>
+            <span class="rval" th:text="${inquiry.paidAt.format(T(java.time.format.DateTimeFormatter).ofPattern('dd/MM/yyyy'))}">04/05/2026</span>
+        </div>
+        <div class="rec-row">
+            <span class="rlbl">Time</span>
+            <span class="rval" th:text="${inquiry.paidAt.format(T(java.time.format.DateTimeFormatter).ofPattern('HH:mm:ss'))}">14:30:00</span>
+        </div>
+        <div class="rec-row">
+            <span class="rlbl">Invoice Ref</span>
+            <span class="rval mono" th:text="${inquiry.invoiceNo}">INV-2026-0001</span>
+        </div>
+        <div class="rec-row">
+            <span class="rlbl">Inquiry Ref</span>
+            <span class="rval mono" th:text="${inquiry.referenceNo}">INQ-2026-0001</span>
+        </div>
+
+        <div class="sec-head">Buyer Information</div>
+        <div class="co-box">
+            <div class="co-name" th:text="${inquiry.companyName}">Company</div>
+            <div class="co-det" th:text="${inquiry.contactPerson}">Contact</div>
+            <div class="co-det" th:text="${inquiry.email}">email</div>
+            <div class="co-det" th:text="${inquiry.phone}">phone</div>
+        </div>
+
+        <div class="sec-head">Item Details</div>
+        <div class="item-line">
+            <span class="item-desc">Fresh Milk Supply</span>
+            <span class="item-qty" th:text="${#numbers.formatDecimal(inquiry.requestedLitres,1,'COMMA',2,'POINT')} + 'L'">300.00L</span>
+        </div>
+        <div class="rec-row">
+            <span class="rlbl">Unit Price</span>
+            <span class="rval">ZMW <span th:text="${#numbers.formatDecimal(inquiry.pricePerLitre,1,'COMMA',4,'POINT')}">20.0000</span>/L</span>
+        </div>
+
+        <div class="totals">
+            <div class="tot-row">
+                <span class="tot-lbl">Total Amount</span>
+                <span style="font-family:'Courier New',monospace">ZMW <span th:text="${#numbers.formatDecimal(inquiry.totalAmount,1,'COMMA',2,'POINT')}">6,000.00</span></span>
+            </div>
+        </div>
+
+        <div class="stamp-wrap">
+            <div class="stamp">✓ PAID IN FULL</div>
+        </div>
+
+        <!-- Accountant signature (only shown if document was signed) -->
+        <div th:if="${inquiry.signed and signerName != null}"
+             style="text-align:center;padding:14px 0 6px;border-top:1px dashed #000;margin-top:12px">
+            <img th:if="${signerSignature != null}"
+                 th:src="${signerSignature}"
+                 style="max-height:55px;max-width:180px;display:block;margin:0 auto 6px"
+                 alt="Signature"/>
+            <div style="display:inline-block;border-top:1px solid #000;padding-top:4px;min-width:160px;font-size:10px;color:#555"
+                 th:text="${signerName}">Accountant</div>
+            <div style="font-size:9px;color:#888;margin-top:2px">Authorised Signature</div>
+        </div>
+
+        <div class="rec-foot">
+            <div class="ty">Thank You</div>
+            <p>Payment received and credited to<br/>Cooperative Fund Account (COFA)</p>
+            <div class="rec-ref" th:text="'Ref: ' + ${inquiry.receiptNo}">Ref: RCP-001</div>
+            <div class="ts" th:text="${inquiry.paidAt.format(T(java.time.format.DateTimeFormatter).ofPattern('dd MMM yyyy HH:mm'))}">04 May 2026 14:30</div>
+            <p style="margin-top:12px;font-size:9px">---------- End of Receipt ----------</p>
+        </div>
+    </div>
+</div>
+
+<div class="print-wrap">
+    <button class="btn-print-lg" onclick="window.print()">🖨️ PRINT RECEIPT</button>
+</div>
+
+</body>
+</html>

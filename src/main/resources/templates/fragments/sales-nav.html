@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<!--
+  Shared sales navigation fragment.
+  Include from any sales page with:
+
+      <div th:replace="~{fragments/sales-nav :: nav(active='dashboard')}"></div>
+
+  Valid 'active' values (must match one exactly, or pass '' for none):
+      dashboard | inquiries | purchase-orders | delivered
+      | orders | invoices | payments | companies
+
+  Badge counts (all populated by SalesController.addNavigationCounts(),
+  which runs before every /sales/** request — no extra wiring needed
+  on individual routes): pendingInquiries, submittedPOCount,
+  awaitingInvoiceCount, unsentInvoiceCount, awaitingPaymentCount.
+
+  Each page that includes this must have the matching .topnav /
+  .nav-link / etc. CSS in its own <style> block (same rules,
+  copy-pasted identically across all 12 sales pages).
+-->
+<nav th:fragment="nav(active)" class="topnav">
+    <a class="nav-brand" th:href="@{/sales/dashboard}">
+        <div class="nav-logo">DC</div>
+        <div class="nav-title">DairyCoop <span>Sales</span></div>
+    </a>
+
+    <div class="nav-links">
+        <a th:href="@{/sales/dashboard}" class="nav-link" th:classappend="${active == 'dashboard'} ? ' active' : ''">
+            <i class="bi bi-grid-1x2"></i>Dashboard
+        </a>
+        <a th:href="@{/sales/inquiries}" class="nav-link" th:classappend="${active == 'inquiries'} ? ' active' : ''">
+            <i class="bi bi-envelope-open"></i>Inquiries
+            <span id="nav-badge-pendingInquiries" class="nav-badge" th:if="${pendingInquiries != null and pendingInquiries > 0}" th:text="${pendingInquiries}">3</span>
+        </a>
+        <a th:href="@{/sales/purchase-orders}" class="nav-link" th:classappend="${active == 'purchase-orders'} ? ' active' : ''">
+            <i class="bi bi-file-earmark-check"></i>Purchase Orders
+            <span id="nav-badge-submittedPOCount" class="nav-badge" th:if="${submittedPOCount != null and submittedPOCount > 0}" th:text="${submittedPOCount}">2</span>
+        </a>
+        <a th:href="@{/sales/delivered}" class="nav-link" th:classappend="${active == 'delivered'} ? ' active' : ''">
+            <i class="bi bi-truck"></i>Delivered
+            <span id="nav-badge-awaitingInvoiceCount" class="nav-badge" th:if="${awaitingInvoiceCount != null and awaitingInvoiceCount > 0}" th:text="${awaitingInvoiceCount}">1</span>
+        </a>
+        <a th:href="@{/sales/orders}" class="nav-link" th:classappend="${active == 'orders'} ? ' active' : ''">
+            <i class="bi bi-receipt"></i>Orders
+        </a>
+        <a th:href="@{/sales/invoices}" class="nav-link" th:classappend="${active == 'invoices'} ? ' active' : ''">
+            <i class="bi bi-file-earmark-text"></i>Invoices
+            <span id="nav-badge-unsentInvoiceCount" class="nav-badge" th:if="${unsentInvoiceCount != null and unsentInvoiceCount > 0}" th:text="${unsentInvoiceCount}">1</span>
+        </a>
+        <a th:href="@{/sales/payments}" class="nav-link" th:classappend="${active == 'payments'} ? ' active' : ''">
+            <i class="bi bi-cash-stack"></i>Payments
+            <span id="nav-badge-awaitingPaymentCount" class="nav-badge" th:if="${awaitingPaymentCount != null and awaitingPaymentCount > 0}" th:text="${awaitingPaymentCount}">3</span>
+        </a>
+        <a th:href="@{/sales/companies}" class="nav-link" th:classappend="${active == 'companies'} ? ' active' : ''">
+            <i class="bi bi-building"></i>Companies
+        </a>
+    </div>
+
+    <div class="nav-right">
+        <div class="nav-user" th:with="displayName=${currentUserName != null and !#strings.isEmpty(currentUserName) ? currentUserName : #authentication.name}">
+            <div class="nav-avatar"><span th:text="${#strings.substring(displayName,0,1).toUpperCase()}">S</span></div>
+            <span class="nav-uname" th:text="${displayName}" th:title="${#authentication.name}">Sales Officer</span>
+        </div>
+        <form th:action="@{/logout}" method="post" style="margin:0">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            <button type="submit" class="btn-logout"><i class="bi bi-box-arrow-right"></i>Logout</button>
+        </form>
+    </div>
+
+    <script th:src="@{/js/ajax-actions.js}"></script>
+    <script th:src="@{/js/processing-feedback.js}"></script>
+</nav>
+
+</body>
+</html>

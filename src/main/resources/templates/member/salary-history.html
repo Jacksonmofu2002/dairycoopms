@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Salary &amp; Payment History - DairyCoop Member Portal</title>
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap/dist/css/bootstrap.min.css}"/>
+    <link rel="stylesheet" th:href="@{/css/member-portal.css}"/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+    <style>
+        :root{
+            --forest:#0a1f0e; --forest2:#132b18;
+            --green:#1a6b2e;  --green-mid:#2d8a42;
+            --lime:#b8f566;
+            --cream:#f7f5f0;  --cream2:#eeece6;
+            --ink:#0f1a10;    --ink2:#2d3a2e;
+            --muted:#6b7a6c;  --border:#ddd9cf;
+            --white:#ffffff;
+        }
+
+        /* SIDEBAR */
+
+        /* MAIN */
+
+        /* PAGE HEADER */
+        .pg-eyebrow{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.16em;color:var(--green);margin-bottom:6px}
+        .pg-title{font-family:'Instrument Serif',serif;font-size:30px;color:var(--ink);margin-bottom:4px}
+        .pg-title em{color:var(--green-mid)}
+        .pg-sub{font-size:13px;color:var(--muted);margin-bottom:28px}
+
+        /* SUMMARY STRIP */
+        .sum-strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px;margin-bottom:28px}
+        .sum-card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:18px 20px;position:relative;overflow:hidden}
+        .sum-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+        .sum-card.green::before{background:linear-gradient(90deg,#1a6b2e,#2d8a42)}
+        .sum-card.amber::before{background:linear-gradient(90deg,#d97706,#fbbf24)}
+        .sum-card.red::before{background:linear-gradient(90deg,#dc2626,#ef4444)}
+        .sum-card.blue::before{background:linear-gradient(90deg,#2563eb,#60a5fa)}
+        .sum-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);margin-bottom:7px}
+        .sum-num{font-size:22px;font-weight:800;color:var(--ink);font-family:'JetBrains Mono',monospace}
+        .sum-card.green .sum-num{color:#1a6b2e}
+        .sum-card.amber .sum-num{color:#d97706}
+        .sum-card.red .sum-num{color:#dc2626}
+        .sum-card.blue .sum-num{color:#2563eb}
+        .sum-sub{font-size:11px;color:var(--muted);margin-top:3px}
+
+        /* PAYMENT RECORD CARD */
+        .pay-record{background:#fff;border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:16px;transition:box-shadow .18s}
+        .pay-record:hover{box-shadow:0 4px 16px rgba(0,0,0,.07)}
+        .pay-head{padding:14px 20px;display:flex;align-items:center;gap:14px;border-bottom:1px solid #f1f5f4;background:#fafaf8;flex-wrap:wrap}
+        .pay-period{background:#f0f8f1;border:1px solid #c6e6c9;border-radius:8px;padding:7px 12px}
+        .pay-period-month{font-family:'Instrument Serif',serif;font-size:16px;color:var(--ink);line-height:1}
+        .pay-period-label{font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-top:2px;font-weight:700}
+        .pay-status-paid{display:inline-flex;align-items:center;gap:5px;background:#f0fdf4;border:1px solid #bbf7d0;color:#166534;font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px}
+        .pay-status-unpaid{display:inline-flex;align-items:center;gap:5px;background:#fef9c3;border:1px solid #fde68a;color:#92400e;font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px}
+        .pay-ref{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);margin-left:auto}
+        .pay-
+        /* SALARY BREAKDOWN LEDGER */
+        .ledger{border:1px solid var(--border);border-radius:10px;overflow:hidden}
+        .ledger-row{display:flex;align-items:center;justify-content:space-between;padding:11px 16px;border-bottom:1px solid #f1f5f4}
+        .ledger-row:last-child{border-bottom:none}
+        .ledger-row.total-row{background:#f0f8f1;border-top:2px solid var(--border)}
+        .ledger-label{font-size:12.5px;font-weight:600;color:var(--ink)}
+        .ledger-sub{font-size:11px;color:var(--muted);margin-top:1px}
+        .ledger-amount{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:13px;color:var(--ink)}
+        .ledger-amount.gross{color:#1a6b2e}
+        .ledger-amount.deduction{color:#dc2626}
+        .ledger-amount.loan{color:#c2410c}
+        .ledger-amount.net{color:#166534;font-size:17px;font-weight:800}
+
+        /* LOAN BADGE */
+        .loan-repay-badge{display:inline-flex;align-items:center;gap:6px;background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:5px 10px;font-size:11px;color:#92400e;font-weight:600;margin-top:8px}
+        .cofa-badge{display:inline-flex;align-items:center;gap:5px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:7px;padding:3px 9px;font-size:10px;color:#1e40af;font-weight:700;margin-left:6px}
+
+        /* PAID DATE */
+        .paid-on{font-size:11.5px;color:var(--muted);display:flex;align-items:center;gap:6px;margin-top:12px}
+        .paid-by{font-size:11.5px;color:var(--muted);display:flex;align-items:center;gap:6px;margin-top:4px}
+
+        /* EMPTY STATE */
+        .empty-state{text-align:center;padding:60px 32px;color:var(--muted)}
+        .empty-icon{width:64px;height:64px;background:#f1f5f9;border-radius:16px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px}
+    </style>
+</head>
+<body>
+
+<div th:replace="~{fragments/member-nav :: nav(active='salary-history')}"></div>
+
+<div class="main">
+    <div class="topbar">
+        <div class="tb-title">Salary &amp; Payment History</div>
+        <div class="tb-date" id="tbDate"></div>
+    </div>
+    <div class="content">
+
+        <div class="pg-eyebrow">My Finance</div>
+        <div class="pg-title">Salary &amp; <em>Payment History</em></div>
+        <div class="pg-sub">All your milk payment records — gross earnings, deductions, loan repayments, and net payments.</div>
+
+        <!-- Summary strip -->
+        <div class="sum-strip">
+            <div class="sum-card green">
+                <div class="sum-label">Total Salary Paid</div>
+                <div class="sum-num" th:text="'ZMW ' + ${#numbers.formatDecimal(totalGross ?: 0, 1, 'COMMA', 2, 'POINT')}">ZMW 0.00</div>
+                <div class="sum-sub">ZMW 3,000 × paid periods</div>
+            </div>
+            <div class="sum-card red">
+                <div class="sum-label">Total Deductions</div>
+                <div class="sum-num" th:text="'ZMW ' + ${#numbers.formatDecimal(totalDeductions ?: 0, 1, 'COMMA', 2, 'POINT')}">ZMW 0.00</div>
+                <div class="sum-sub">Levy + loan repayments</div>
+            </div>
+            <div class="sum-card amber">
+                <div class="sum-label">Loan Repaid</div>
+                <div class="sum-num" th:text="'ZMW ' + ${#numbers.formatDecimal(totalLoanRepaid ?: 0, 1, 'COMMA', 2, 'POINT')}">ZMW 0.00</div>
+                <div class="sum-sub">Credited to COFA</div>
+            </div>
+            <div class="sum-card blue">
+                <div class="sum-label">Total Received</div>
+                <div class="sum-num" th:text="'ZMW ' + ${#numbers.formatDecimal(totalNet ?: 0, 1, 'COMMA', 2, 'POINT')}">ZMW 0.00</div>
+                <div class="sum-sub">Net take-home paid</div>
+            </div>
+        </div>
+
+        <!-- Payment records -->
+        <div th:if="${payments == null or payments.isEmpty()}" class="empty-state">
+            <div class="empty-icon">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="1.5">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                </svg>
+            </div>
+            <div style="font-size:16px;font-weight:700;color:var(--ink);margin-bottom:6px">No payment records yet</div>
+            <div style="font-size:13px">Milk payment records appear here once the accounts officer generates and processes them for each period.</div>
+        </div>
+
+        <div th:each="pay : ${payments}" class="pay-record">
+            <div class="pay-head">
+                <!-- Period badge -->
+                <div class="pay-period">
+                    <div class="pay-period-month"
+                         th:text="${monthNames[pay.month] + ' ' + pay.year}">Jan 2026</div>
+                    <div class="pay-period-label">Milk Period</div>
+                </div>
+                <!-- Status -->
+                <div class="pay-status-paid" th:if="${pay.status == 'PAID'}">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                    Paid
+                </div>
+                <div class="pay-status-unpaid" th:if="${pay.status == 'UNPAID'}">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    Awaiting Payment
+                </div>
+                <!-- Reference -->
+                <div class="pay-ref" th:if="${pay.referenceNo != null}" th:text="'Ref: ' + ${pay.referenceNo}">Ref</div>
+            </div>
+
+            <div class="pay-body">
+                <!-- Salary breakdown ledger -->
+                <div class="ledger">
+                    <!-- Gross / Fixed salary -->
+                    <div class="ledger-row">
+                        <div>
+                            <div class="ledger-label">Monthly Salary</div>
+                            <div class="ledger-sub">Fixed cooperative salary — ZMW 3,000 per month</div>
+                        </div>
+                        <div class="ledger-amount gross"
+                             th:text="'ZMW ' + ${#numbers.formatDecimal(pay.grossAmount, 1, 'COMMA', 2, 'POINT')}">ZMW 0.00</div>
+                    </div>
+
+                    <!-- Standard deductions (from deductionMap) -->
+                    <div class="ledger-row"
+                         th:if="${deductionMap[pay.id.toString()] != null and deductionMap[pay.id.toString()].stdTotal.compareTo(T(java.math.BigDecimal).ZERO) > 0}">
+                        <div>
+                            <div class="ledger-label">Cooperative Deductions</div>
+                            <div class="ledger-sub">Levy, insurance &amp; other standard charges</div>
+                        </div>
+                        <div class="ledger-amount deduction"
+                             th:text="'− ZMW ' + ${#numbers.formatDecimal(deductionMap[pay.id.toString()].stdTotal, 1, 'COMMA', 2, 'POINT')}">− ZMW 0.00</div>
+                    </div>
+
+                    <!-- Loan repayments (per loan) -->
+                    <div th:each="ded : ${deductionMap[pay.id.toString()]?.loanDeds}"
+                         class="ledger-row" style="background:#fffbeb">
+                        <div>
+                            <div class="ledger-label" style="color:#c2410c">Loan Repayment</div>
+                            <div class="ledger-sub">
+                                Monthly instalment deducted
+                                <span class="cofa-badge">→ COFA</span>
+                            </div>
+                            <div class="loan-repay-badge">
+                                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+                                Balance after: ZMW <span th:text="${#numbers.formatDecimal(ded.loan.remainingBalance, 1, 'COMMA', 2, 'POINT')}">0.00</span>
+                                of ZMW <span th:text="${#numbers.formatDecimal(ded.loan.amount, 1, 'COMMA', 2, 'POINT')}">0.00</span>
+                            </div>
+                        </div>
+                        <div class="ledger-amount loan"
+                             th:text="'− ZMW ' + ${#numbers.formatDecimal(ded.amount, 1, 'COMMA', 2, 'POINT')}">− ZMW 0.00</div>
+                    </div>
+
+                    <!-- Net total -->
+                    <div class="ledger-row total-row">
+                        <div>
+                            <div class="ledger-label" style="font-size:14px;font-weight:800;color:#1a6b2e">Net Payment to You</div>
+                            <div class="ledger-sub">Gross − all deductions</div>
+                        </div>
+                        <div class="ledger-amount net"
+                             th:text="'ZMW ' + ${#numbers.formatDecimal(pay.netAmount, 1, 'COMMA', 2, 'POINT')}">ZMW 0.00</div>
+                    </div>
+                </div>
+
+                <!-- Payment meta -->
+                <div class="paid-on" th:if="${pay.paidAt != null}">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    Paid on:
+                    <strong th:text="${pay.paidAt.format(T(java.time.format.DateTimeFormatter).ofPattern('dd MMM yyyy, HH:mm'))}">date</strong>
+                    <span th:if="${pay.paymentMethod != null}"
+                          style="background:#f1f5f9;padding:2px 8px;border-radius:6px;font-size:10px;font-weight:700;color:#475569"
+                          th:text="${pay.paymentMethod}">Method</span>
+                </div>
+                <div class="paid-by" th:if="${pay.processedBy != null}">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    Processed by: <strong th:text="${pay.processedBy.fullName}">Officer</strong>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    document.getElementById('tbDate').textContent = new Date().toLocaleDateString('en-GB',
+        {weekday:'short', day:'numeric', month:'long', year:'numeric'});
+</script>
+</body>
+</html>

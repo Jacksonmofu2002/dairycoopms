@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Review Inquiry - DairyCoop Sales</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        /* ── Shared Sales Topnav (keep identical on every sales/* page) ── */
+        .topnav{background:linear-gradient(135deg,#0f2747 0%,#1b3a63 100%);border-bottom:1px solid rgba(255,255,255,0.08);padding:0 22px;height:64px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 4px 20px rgba(15,39,71,0.45);gap:14px}
+        .nav-brand{display:flex;align-items:center;gap:10px;flex-shrink:0;text-decoration:none}
+        .nav-logo{width:38px;height:38px;background:linear-gradient(135deg,#3b82f6,#1d4ed8);border-radius:10px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:17px;flex-shrink:0}
+        .nav-title{font-size:17px;font-weight:700;color:#fff;white-space:nowrap}
+        .nav-title span{color:rgba(255,255,255,0.9)}
+        .nav-links{display:flex;align-items:center;gap:1px;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none;flex:1;min-width:0}
+        .nav-links::-webkit-scrollbar{display:none}
+        .nav-link{padding:8px 10px;border-radius:8px;color:rgba(255,255,255,0.85);text-decoration:none;font-size:12.5px;font-weight:500;display:flex;align-items:center;gap:5px;transition:all .2s;position:relative;white-space:nowrap;flex-shrink:0}
+        .nav-link:hover{background:rgba(255,255,255,0.15);color:#fff}
+        .nav-link.active{background:rgba(255,255,255,0.2);color:#fff}
+        .nav-link i{font-size:14px}
+        .nav-badge{position:absolute;top:3px;right:3px;background:#ef4444;color:#fff;font-size:9px;font-weight:700;padding:2px 5px;border-radius:9px;min-width:16px;text-align:center}
+        .nav-right{display:flex;align-items:center;gap:10px;flex-shrink:0}
+        .nav-user{display:flex;align-items:center;gap:8px;padding:5px 10px 5px 5px;background:#f8fafc;border-radius:24px;border:1px solid #e2e8f0;max-width:170px}
+        .nav-avatar{width:28px;height:28px;background:linear-gradient(135deg,#3b82f6,#1d4ed8);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:600;flex-shrink:0}
+        .nav-uname{font-size:12.5px;font-weight:500;color:#334155;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .btn-logout{background:none;border:1px solid #fecaca;color:#dc2626;padding:7px 12px;border-radius:8px;font-size:12.5px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:6px;transition:all .2s;white-space:nowrap;flex-shrink:0}
+        .btn-logout:hover{background:#fef2f2}
+        @media(max-width:1480px){.nav-uname{display:none}.nav-user{max-width:none}}
+        :root { --primary: #3b82f6; --primary-dark: #1d4ed8; }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background: #f8fafc; }
+        .card { border-radius: 16px; border: 1px solid #e2e8f0; }
+        .card-header { background: white; font-weight: 600; border-bottom: 1px solid #e2e8f0; }
+        .detail-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #e2e8f0; }
+        .detail-row:last-child { border-bottom: none; }
+        .badge-PENDING { background: #fef3c7; color: #92400e; }
+        .badge-APPROVED { background: #dbeafe; color: #1e40af; }
+        .badge-REJECTED { background: #fee2e2; color: #991b1b; }
+        .badge-DELIVERED { background: #d1fae5; color: #065f46; }
+        .badge-INVOICED { background: #e0e7ff; color: #3730a3; }
+        .badge-PAID { background: #dcfce7; color: #166534; }
+        .btn-primary { background: var(--primary); border-color: var(--primary); }
+        .btn-success { background: #16a34a; border-color: #16a34a; }
+    </style>
+</head>
+<body>
+<div th:replace="~{fragments/sales-nav :: nav(active='inquiries')}"></div>
+
+<div class="container-fluid py-4" style="max-width:1000px;">
+    <a th:href="@{/sales/inquiries}" class="btn btn-outline-secondary mb-3"><i class="bi bi-arrow-left me-2"></i>Back to Inquiries</a>
+
+    <div th:if="${successMessage}" class="alert alert-success"><i class="bi bi-check-circle me-2"></i><span th:text="${successMessage}"></span></div>
+    <div th:if="${errorMessage}" class="alert alert-danger"><i class="bi bi-exclamation-triangle me-2"></i><span th:text="${errorMessage}"></span></div>
+
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span><i class="bi bi-file-text me-2"></i>Inquiry <code th:text="${inquiry.referenceNo}">INQ-2026-0001</code></span>
+            <span class="badge fs-6" th:classappend="'badge-' + ${inquiry.status}" th:text="${inquiry.status}">PENDING</span>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <h6 class="text-muted text-uppercase" style="font-size:0.75rem;"><i class="bi bi-building me-1"></i>Company Information</h6>
+                    <div class="detail-row"><span class="text-muted">Company</span><strong th:text="${inquiry.companyName}">Parmalat</strong></div>
+                    <div class="detail-row"><span class="text-muted">Contact</span><span th:text="${inquiry.contactPerson}">John</span></div>
+                    <div class="detail-row"><span class="text-muted">Position</span><span th:text="${inquiry.position ?: '-'}">Manager</span></div>
+                    <div class="detail-row"><span class="text-muted">Email</span><span th:text="${inquiry.email}">email</span></div>
+                    <div class="detail-row"><span class="text-muted">Phone</span><span th:text="${inquiry.phone}">phone</span></div>
+                </div>
+                <div class="col-md-6">
+                    <h6 class="text-muted text-uppercase" style="font-size:0.75rem;"><i class="bi bi-droplet me-1"></i>Order Details</h6>
+                    <div class="detail-row"><span class="text-muted">Quantity</span><strong th:text="${#numbers.formatDecimal(inquiry.requestedLitres, 1, 2)} + ' Litres'">500 L</strong></div>
+                    <div class="detail-row"><span class="text-muted">Preferred Date</span><span th:text="${inquiry.preferredDate.format(T(java.time.format.DateTimeFormatter).ofPattern('dd MMM yyyy'))}">15 Apr</span></div>
+                    <div class="detail-row"><span class="text-muted">Frequency</span><span th:text="${inquiry.frequency}">ONE_TIME</span></div>
+                    <div class="detail-row"><span class="text-muted">Submitted</span><span th:text="${inquiry.submittedAt.format(T(java.time.format.DateTimeFormatter).ofPattern('dd MMM yyyy HH:mm'))}">15 Apr 10:30</span></div>
+                </div>
+            </div>
+            <div th:if="${inquiry.message}" class="mt-3 p-3 bg-light rounded">
+                <h6 class="text-muted mb-2" style="font-size:0.75rem;">MESSAGE</h6>
+                <p class="mb-0" th:text="${inquiry.message}">Additional requirements...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Panel (only for PENDING) -->
+    <div th:if="${inquiry.status.name() == 'PENDING'}" class="card">
+        <div class="card-header"><i class="bi bi-lightning me-2"></i>Take Action</div>
+        <div class="card-body">
+            <div class="alert alert-info mb-4">
+                <i class="bi bi-info-circle me-2"></i>
+                <strong>Available Inventory:</strong> <span th:text="${#numbers.formatDecimal(availableLitres, 1, 2)}">3500</span> Litres
+                <span th:if="${availableLitres < inquiry.requestedLitres}" class="text-danger ms-2">
+                    <i class="bi bi-exclamation-triangle"></i> Insufficient for this request!
+                </span>
+            </div>
+
+            <div class="row" id="inquiry-action-panel" data-action-panel>
+                <!-- Approve Form -->
+                <div class="col-md-6">
+                    <div class="card border-success h-100">
+                        <div class="card-header bg-success text-white"><i class="bi bi-check-circle me-2"></i>Approve Inquiry</div>
+                        <div class="card-body">
+                            <form th:action="@{/sales/inquiries/{id}/approve(id=${inquiry.id})}" method="post"
+                                  data-ajax-action="disable_panel">
+                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                <div class="mb-3">
+                                    <label class="form-label">Price per Litre (ZMW)</label>
+                                    <input type="number" class="form-control" name="pricePerLitre" step="0.01" min="0.01" value="5.50" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Total Amount</label>
+                                    <input type="text" class="form-control" id="totalPreview" readonly>
+                                </div>
+                                <button type="button"
+                                        class="btn btn-success w-100"
+                                        th:disabled="${availableLitres < inquiry.requestedLitres}"
+                                        onclick="dcAjax(this,{action:'disable_panel',loadingText:'Approving...'})">
+                                    <i class="bi bi-check-lg me-2"></i>Approve Inquiry
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reject Form -->
+                <div class="col-md-6">
+                    <div class="card border-danger h-100">
+                        <div class="card-header bg-danger text-white"><i class="bi bi-x-circle me-2"></i>Reject Inquiry</div>
+                        <div class="card-body">
+                            <form th:action="@{/sales/inquiries/{id}/reject(id=${inquiry.id})}" method="post"
+                                  data-ajax-action="disable_panel">
+                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                <div class="mb-3">
+                                    <label class="form-label">Rejection Reason</label>
+                                    <textarea class="form-control" name="reason" rows="4" placeholder="Explain why this inquiry is being rejected..." required></textarea>
+                                </div>
+                                <button type="button"
+                                        class="btn btn-danger w-100"
+                                        onclick="dcAjax(this,{action:'disable_panel',loadingText:'Rejecting...'})">
+                                    <i class="bi bi-x-lg me-2"></i>Reject Inquiry
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rejection Info (for REJECTED) -->
+    <div th:if="${inquiry.status.name() == 'REJECTED'}" class="alert alert-danger">
+        <h6><i class="bi bi-x-circle me-2"></i>Rejection Reason</h6>
+        <p class="mb-0" th:text="${inquiry.rejectionReason}">Reason</p>
+    </div>
+
+    <!-- Invoice Link (for INVOICED/PAID) - FIXED: using inquiry.invoiceNo instead of inquiry.sale -->
+    <div th:if="${inquiry.invoiceNo != null}" class="card">
+        <div class="card-body text-center">
+            <i class="bi bi-receipt text-success" style="font-size:3rem;"></i>
+            <h5 class="mt-2">Invoice Created</h5>
+            <p class="text-muted">Invoice <code th:text="${inquiry.invoiceNo}">INV-2026-0001</code></p>
+            <a th:href="@{/sales/invoice/{id}(id=${inquiry.id})}" class="btn btn-primary">
+                <i class="bi bi-eye me-2"></i>View Invoice
+            </a>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script th:inline="javascript">
+    const qty = /*[[${inquiry.requestedLitres}]]*/ 500;
+    const priceInput = document.querySelector('input[name="pricePerLitre"]');
+    const totalPreview = document.getElementById('totalPreview');
+    if (priceInput && totalPreview) {
+        function updateTotal() {
+            const price = parseFloat(priceInput.value) || 0;
+            totalPreview.value = 'ZMW ' + (qty * price).toFixed(2);
+        }
+        priceInput.addEventListener('input', updateTotal);
+        updateTotal();
+    }
+</script>
+<script th:src="@{/js/ajax-actions.js}"></script>
+</body>
+</html>

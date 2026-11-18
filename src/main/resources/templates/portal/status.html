@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Check Status - Company Portal</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Fraunces:wght@600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #166534;
+            --primary-dark: #0f4a1e;
+            --primary-light: #22c55e;
+        }
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 50%, #f0fdf4 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+        .navbar {
+            background: white;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            margin-bottom: 40px;
+        }
+        .navbar-brand {
+            font-family: 'Fraunces', serif;
+            font-weight: 700;
+            color: var(--primary) !important;
+        }
+        .search-card {
+            max-width: 600px;
+            margin: 0 auto 40px;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+        }
+        .search-card h1 {
+            font-family: 'Fraunces', serif;
+            color: var(--primary-dark);
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+        .search-card p {
+            color: #64748b;
+            margin-bottom: 24px;
+        }
+        .form-control {
+            padding: 14px 18px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 16px;
+            text-transform: uppercase;
+        }
+        .form-control:focus {
+            border-color: var(--primary-light);
+            box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.15);
+        }
+        .btn-primary {
+            background: var(--primary);
+            border: none;
+            padding: 14px 28px;
+            border-radius: 12px;
+            font-weight: 600;
+        }
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+        .result-card {
+            max-width: 700px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+        }
+        .result-header {
+            padding: 24px 32px;
+            background: var(--primary);
+            color: white;
+        }
+        .result-header h4 {
+            margin: 0;
+            font-family: 'Fraunces', serif;
+        }
+        .result-body {
+            padding: 32px;
+        }
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 14px 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .info-row:last-child {
+            border-bottom: none;
+        }
+        .info-label {
+            color: #64748b;
+            font-size: 14px;
+        }
+        .info-value {
+            font-weight: 600;
+            color: #1e293b;
+        }
+        .status-badge {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+        .status-pending { background: #fef3c7; color: #92400e; }
+        .status-approved { background: #d1fae5; color: #065f46; }
+        .status-invoiced { background: #dbeafe; color: #1e40af; }
+        .status-paid { background: #e0e7ff; color: #3730a3; }
+        .status-rejected { background: #fee2e2; color: #991b1b; }
+        .alert {
+            border: none;
+            border-radius: 12px;
+            padding: 16px 20px;
+        }
+        .alert-danger { background: #fee2e2; color: #991b1b; }
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: #64748b;
+            text-decoration: none;
+            font-size: 14px;
+            margin-top: 24px;
+        }
+        .back-link:hover {
+            color: var(--primary);
+        }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg fixed-top">
+    <div class="container">
+        <a class="navbar-brand" th:href="@{/portal}">
+            <i class="bi bi-droplet-fill me-2"></i>Dairy Cooperative
+        </a>
+        <span class="badge bg-success">Status Check</span>
+    </div>
+</nav>
+
+<div style="height: 80px;"></div>
+
+<div class="container">
+    <!-- Search Form -->
+    <div class="search-card">
+        <h1><i class="bi bi-search me-2"></i>Check Inquiry Status</h1>
+        <p>Enter your inquiry reference number to check its current status.</p>
+
+        <form th:action="@{/portal/status}" method="get">
+            <div class="input-group">
+                <input type="text" name="ref" class="form-control"
+                       placeholder="INQ-2026-0001"
+                       th:value="${ref}"
+                       required autofocus>
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-search me-2"></i>Check Status
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Error Message -->
+    <div th:if="${errorMessage}" class="alert alert-danger text-center" style="max-width: 600px; margin: 0 auto;">
+        <i class="bi bi-exclamation-circle me-2"></i>
+        <span th:text="${errorMessage}">Error message</span>
+    </div>
+
+    <!-- Result Card -->
+    <div th:if="${inquiry}" class="result-card">
+        <div class="result-header">
+            <h4>
+                <i class="bi bi-file-text me-2"></i>
+                Inquiry <span th:text="${inquiry.referenceNo}">INQ-2026-0001</span>
+            </h4>
+        </div>
+        <div class="result-body">
+            <div class="info-row">
+                <span class="info-label">Company</span>
+                <span class="info-value" th:text="${inquiry.companyName}">Parmalat Zambia</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Contact Person</span>
+                <span class="info-value" th:text="${inquiry.contactPerson}">John Banda</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Submitted</span>
+                <span class="info-value" th:text="${#temporals.format(inquiry.submittedAt, 'dd MMM yyyy HH:mm')}">15 Apr 2026</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Quantity Requested</span>
+                <span class="info-value" th:text="${#numbers.formatDecimal(inquiry.requestedLitres, 1, 'COMMA', 0, 'POINT')} + ' Litres'">500 Litres</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Preferred Date</span>
+                <span class="info-value" th:text="${#temporals.format(inquiry.preferredDate, 'dd MMM yyyy')}">20 Apr 2026</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Status</span>
+                <span class="info-value">
+                    <span class="status-badge status-pending" th:if="${inquiry.status.name() == 'PENDING'}">
+                        <i class="bi bi-hourglass-split me-1"></i>Pending Review
+                    </span>
+                    <span class="status-badge status-approved" th:if="${inquiry.status.name() == 'APPROVED'}">
+                        <i class="bi bi-check-circle me-1"></i>Approved
+                    </span>
+                    <span class="status-badge status-invoiced" th:if="${inquiry.status.name() == 'INVOICED'}">
+                        <i class="bi bi-receipt me-1"></i>Invoiced
+                    </span>
+                    <span class="status-badge status-paid" th:if="${inquiry.status.name() == 'PAID'}">
+                        <i class="bi bi-check2-all me-1"></i>Paid
+                    </span>
+                    <span class="status-badge status-rejected" th:if="${inquiry.status.name() == 'REJECTED'}">
+                        <i class="bi bi-x-circle me-1"></i>Rejected
+                    </span>
+                </span>
+            </div>
+
+            <!-- Show pricing if approved -->
+            <div th:if="${inquiry.pricePerLitre != null}">
+                <div class="info-row">
+                    <span class="info-label">Price per Litre</span>
+                    <span class="info-value" th:text="'ZMW ' + ${#numbers.formatDecimal(inquiry.pricePerLitre, 1, 'COMMA', 2, 'POINT')}">ZMW 5.00</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Total Amount</span>
+                    <span class="info-value text-success" style="font-size: 18px;"
+                          th:text="'ZMW ' + ${#numbers.formatDecimal(inquiry.totalAmount, 1, 'COMMA', 2, 'POINT')}">ZMW 2,500.00</span>
+                </div>
+            </div>
+
+            <!-- Show rejection reason -->
+            <div th:if="${inquiry.rejectionReason != null}" class="alert alert-danger mt-3">
+                <strong>Rejection Reason:</strong>
+                <span th:text="${inquiry.rejectionReason}">Insufficient inventory</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="text-center">
+        <a th:href="@{/portal}" class="back-link">
+            <i class="bi bi-arrow-left"></i> Back to Portal
+        </a>
+    </div>
+</div>
+
+</body>
+</html>

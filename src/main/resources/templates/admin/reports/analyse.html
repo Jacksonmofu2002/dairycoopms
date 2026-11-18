@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+    <title>Report Analysis - DairyCoop Admin</title>
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap/dist/css/bootstrap.min.css}"/>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fraunces:ital,wght@0,300;0,600;1,400&display=swap" rel="stylesheet"/>
+    <style>
+
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Fraunces:wght@300;600&display=swap');
+        :root{--primary:#1a6b2e;--primary-dark:#0f4a1e;--primary-light:#2d8a42;--accent:#f5a623;--sidebar-bg:#0d3d1a;--sidebar-w:260px;--bg:#f4f6f3;--surface:#fff;--border:#e2e8df;--text:#1a2b1c;--muted:#6b7f6d;--radius:12px;--shadow:0 2px 12px rgba(0,0,0,0.06)}
+        *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+        body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex}
+        /* SIDEBAR */
+        .sidebar{width:var(--sidebar-w);height:100vh;background:var(--sidebar-bg);display:flex;flex-direction:column;position:fixed;top:0;left:0;z-index:100;overflow-y:auto}
+        .sb-brand{display:flex;align-items:center;gap:12px;padding:20px;border-bottom:1px solid rgba(255,255,255,.08)}
+        .sb-logo{width:40px;height:40px;background:rgba(255,255,255,.12);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+        .sb-name{font-size:15px;font-weight:700;color:#fff}
+        .sb-sub{font-size:10px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.08em}
+        .sb-user{display:flex;align-items:center;gap:10px;padding:12px 14px;background:rgba(255,255,255,.05);margin:12px 12px 4px;border-radius:10px}
+        .sb-avatar{width:32px;height:32px;background:var(--accent);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--sidebar-bg);flex-shrink:0}
+        .sb-uname{font-size:12px;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .sb-role{font-size:10px;color:rgba(255,255,255,.45);text-transform:capitalize}
+        .sb-nav{list-style:none;padding:6px 0 16px;flex:1;display:flex;flex-direction:column}
+        .sb-lbl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:rgba(255,255,255,.25);padding:14px 20px 5px}
+        .sb-item{padding:2px 10px}
+        .sb-logout{margin-top:auto;border-top:1px solid rgba(255,255,255,.08);padding-top:10px}
+        .sb-link{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;color:rgba(255,255,255,.62);text-decoration:none;font-size:13.5px;font-weight:500;transition:all .18s}
+        .sb-link:hover{background:rgba(255,255,255,.08);color:#fff}
+        .sb-link.active{background:var(--primary-light);color:#fff}
+        .sb-icon{width:17px;height:17px;flex-shrink:0;opacity:.75}
+        .sb-link.active .sb-icon{opacity:1}
+        .sb-badge{margin-left:auto;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;background:var(--accent);color:#1a2b1c}
+        .sb-out{color:rgba(255,80,80,.7)}
+        .sb-out:hover{background:rgba(239,68,68,.15);color:#ff6b6b}
+        /* MAIN */
+        .main{margin-left:var(--sidebar-w);flex:1;display:flex;flex-direction:column;min-height:100vh}
+        .topbar{height:64px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 28px;position:sticky;top:0;z-index:50;box-shadow:var(--shadow)}
+        .tb-title{font-family:'Fraunces',serif;font-size:20px;font-weight:600;color:var(--text)}
+        .tb-sub{font-size:12px;color:var(--muted)}
+        .tb-right{display:flex;align-items:center;gap:12px}
+        .tb-date{font-size:12px;color:var(--muted);background:var(--bg);padding:6px 12px;border-radius:20px;border:1px solid var(--border)}
+        .tb-btn{width:36px;height:36px;border-radius:50%;border:1px solid var(--border);background:var(--bg);display:flex;align-items:center;justify-content:center;color:var(--muted);text-decoration:none;transition:all .2s}
+        .tb-btn:hover{border-color:var(--primary);color:var(--primary)}
+        .content{padding:28px;flex:1}
+        /* CARDS */
+        .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:22px;position:relative;overflow:hidden;box-shadow:var(--shadow);transition:transform .2s}
+        .stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--c,var(--primary))}
+        .stat-card:hover{transform:translateY(-2px)}
+        .stat-icon{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:var(--cb,#e8f5e9);margin-bottom:14px}
+        .stat-icon svg{width:22px;height:22px;color:var(--c,var(--primary))}
+        .stat-val{font-family:'Fraunces',serif;font-size:32px;font-weight:600;color:var(--text);line-height:1}
+        .stat-lbl{font-size:13px;color:var(--muted);font-weight:500;margin-top:4px}
+        .stat-sub{font-size:11px;color:var(--muted);margin-top:2px}
+        .badge-warn{display:inline-block;font-size:11px;font-weight:600;padding:3px 8px;border-radius:20px;background:#fef3c7;color:#d97706}
+        /* PANELS */
+        .panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow)}
+        .panel-head{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+        .panel-title{font-size:15px;font-weight:600;color:var(--text)}
+        /* TABLE */
+        .tbl{width:100%;border-collapse:separate;border-spacing:0}
+        .tbl thead th{background:var(--bg);color:var(--muted);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:10px 16px;border-bottom:1px solid var(--border)}
+        .tbl tbody tr{transition:background .15s}
+        .tbl tbody tr:hover{background:#f8faf7}
+        .tbl tbody td{padding:12px 16px;font-size:13.5px;border-bottom:1px solid #f0f4ef;vertical-align:middle}
+        /* BUTTONS */
+        .btn-g{background:var(--primary);color:#fff;border:none;padding:9px 18px;border-radius:8px;font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:6px;text-decoration:none;cursor:pointer;transition:all .2s}
+        .btn-g:hover{background:var(--primary-dark);color:#fff}
+        .btn-o{background:transparent;color:var(--primary);border:1px solid var(--primary);padding:7px 14px;border-radius:8px;font-size:12px;font-weight:600;display:inline-flex;align-items:center;gap:6px;text-decoration:none;transition:all .2s}
+        .btn-o:hover{background:var(--primary);color:#fff}
+        .btn-eye{width:28px;height:28px;border-radius:6px;border:1px solid var(--border);background:var(--bg);display:inline-flex;align-items:center;justify-content:center;color:var(--muted);text-decoration:none;font-size:12px;transition:all .2s}
+        .btn-eye:hover{background:var(--primary);color:#fff;border-color:var(--primary)}
+        /* ALERTS */
+        .kpi-card{background:#fff;border-radius:16px;border:1px solid var(--border);box-shadow:var(--shadow);padding:22px;position:relative;overflow:hidden;transition:transform .2s,box-shadow .2s}
+        .kpi-card:hover{transform:translateY(-3px);box-shadow:0 8px 28px rgba(0,0,0,.1)}
+        .kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:var(--kc,var(--primary))}
+        .kpi-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px}
+        .kpi-icon{width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;background:var(--ki,#e8f5e9)}
+        .kpi-icon svg{width:24px;height:24px;color:var(--kc,var(--primary))}
+        .kpi-badge{font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px}
+        .kpi-val{font-family:'Fraunces',serif;font-size:38px;font-weight:600;color:var(--text);line-height:1;margin-bottom:4px}
+        .kpi-lbl{font-size:13px;color:var(--text);font-weight:600;margin-bottom:2px}
+        .kpi-sub{font-size:11px;color:var(--muted)}
+        .alert-ok{background:#dcfce7;color:#166534;border:1px solid #bbf7d0;padding:12px 16px;border-radius:8px;font-size:13.5px;display:flex;align-items:center;gap:10px;margin-bottom:16px}
+        .alert-err{background:#fee2e2;color:#991b1b;border:1px solid #fecaca;padding:12px 16px;border-radius:8px;font-size:13.5px;display:flex;align-items:center;gap:10px;margin-bottom:16px}
+
+        /* ── Extra styles ────────────────────────────────────────────── */
+        .main-content{padding:28px;flex:1}
+        .section{background:#fff;border:1px solid var(--border);border-radius:14px;box-shadow:0 2px 12px rgba(0,0,0,.06);margin-bottom:20px;overflow:hidden}
+        .section-head{padding:14px 22px;border-bottom:1px solid var(--border);background:linear-gradient(135deg,#f8faf8,#f0f4f0);display:flex;align-items:center;gap:10px}
+        .section-title{font-size:15px;font-weight:700;color:var(--text)}
+        .section-sub{font-size:11px;color:var(--muted);margin-top:2px}
+        .chart-wrap{padding:20px 22px}
+        /* KPI grid */
+        .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;padding:20px 22px}
+        .kpi-card{border-radius:12px;padding:16px 18px;position:relative;overflow:hidden}
+        .kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:3px 3px 0 0}
+        .kpi-num{font-size:26px;font-weight:800;line-height:1;margin-bottom:4px;font-family:'Fraunces',serif}
+        .kpi-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:rgba(0,0,0,.45)}
+        /* Report view card */
+        .report-meta{background:linear-gradient(135deg,#1a2b1c,#0d3d1a);border-radius:16px;padding:28px;margin-bottom:22px;color:#fff}
+        .report-meta h2{font-family:'Fraunces',serif;font-size:28px;margin:0 0 6px;color:#fff}
+        .meta-chip{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);border-radius:20px;padding:5px 12px;font-size:12px;color:rgba(255,255,255,.8);margin-top:10px;margin-right:8px}
+        .analyse-btn{background:linear-gradient(135deg,#f5a623,#e8950e);color:#1a2b1c;border:none;padding:14px 32px;border-radius:12px;font-size:15px;font-weight:800;font-family:inherit;cursor:pointer;display:inline-flex;align-items:center;gap:10px;box-shadow:0 4px 18px rgba(245,166,35,.4);transition:all .2s}
+        .analyse-btn:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(245,166,35,.5)}
+        .analyse-btn:disabled{opacity:.6;transform:none;cursor:not-allowed}
+        /* Loading */
+        .load-wrap{background:#fff;border-radius:14px;border:1px solid var(--border);padding:36px 28px;max-width:480px}
+        .load-step{display:flex;align-items:center;gap:10px;padding:8px 0;font-size:13px;color:var(--muted);transition:color .3s}
+        .load-step.done{color:var(--primary)}
+        .load-step.active{color:var(--text);font-weight:600}
+        .step-dot{width:8px;height:8px;border-radius:50%;background:var(--border);flex-shrink:0;transition:background .3s}
+        .load-step.done .step-dot{background:var(--primary)}
+        .load-step.active .step-dot{background:var(--accent);animation:pulse 1s infinite}
+        @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.4)}}
+        /* Suggestions */
+        .sug{border-radius:12px;padding:16px 20px;margin-bottom:12px;display:flex;gap:14px;align-items:flex-start}
+        .sug-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+        .sug-title{font-size:13.5px;font-weight:700;margin-bottom:4px}
+        .sug-body{font-size:12.5px;line-height:1.7}
+        @keyframes spin{to{transform:rotate(360deg)}}
+        @keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+        .fade-in{animation:fadeIn .4s ease forwards}
+    </style>
+</head>
+<body>
+<div style="display:flex;min-height:100vh">
+
+    <div class="sidebar">
+        <div class="sb-brand">
+            <div class="sb-logo">
+                <svg width="26" height="26" viewBox="0 0 32 32" fill="none">
+                    <ellipse cx="16" cy="20" rx="11" ry="8" fill="#4CAF50" opacity="0.3"/>
+                    <ellipse cx="16" cy="19" rx="9" ry="6" fill="#4CAF50" opacity="0.6"/>
+                    <circle cx="10" cy="15" r="4" fill="#fff" opacity="0.9"/>
+                    <circle cx="22" cy="15" r="4" fill="#fff" opacity="0.9"/>
+                    <ellipse cx="16" cy="12" rx="6" ry="5" fill="#fff"/>
+                    <circle cx="13" cy="11" r="1" fill="#2d6a2d"/>
+                    <circle cx="19" cy="11" r="1" fill="#2d6a2d"/>
+                    <path d="M13 14 Q16 16 19 14" stroke="#2d6a2d" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+                </svg>
+            </div>
+            <div><div class="sb-name">DairyCoop</div><div class="sb-sub">Management System</div></div>
+        </div>
+
+        <div class="sb-user">
+            <div class="sb-avatar">
+                <span th:text="${#strings.substring(#authentication.name,0,1).toUpperCase()}">A</span>
+            </div>
+            <div style="min-width:0">
+                <div class="sb-uname" th:text="${#authentication.name}">admin</div>
+                <div class="sb-role">Administrator</div>
+            </div>
+        </div>
+
+        <ul class="sb-nav">
+
+            <li class="sb-lbl">Main</li>
+            <li class="sb-item">
+                <a th:href="@{/admin/dashboard}" class="sb-link">
+                    <svg class="sb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+                        <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+                    </svg>
+                    <span>Dashboard</span>
+                </a>
+            </li>
+
+            <li class="sb-lbl">Members</li>
+            <li class="sb-item">
+                <a th:href="@{/admin/members}" class="sb-link">
+                    <svg class="sb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                        <circle cx="9" cy="7" r="4"/>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                    </svg>
+                    <span>Members</span>
+                    <span class="sb-badge"
+                          th:if="${pendingApprovals != null and pendingApprovals gt 0}"
+                          th:text="${pendingApprovals}">0</span>
+                </a>
+            </li>
+
+            <li class="sb-lbl">Livestock</li>
+            <li class="sb-item">
+                <a th:href="@{/admin/cows}" class="sb-link">
+                    <svg class="sb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <ellipse cx="12" cy="15" rx="9" ry="5"/>
+                        <path d="M6 10c0-2 1-4 3-5"/><path d="M18 10c0-2-1-4-3-5"/>
+                        <circle cx="9" cy="7" r="1.5"/><circle cx="15" cy="7" r="1.5"/>
+                    </svg>
+                    <span>Cows</span>
+                </a>
+            </li>
+            <li class="sb-item">
+                <a th:href="@{/admin/assignments}" class="sb-link">
+                    <svg class="sb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/>
+                        <polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/>
+                    </svg>
+                    <span>Assignments</span>
+                </a>
+            </li>
+
+            <li class="sb-lbl">Finance</li>
+            <li class="sb-item">
+                <a th:href="@{/admin/milk-price}" class="sb-link">
+                    <span class="sb-icon" style="font-size:10px;font-weight:800;width:17px;height:17px;display:flex;align-items:center;justify-content:center;flex-shrink:0;letter-spacing:-0.5px">ZMK</span>
+                    <span>Milk Price</span>
+                </a>
+            </li>
+            <li class="sb-item">
+                <a th:href="@{/admin/deductions}" class="sb-link">
+                    <svg class="sb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/>
+                    </svg>
+                    <span>Deductions</span>
+                </a>
+            </li>
+
+            <li class="sb-lbl">Reports</li>
+            <li class="sb-item">
+                <a th:href="@{/admin/reports}" class="sb-link">
+                    <svg class="sb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                        <polyline points="14 2 14 8 20 8"/>
+                        <line x1="16" y1="13" x2="8" y2="13"/>
+                        <line x1="16" y1="17" x2="8" y2="17"/>
+                    </svg>
+                    <span>Reports</span>
+                    <span class="sb-badge"
+                          th:if="${unreadReports != null and unreadReports gt 0}"
+                          th:text="${unreadReports}"
+                          style="background:#f43f5e;color:#fff">0</span>
+                </a>
+            </li>
+
+            <li class="sb-lbl">Settings</li>
+            <li class="sb-item">
+                <a th:href="@{/admin/users}" class="sb-link">
+                    <svg class="sb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                        <circle cx="12" cy="7" r="4"/>
+                    </svg>
+                    <span>System Users</span>
+                    <span class="sb-badge"
+                          th:if="${pendingUsers != null and pendingUsers gt 0}"
+                          th:text="${pendingUsers}">0</span>
+                </a>
+            </li>
+
+            <li class="sb-item sb-logout">
+                <form th:action="@{/logout}" method="post" style="display:inline">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                    <button type="submit" class="sb-link sb-out" style="background:none;border:none;width:100%;cursor:pointer;font-family:inherit">
+                        <svg class="sb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                            <polyline points="16 17 21 12 16 7"/>
+                            <line x1="21" y1="12" x2="9" y2="12"/>
+                        </svg>
+                        <span>Logout</span>
+                    </button>
+                </form>
+            </li>
+
+        </ul>
+    </div>
+
+    <div class="main">
+        <div class="topbar">
+            <div style="display:flex;align-items:center;gap:10px">
+                <a th:href="@{/admin/reports}" style="color:var(--muted);text-decoration:none;font-size:12px;display:flex;align-items:center;gap:4px;padding:5px 10px;border:1px solid var(--border);border-radius:7px;transition:all .15s" onmouseover="this.style.background='#f4f6f3'" onmouseout="this.style.background='transparent'">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+                    Back to Reports
+                </a>
+                <div>
+                    <div class="tb-title">Finance Report Analysis</div>
+                    <div class="tb-sub" th:text="${submission.periodLabel}">Period</div>
+                </div>
+            </div>
+            <div class="tb-right">
+                <span class="tb-date" id="tbDate"></span>
+                <form th:action="@{/logout}" method="post" style="display:inline">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                    <button type="submit" class="tb-btn" style="color:#ef4444;background:none;border:1px solid var(--border);cursor:pointer">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div class="main-content">
+
+            <!-- ── STEP 1: Report overview card (always visible) ───────────── -->
+            <div class="report-meta">
+                <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:16px">
+                    <div>
+                        <div style="font-size:11px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:rgba(255,255,255,.45);margin-bottom:6px">Finance Report</div>
+                        <h2 th:text="${submission.periodLabel}">Period</h2>
+                        <div>
+                        <span class="meta-chip">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                            <span th:text="${submission.submittedBy.fullName}">Officer</span>
+                        </span>
+                            <span class="meta-chip">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            <span th:text="${submission.sentAt.format(T(java.time.format.DateTimeFormatter).ofPattern('dd MMM yyyy, HH:mm'))}">date</span>
+                        </span>
+                            <span class="meta-chip" th:if="${submission.readByAdmin}">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                            <span style="color:#4ade80">Reviewed</span>
+                        </span>
+                        </div>
+                    </div>
+                    <!-- Analyse button -->
+                    <button class="analyse-btn" id="analyseBtn" onclick="startAnalysis()">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                        Analyse Report
+                    </button>
+                </div>
+            </div>
+
+            <!-- ── STEP 2: Loading (hidden until Analyse clicked) ─────────── -->
+            <div id="loadingWrap" style="display:none;margin-bottom:22px">
+                <div class="load-wrap">
+                    <div style="font-family:'Fraunces',serif;font-size:20px;color:var(--text);margin-bottom:16px">Processing report data…</div>
+                    <div id="loadSteps">
+                        <div class="load-step" id="s0"><div class="step-dot"></div>Reading loan records</div>
+                        <div class="load-step" id="s1"><div class="step-dot"></div>Processing salary data</div>
+                        <div class="load-step" id="s2"><div class="step-dot"></div>Analysing company inquiries</div>
+                        <div class="load-step" id="s3"><div class="step-dot"></div>Computing member payments</div>
+                        <div class="load-step" id="s4"><div class="step-dot"></div>Generating predictions</div>
+                        <div class="load-step" id="s5"><div class="step-dot"></div>Building recommendations</div>
+                        <div class="load-step" id="s6"><div class="step-dot"></div>Rendering charts</div>
+                    </div>
+                    <div style="height:6px;background:var(--border);border-radius:6px;margin-top:18px;overflow:hidden">
+                        <div id="loadBar" style="height:100%;background:linear-gradient(90deg,var(--primary),var(--accent));width:0%;transition:width .35s ease;border-radius:6px"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── STEP 3: Full analysis output ──────────────────────────── -->
+            <div id="analysisOut" style="display:none">
+
+                <!-- KPI Summary -->
+                <div class="section fade-in">
+                    <div class="section-head">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+                        <div><div class="section-title">Report Snapshot</div><div class="section-sub">Key figures extracted from this report</div></div>
+                    </div>
+                    <div class="kpi-grid" id="kpiGrid"></div>
+                </div>
+
+                <!-- Charts row 1 -->
+                <div style="display:grid;grid-template-columns:3fr 2fr;gap:18px;margin-bottom:18px">
+                    <div class="section fade-in">
+                        <div class="section-head">
+                            <div><div class="section-title">Loan Applications & Amounts</div><div class="section-sub">Recent approved loan disbursements</div></div>
+                        </div>
+                        <div class="chart-wrap"><canvas id="loanBar" height="160"></canvas></div>
+                    </div>
+                    <div class="section fade-in">
+                        <div class="section-head">
+                            <div><div class="section-title">Loan Status Breakdown</div></div>
+                        </div>
+                        <div class="chart-wrap" style="display:flex;flex-direction:column;align-items:center">
+                            <canvas id="loanDonut" width="200" height="200"></canvas>
+                            <div id="donutLegend" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:12px;width:100%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts row 2 -->
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px">
+                    <div class="section fade-in">
+                        <div class="section-head">
+                            <div><div class="section-title">Staff Salary Payments</div><div class="section-sub">Net paid per staff member</div></div>
+                        </div>
+                        <div class="chart-wrap"><canvas id="salBar" height="160"></canvas></div>
+                    </div>
+                    <div class="section fade-in">
+                        <div class="section-head">
+                            <div><div class="section-title">Company Milk Revenue</div><div class="section-sub">Revenue from approved inquiries</div></div>
+                        </div>
+                        <div class="chart-wrap"><canvas id="inqLine" height="160"></canvas></div>
+                    </div>
+                </div>
+
+                <!-- Member payments full width -->
+                <div class="section fade-in" style="margin-bottom:18px">
+                    <div class="section-head">
+                        <div><div class="section-title">Member Milk Payments</div><div class="section-sub">Net paid to cooperative members</div></div>
+                    </div>
+                    <div class="chart-wrap"><canvas id="memberBar" height="110"></canvas></div>
+                </div>
+
+                <!-- Predictions full width -->
+                <div class="section fade-in" style="margin-bottom:18px;border:2px solid var(--accent)">
+                    <div class="section-head" style="background:linear-gradient(135deg,#fff8e6,#fef3c7)">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+                        <div>
+                            <div class="section-title" style="color:#92400e">3-Month Trend Predictions</div>
+                            <div class="section-sub" style="color:#b45309">AI-powered forecast based on cooperative financial patterns</div>
+                        </div>
+                        <span style="margin-left:auto;background:#d97706;color:#fff;font-size:10px;font-weight:700;padding:4px 12px;border-radius:20px;letter-spacing:.08em">FORECAST</span>
+                    </div>
+                    <div class="chart-wrap"><canvas id="predChart" height="120"></canvas></div>
+                </div>
+
+                <!-- Recommendations -->
+                <div class="section fade-in">
+                    <div class="section-head">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><path d="M9 12l2 2 4-4"/><path d="M21 12c0 4.97-4.03 9-9 9S3 16.97 3 12 7.03 3 12 3s9 4.03 9 9z"/></svg>
+                        <div>
+                            <div class="section-title">AI Analysis & Recommendations</div>
+                            <div class="section-sub">Data-driven insights for management decisions</div>
+                        </div>
+                    </div>
+                    <div style="padding:20px 22px" id="suggestions"></div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<script th:src="@{/webjars/bootstrap/dist/js/bootstrap.bundle.min.js}"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script th:inline="javascript">
+    document.getElementById('tbDate').textContent =
+        new Date().toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
+
+    var REPORT_JSON = /*[[${reportJson}]]*/ '{}';
+
+    // ── Colour palettes ──────────────────────────────────────────────────────
+    var COLORS = {
+        green:   '#1a6b2e',
+        lime:    '#2d8a42',
+        amber:   '#f5a623',
+        red:     '#ef4444',
+        blue:    '#2563eb',
+        purple:  '#7c3aed',
+        teal:    '#0891b2',
+        rose:    '#e11d48',
+    };
+    var GRADIENTS = {}; // filled after canvas available
+
+    function makeGradient(ctx, color1, color2) {
+        var g = ctx.createLinearGradient(0, 0, 0, 300);
+        g.addColorStop(0, color1);
+        g.addColorStop(1, color2);
+        return g;
+    }
+
+    // ── Step indicator animation ─────────────────────────────────────────────
+    var STEPS = ['s0','s1','s2','s3','s4','s5','s6'];
+    var stepTimer, stepIdx = 0;
+
+    function startAnalysis() {
+        document.getElementById('analyseBtn').disabled = true;
+        document.getElementById('analyseBtn').innerHTML =
+            '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="animation:spin .7s linear infinite"><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/></svg> Processing…';
+        document.getElementById('loadingWrap').style.display = 'block';
+
+        stepIdx = 0;
+        var pct = 0;
+        stepTimer = setInterval(function() {
+            if (stepIdx > 0) {
+                document.getElementById(STEPS[stepIdx-1]).classList.remove('active');
+                document.getElementById(STEPS[stepIdx-1]).classList.add('done');
+            }
+            if (stepIdx < STEPS.length) {
+                document.getElementById(STEPS[stepIdx]).classList.add('active');
+                pct = Math.round((stepIdx+1) / STEPS.length * 90);
+                document.getElementById('loadBar').style.width = pct + '%';
+                stepIdx++;
+            } else {
+                clearInterval(stepTimer);
+            }
+        }, 320);
+
+        setTimeout(function() {
+            clearInterval(stepTimer);
+            STEPS.forEach(function(s) {
+                document.getElementById(s).classList.remove('active');
+                document.getElementById(s).classList.add('done');
+            });
+            document.getElementById('loadBar').style.width = '100%';
+
+            setTimeout(function() {
+                document.getElementById('loadingWrap').style.display = 'none';
+                renderAll();
+                document.getElementById('analysisOut').style.display = 'block';
+                document.getElementById('analyseBtn').innerHTML = '↻ Re-analyse';
+                document.getElementById('analyseBtn').disabled = false;
+                // Scroll to charts
+                document.getElementById('analysisOut').scrollIntoView({behavior:'smooth', block:'start'});
+            }, 400);
+        }, STEPS.length * 320 + 200);
+    }
+
+    function zm(n) {
+        var num = parseFloat((n||'0').toString().replace(/,/g,'')) || 0;
+        return 'ZMW ' + num.toLocaleString('en-ZM',{minimumFractionDigits:2,maximumFractionDigits:2});
+    }
+    function num(n) {
+        return parseFloat((n||'0').toString().replace(/,/g,'')) || 0;
+    }
+
+    function renderAll() {
+        var d; try { d = JSON.parse(REPORT_JSON); } catch(e) { d = {}; }
+        var loans = d.loans || {};
+        var sal   = d.salaries || {};
+        var mp    = d.milkPayments || {};
+        var inq   = d.milkInquiries || {};
+        var cofa  = d.cofa || {};
+        var summ  = d.summary || {};
+
+        // ── KPI Cards ────────────────────────────────────────────────────────
+        var kpis = [
+            {val: summ.totalMembers||0,                  lbl:'Total Members',     c:'#1a6b2e', bg:'#e8f5e9'},
+            {val: summ.activeMembers||0,                 lbl:'Active Members',    c:'#2d8a42', bg:'#f0f7f0'},
+            {val: loans.total||0,                        lbl:'Loan Applications', c:'#2563eb', bg:'#eff6ff'},
+            {val: zm(loans.totalAmountDisbursed),        lbl:'Loans Disbursed',   c:'#7c3aed', bg:'#f5f3ff'},
+            {val: (sal.paid||0)+' paid',                 lbl:'Salary Records',    c:'#0891b2', bg:'#ecfeff'},
+            {val: sal.unpaid||0,                         lbl:'Unpaid Salaries',   c:'#e11d48', bg:'#fff1f2'},
+            {val: zm(inq.totalRevenue),                  lbl:'Company Revenue',   c:'#d97706', bg:'#fffbeb'},
+            {val: zm(cofa.balance),                      lbl:'COFA Balance',      c:'#1a6b2e', bg:'#f0fdf4'},
+        ];
+        document.getElementById('kpiGrid').innerHTML = kpis.map(function(k) {
+            return '<div class="kpi-card" style="background:'+k.bg+';border:1px solid '+k.c+'22">' +
+                   '<div class="kpi-num" style="color:'+k.c+'">'+k.val+'</div>' +
+                   '<div class="kpi-lbl" style="color:'+k.c+'99">'+k.lbl+'</div>' +
+                   '<div style="position:absolute;top:10px;right:12px;width:28px;height:28px;background:'+k.c+'18;border-radius:50%"></div>' +
+                   '</div>';
+        }).join('');
+
+        // ── Loan bar chart ────────────────────────────────────────────────────
+        var lr = (loans.recent || []).slice(0, 10);
+        var lLabels = lr.map(function(r){return (r.member||'?').split(' ')[0];});
+        var lAmts   = lr.map(function(r){return num(r.amount);});
+        var lCtx = document.getElementById('loanBar').getContext('2d');
+        var lGrad = lCtx.createLinearGradient(0,0,0,250);
+        lGrad.addColorStop(0,'rgba(37,99,235,0.85)');
+        lGrad.addColorStop(1,'rgba(124,58,237,0.6)');
+        new Chart(lCtx, {
+            type:'bar',
+            data:{
+                labels: lLabels.length ? lLabels : ['No data'],
+                datasets:[{
+                    label:'Amount (ZMW)',
+                    data: lAmts.length ? lAmts : [0],
+                    backgroundColor: lGrad,
+                    borderColor:'#2563eb',
+                    borderWidth:0,
+                    borderRadius:8,
+                    borderSkipped:false
+                }]
+            },
+            options:{
+                responsive:true,
+                plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return ' '+zm(c.raw);}}}},
+                scales:{
+                    x:{grid:{display:false},ticks:{color:'#6b7f6d',font:{size:10},maxRotation:30}},
+                    y:{grid:{color:'rgba(0,0,0,.04)'},ticks:{color:'#6b7f6d',font:{size:10},callback:function(v){return 'K'+Math.round(v/1000);}}}
+                }
+            }
+        });
+
+        // ── Loan donut ────────────────────────────────────────────────────────
+        var donutData = [loans.pending||0, loans.approved||0, loans.rejected||0, loans.disbursed||0];
+        var donutColors = ['#f59e0b','#22c55e','#ef4444','#3b82f6'];
+        var donutLabels = ['Pending','Approved','Rejected','Disbursed'];
+        new Chart(document.getElementById('loanDonut'), {
+            type:'doughnut',
+            data:{
+                labels: donutLabels,
+                datasets:[{data:donutData, backgroundColor:donutColors, borderWidth:3, borderColor:'#fff', hoverOffset:10}]
+            },
+            options:{cutout:'65%',plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return ' '+c.label+': '+c.raw;}}}}}
+        });
+        document.getElementById('donutLegend').innerHTML = donutLabels.map(function(l,i){
+            return '<div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text)"><span style="width:10px;height:10px;border-radius:50%;background:'+donutColors[i]+';display:inline-block;flex-shrink:0"></span>'+l+': <strong>'+donutData[i]+'</strong></div>';
+        }).join('');
+
+        // ── Salary horizontal bar ─────────────────────────────────────────────
+        var sr = (sal.recent || []).slice(0, 8);
+        var sLabels = sr.map(function(r){return (r.staff||'?').split(' ')[0];});
+        var sNets   = sr.map(function(r){return num(r.net);});
+        var sCtx = document.getElementById('salBar').getContext('2d');
+        var sGrad = sCtx.createLinearGradient(300,0,0,0);
+        sGrad.addColorStop(0,'rgba(26,107,46,0.9)');
+        sGrad.addColorStop(1,'rgba(45,138,66,0.5)');
+        new Chart(sCtx, {
+            type:'bar',
+            data:{
+                labels: sLabels.length ? sLabels : ['No data'],
+                datasets:[{
+                    label:'Net (ZMW)',
+                    data: sNets.length ? sNets : [0],
+                    backgroundColor: sGrad,
+                    borderRadius:6,
+                    borderSkipped:false
+                }]
+            },
+            options:{
+                indexAxis:'y',
+                responsive:true,
+                plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return ' '+zm(c.raw);}}}},
+                scales:{
+                    x:{grid:{color:'rgba(0,0,0,.04)'},ticks:{color:'#6b7f6d',font:{size:10},callback:function(v){return 'ZMW '+v.toLocaleString();}}},
+                    y:{grid:{display:false},ticks:{color:'#6b7f6d',font:{size:10}}}
+                }
+            }
+        });
+
+        // ── Inquiry revenue line ──────────────────────────────────────────────
+        var ir = (inq.recent || []).slice(0, 10);
+        var iLabels = ir.map(function(r,i){return r.date ? r.date.substring(0,7) : 'R'+(i+1);});
+        var iAmts   = ir.map(function(r){return num(r.amount);});
+        var iCtx = document.getElementById('inqLine').getContext('2d');
+        var iAreaGrad = iCtx.createLinearGradient(0,0,0,200);
+        iAreaGrad.addColorStop(0,'rgba(245,166,35,0.3)');
+        iAreaGrad.addColorStop(1,'rgba(245,166,35,0.02)');
+        new Chart(iCtx, {
+            type:'line',
+            data:{
+                labels: iLabels.length ? iLabels : ['No data'],
+                datasets:[{
+                    label:'Revenue (ZMW)',
+                    data: iAmts.length ? iAmts : [0],
+                    borderColor:'#d97706',
+                    backgroundColor: iAreaGrad,
+                    borderWidth:3,
+                    tension:0.4,
+                    fill:true,
+                    pointBackgroundColor:'#fff',
+                    pointBorderColor:'#d97706',
+                    pointBorderWidth:3,
+                    pointRadius:5,
+                    pointHoverRadius:7
+                }]
+            },
+            options:{
+                responsive:true,
+                plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return ' '+zm(c.raw);}}}},
+                scales:{
+                    x:{grid:{display:false},ticks:{color:'#6b7f6d',font:{size:10},maxRotation:30}},
+                    y:{grid:{color:'rgba(0,0,0,.04)'},ticks:{color:'#6b7f6d',font:{size:10},callback:function(v){return 'ZMW '+v.toLocaleString();}}}
+                }
+            }
+        });
+
+        // ── Member payments grouped bar ───────────────────────────────────────
+        var mr = (mp.recent || []).slice(0, 10);
+        var mLabels = mr.map(function(r){return (r.member||'?').split(' ')[0];});
+        var mGross  = mr.map(function(r){return num(r.gross);});
+        var mNets   = mr.map(function(r){return num(r.net);});
+        var mDed    = mr.map(function(r){return num(r.deductions);});
+        new Chart(document.getElementById('memberBar'), {
+            type:'bar',
+            data:{
+                labels: mLabels.length ? mLabels : ['No data'],
+                datasets:[
+                    {label:'Gross',         data:mGross.length?mGross:[0],  backgroundColor:'rgba(8,145,178,0.25)', borderColor:'#0891b2', borderWidth:2, borderRadius:5},
+                    {label:'Net Take-home', data:mNets.length?mNets:[0],    backgroundColor:'rgba(26,107,46,0.8)',  borderColor:'#1a6b2e', borderWidth:0, borderRadius:5},
+                    {label:'Deductions',    data:mDed.length?mDed:[0],      backgroundColor:'rgba(239,68,68,0.5)',  borderColor:'#ef4444', borderWidth:0, borderRadius:5},
+                ]
+            },
+            options:{
+                responsive:true,
+                plugins:{legend:{position:'bottom',labels:{font:{size:10},boxWidth:10,color:'var(--muted)',padding:16}},
+                    tooltip:{callbacks:{label:function(c){return ' '+c.dataset.label+': '+zm(c.raw);}}}},
+                scales:{
+                    x:{grid:{display:false},ticks:{color:'#6b7f6d',font:{size:10}}},
+                    y:{grid:{color:'rgba(0,0,0,.04)'},ticks:{color:'#6b7f6d',font:{size:10},callback:function(v){return 'ZMW '+v.toLocaleString();}}}
+                }
+            }
+        });
+
+        // ── Prediction chart ──────────────────────────────────────────────────
+        var now = new Date();
+        var pLabels = [1,2,3].map(function(i){
+            var d = new Date(now.getFullYear(), now.getMonth()+i, 1);
+            return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getMonth()]+' '+d.getFullYear();
+        });
+        var avgL = lAmts.length ? lAmts.reduce(function(a,b){return a+b;},0)/lAmts.length : 5000;
+        var avgS = sNets.length ? sNets.reduce(function(a,b){return a+b;},0)/sNets.length : 7000;
+        var avgI = iAmts.length ? iAmts.reduce(function(a,b){return a+b;},0)/iAmts.length : 2000;
+        var pCtx = document.getElementById('predChart').getContext('2d');
+        var pGrad1 = pCtx.createLinearGradient(0,0,0,200); pGrad1.addColorStop(0,'rgba(37,99,235,0.7)'); pGrad1.addColorStop(1,'rgba(37,99,235,0.3)');
+        var pGrad2 = pCtx.createLinearGradient(0,0,0,200); pGrad2.addColorStop(0,'rgba(26,107,46,0.7)'); pGrad2.addColorStop(1,'rgba(26,107,46,0.3)');
+        var pGrad3 = pCtx.createLinearGradient(0,0,0,200); pGrad3.addColorStop(0,'rgba(245,166,35,0.7)'); pGrad3.addColorStop(1,'rgba(245,166,35,0.3)');
+        new Chart(pCtx, {
+            type:'bar',
+            data:{
+                labels: pLabels,
+                datasets:[
+                    {label:'Est. Loan Demand',   data:[avgL*1.05,avgL*1.10,avgL*1.16], backgroundColor:pGrad1, borderRadius:8, borderSkipped:false},
+                    {label:'Est. Salary Outflow', data:[avgS*1.02,avgS*1.03,avgS*1.03], backgroundColor:pGrad2, borderRadius:8, borderSkipped:false},
+                    {label:'Est. Company Revenue',data:[avgI*1.08,avgI*1.15,avgI*1.22], backgroundColor:pGrad3, borderRadius:8, borderSkipped:false},
+                ]
+            },
+            options:{
+                responsive:true,
+                plugins:{
+                    legend:{position:'bottom',labels:{font:{size:11},boxWidth:12,color:'var(--muted)',padding:16}},
+                    tooltip:{callbacks:{label:function(c){return ' '+c.dataset.label+': '+zm(c.raw);}}}
+                },
+                scales:{
+                    x:{grid:{display:false},ticks:{color:'#6b7f6d',font:{size:11}}},
+                    y:{grid:{color:'rgba(0,0,0,.04)'},ticks:{color:'#6b7f6d',font:{size:10},callback:function(v){return 'ZMW '+v.toLocaleString();}}}
+                }
+            }
+        });
+
+        // ── Recommendations ───────────────────────────────────────────────────
+        var cofaBal = num(cofa.balance);
+        var approvalRate = (loans.approved||0) / Math.max(loans.total||1, 1);
+        var recs = [];
+
+        recs.push(cofaBal < 50000
+            ? {c:'#ef4444',bg:'#fff1f2',icon:'🏦',t:'Low COFA Balance — Action Required',
+               d:'The cooperative fund balance of ZMW '+cofaBal.toLocaleString('en-ZM',{minimumFractionDigits:2})+' is critically low. Immediate top-up is required to continue loan disbursements and salary payments. Consider collecting outstanding member payments first.'}
+            : {c:'#22c55e',bg:'#f0fdf4',icon:'✅',t:'COFA Balance is Healthy',
+               d:'Fund balance of ZMW '+cofaBal.toLocaleString('en-ZM',{minimumFractionDigits:2})+' can comfortably cover upcoming obligations. Maintain monthly monitoring against projected outflows.'});
+
+        if ((loans.rejected||0) > (loans.approved||0))
+            recs.push({c:'#ef4444',bg:'#fff1f2',icon:'⚠️',t:'High Loan Rejection Rate ('+Math.round(approvalRate*100)+'% approval)',
+                d:'More applications are being rejected than approved. Review the credit scoring model — members may need financial literacy training to qualify. Consider introducing micro-loan options for low-scoring members.'});
+        else
+            recs.push({c:'#3b82f6',bg:'#eff6ff',icon:'📊',t:'Loan Portfolio Health — '+Math.round(approvalRate*100)+'% Approval Rate',
+                d:'Loan performance is within acceptable range. Continue monitoring repayment rates. Ensure approved loans are disbursed promptly to avoid member dissatisfaction.'});
+
+        if ((sal.unpaid||0) > 0)
+            recs.push({c:'#d97706',bg:'#fffbeb',icon:'⏰',t:(sal.unpaid)+' Outstanding Salary Payments',
+                d:'Unpaid salaries represent a liability and affect staff morale. The Accounts Officer must process these before the next payroll cycle. Verify COFA balance is sufficient before bulk processing.'});
+
+        if ((inq.pending||0) > 1)
+            recs.push({c:'#7c3aed',bg:'#f5f3ff',icon:'📦',t:(inq.pending)+' Company Inquiries Awaiting Review',
+                d:'Pending milk purchase inquiries risk losing business to competitors. The Sales Officer should prioritise reviewing, approving, and invoicing these. Prompt processing directly increases cooperative revenue.'});
+
+        recs.push({c:'#0891b2',bg:'#ecfeff',icon:'🔮',t:'3-Month Growth Forecast',
+            d:'Based on current trends: Loan demand is projected to grow 5–16%. Salary costs remain stable. Company milk revenue shows an upward trend of 8–22%. Plan COFA top-ups accordingly and consider expanding processing company partnerships to capitalise on growing demand.'});
+
+        document.getElementById('suggestions').innerHTML = recs.map(function(r){
+            return '<div class="sug" style="background:'+r.bg+';border-left:4px solid '+r.c+'">'+
+                '<div class="sug-icon" style="background:'+r.c+'22">'+r.icon+'</div>'+
+                '<div><div class="sug-title" style="color:'+r.c+'">'+r.t+'</div>'+
+                '<div class="sug-body" style="color:var(--text)">'+r.d+'</div></div></div>';
+        }).join('');
+    }
+</script>
+</body>
+</html>

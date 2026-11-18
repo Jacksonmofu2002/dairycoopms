@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Join DairyCoop - Create Account</title>
+  <link rel="stylesheet" th:href="@{/webjars/bootstrap/dist/css/bootstrap.min.css}"/>
+  <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;1,9..144,400&display=swap');
+        *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+        body{font-family:'Plus Jakarta Sans',sans-serif;min-height:100vh;background:#0a1628;display:flex;align-items:center;justify-content:center;padding:24px;position:relative;overflow:hidden}
+        /* Ambient background blobs */
+        body::before{content:'';position:fixed;top:-20%;left:-10%;width:600px;height:600px;background:radial-gradient(circle,rgba(26,107,46,0.25) 0%,transparent 70%);pointer-events:none}
+        body::after{content:'';position:fixed;bottom:-20%;right:-10%;width:500px;height:500px;background:radial-gradient(circle,rgba(245,166,35,0.12) 0%,transparent 70%);pointer-events:none}
+        .wrap{display:flex;max-width:980px;width:100%;gap:0;border-radius:24px;overflow:hidden;box-shadow:0 32px 80px rgba(0,0,0,0.5)}
+        /* Left panel */
+        .left{width:380px;flex-shrink:0;background:linear-gradient(160deg,#0d3d1a 0%,#1a5c2a 50%,#0a2e12 100%);padding:48px 40px;display:flex;flex-direction:column;position:relative;overflow:hidden}
+        .left::before{content:'';position:absolute;top:-60px;right:-60px;width:240px;height:240px;background:rgba(255,255,255,0.04);border-radius:50%}
+        .left::after{content:'';position:absolute;bottom:-40px;left:-40px;width:200px;height:200px;background:rgba(245,166,35,0.08);border-radius:50%}
+        .brand{display:flex;align-items:center;gap:12px;margin-bottom:48px;position:relative;z-index:1}
+        .brand-icon{width:46px;height:46px;background:rgba(255,255,255,0.12);border-radius:14px;display:flex;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,0.1)}
+        .brand-name{font-family:'Fraunces',serif;font-size:20px;font-weight:600;color:#fff}
+        .brand-tag{font-size:10px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:.12em}
+        .left-hero{flex:1;display:flex;flex-direction:column;justify-content:center;position:relative;z-index:1}
+        .left-title{font-family:'Fraunces',serif;font-size:34px;font-weight:300;color:#fff;line-height:1.25;margin-bottom:16px}
+        .left-title em{font-style:italic;color:#f5a623}
+        .left-desc{font-size:13.5px;color:rgba(255,255,255,0.5);line-height:1.8;margin-bottom:32px}
+        .feature{display:flex;gap:12px;margin-bottom:14px;align-items:flex-start}
+        .feature-dot{width:8px;height:8px;border-radius:50%;background:#f5a623;flex-shrink:0;margin-top:5px}
+        .feature-text{font-size:13px;color:rgba(255,255,255,0.65);line-height:1.5}
+        .left-foot{font-size:11px;color:rgba(255,255,255,0.2);position:relative;z-index:1;margin-top:32px}
+        /* Right panel */
+        .right{flex:1;background:#ffffff;padding:48px 44px;display:flex;flex-direction:column;justify-content:center}
+        .form-title{font-family:'Fraunces',serif;font-size:26px;font-weight:600;color:#111827;margin-bottom:6px}
+        .form-sub{font-size:13.5px;color:#6b7280;margin-bottom:32px}
+        .err-box{background:#fef2f2;border:1px solid #fecaca;border-radius:12px;padding:13px 16px;margin-bottom:24px;display:flex;gap:10px;align-items:flex-start}
+        .err-box svg{flex-shrink:0;margin-top:1px;color:#ef4444}
+        .err-box span{font-size:13.5px;color:#dc2626}
+        .fgrp{margin-bottom:20px}
+        .flbl{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#374151;margin-bottom:8px}
+        .req{color:#ef4444}
+        .finp{width:100%;padding:12px 16px;border:1.5px solid #e5e7eb;border-radius:12px;font-size:14px;font-family:inherit;color:#111827;background:#f9fafb;outline:none;transition:all .2s}
+        .finp:focus{border-color:#1a6b2e;background:#fff;box-shadow:0 0 0 4px rgba(26,107,46,0.08)}
+        .finp::placeholder{color:#9ca3af}
+        .hint{font-size:11.5px;color:#6b7280;margin-top:5px}
+        .btn-primary{width:100%;padding:14px;background:linear-gradient(135deg,#1a6b2e,#2d8a42);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:600;font-family:inherit;cursor:pointer;transition:all .2s;margin-top:4px}
+        .btn-primary:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(26,107,46,0.35)}
+        .divider{display:flex;align-items:center;gap:12px;margin:24px 0;color:#d1d5db;font-size:12px}
+        .divider::before,.divider::after{content:'';flex:1;height:1px;background:#e5e7eb}
+        .signin-link{text-align:center;font-size:13.5px;color:#6b7280}
+        .signin-link a{color:#1a6b2e;font-weight:600;text-decoration:none}
+        .signin-link a:hover{text-decoration:underline}
+        @media(max-width:700px){.left{display:none}.right{border-radius:24px;padding:32px 24px}}
+    </style>
+</head>
+<body>
+<div class="wrap">
+  <!-- Left -->
+  <div class="left">
+    <div class="brand">
+      <div class="brand-icon">
+        <svg width="26" height="26" viewBox="0 0 32 32" fill="none">
+          <ellipse cx="16" cy="20" rx="11" ry="8" fill="#4CAF50" opacity="0.3"/>
+          <ellipse cx="16" cy="19" rx="9" ry="6" fill="#4CAF50" opacity="0.6"/>
+          <circle cx="10" cy="15" r="4" fill="#fff" opacity="0.9"/>
+          <circle cx="22" cy="15" r="4" fill="#fff" opacity="0.9"/>
+          <ellipse cx="16" cy="12" rx="6" ry="5" fill="#fff"/>
+          <circle cx="13" cy="11" r="1" fill="#2d6a2d"/>
+          <circle cx="19" cy="11" r="1" fill="#2d6a2d"/>
+          <path d="M13 14 Q16 16 19 14" stroke="#2d6a2d" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div>
+        <div class="brand-name">DairyCoop</div>
+        <div class="brand-tag">Member Portal</div>
+      </div>
+    </div>
+    <div class="left-hero">
+      <div class="left-title">Your farm,<br/><em>your future.</em></div>
+      <div class="left-desc">Join the cooperative and get access to loans, track your milk deliveries, and receive your monthly payments  all in one place.</div>
+      <div class="feature"><div class="feature-dot"></div><div class="feature-text">Apply for livestock and farming loans</div></div>
+      <div class="feature"><div class="feature-dot"></div><div class="feature-text">Track daily milk collection records</div></div>
+      <div class="feature"><div class="feature-dot"></div><div class="feature-text">View monthly payment statements</div></div>
+      <div class="feature"><div class="feature-dot"></div><div class="feature-text">Monitor your cow assignments</div></div>
+    </div>
+    <div class="left-foot">2026 DairyCoop Management System</div>
+  </div>
+
+  <!-- Right -->
+  <div class="right">
+    <div class="form-title">Create your account</div>
+    <div class="form-sub">Already a member? You can sign up below and complete your profile after logging in.</div>
+
+    <div class="err-box" th:if="${errorMessage != null}">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+      </svg>
+      <span th:text="${errorMessage}">Error</span>
+    </div>
+
+    <form th:action="@{/member/register}" method="post">
+      <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+      <div class="fgrp">
+        <label class="flbl" for="fullName">Full Name <span class="req">*</span></label>
+        <input type="text" id="fullName" name="fullName" class="finp"
+               th:value="${fullName}" placeholder="e.g. Mwamba Chanda" required autocomplete="name"/>
+      </div>
+
+      <div class="fgrp">
+        <label class="flbl" for="email">Email Address <span class="req">*</span></label>
+        <input type="email" id="email" name="email" class="finp"
+               th:value="${email}" placeholder="your@email.com" required autocomplete="email"/>
+        <div class="hint">This will be your login email</div>
+      </div>
+
+      <div class="fgrp">
+        <label class="flbl" for="password">Password <span class="req">*</span></label>
+        <input type="password" id="password" name="password" class="finp"
+               placeholder="Min 8 chars, one uppercase, one number" required autocomplete="new-password"/>
+      </div>
+
+      <div class="fgrp">
+        <label class="flbl" for="confirmPassword">Confirm Password <span class="req">*</span></label>
+        <input type="password" id="confirmPassword" name="confirmPassword" class="finp"
+               placeholder="Repeat your password" required autocomplete="new-password"/>
+      </div>
+
+      <button type="submit" class="btn-primary">Create Account</button>
+    </form>
+
+    <div class="divider">or</div>
+    <div class="signin-link">Already have an account? <a th:href="@{/login}">Sign in here</a></div>
+  </div>
+</div>
+<script th:src="@{/webjars/bootstrap/dist/js/bootstrap.bundle.min.js}"></script>
+</body>
+</html>

@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Create Purchase Order - DairyCoop</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:system-ui,-apple-system,sans-serif;background:#f8fafc;color:#0f172a;min-height:100vh;padding:32px}
+        .container{max-width:800px;margin:0 auto}
+        .card{background:#fff;border-radius:14px;border:1px solid #e2e8f0;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.05)}
+        .card-head{padding:24px 28px;border-bottom:1px solid #f1f5f9;background:#f8fafc}
+        .card-title{font-size:20px;font-weight:700;color:#0f172a;margin-bottom:4px}
+        .card-subtitle{font-size:14px;color:#64748b}
+        .card-body{padding:28px}
+        .info-box{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:16px;margin-bottom:24px}
+        .info-box strong{color:#166534;display:block;margin-bottom:8px}
+        .info-row{display:grid;grid-template-columns:140px 1fr;gap:8px;margin-bottom:6px;font-size:14px}
+        .info-label{color:#64748b;font-weight:500}
+        .info-value{color:#0f172a;font-weight:600}
+        .form-group{margin-bottom:20px}
+        label{display:block;font-size:14px;font-weight:600;color:#334155;margin-bottom:8px}
+        label .required{color:#ef4444;margin-left:2px}
+        input,textarea{width:100%;padding:12px 16px;border:1px solid#cbd5e1;border-radius:8px;font-size:14px;font-family:inherit;transition:all .2s}
+        input:focus,textarea:focus{outline:none;border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,0.1)}
+        textarea{resize:vertical;min-height:80px}
+        .form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+        .btn-group{display:flex;gap:12px;margin-top:28px;padding-top:24px;border-top:1px solid #f1f5f9}
+        .btn{padding:12px 24px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;border:none;font-family:inherit;transition:all .2s;display:inline-flex;align-items:center;gap:8px}
+        .btn-primary{background:linear-gradient(135deg,#059669,#047857);color:#fff}
+        .btn-primary:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(5,150,105,0.3)}
+        .btn-secondary{background:#fff;color:#475569;border:1px solid #cbd5e1}
+        .btn-secondary:hover{background:#f8fafc}
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="card">
+        <div class="card-head">
+            <div class="card-title">Create Purchase Order</div>
+            <div class="card-subtitle" th:text="'For Inquiry: ' + ${inquiry.referenceNo}">Reference</div>
+        </div>
+
+        <div class="card-body">
+            <!-- Inquiry Summary -->
+            <div class="info-box">
+                <strong>📋 Inquiry Details</strong>
+                <div class="info-row">
+                    <span class="info-label">Company:</span>
+                    <span class="info-value" th:text="${company.name}">Company Name</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Reference:</span>
+                    <span class="info-value" th:text="${inquiry.referenceNo}">INQ-2026-0001</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Requested Quantity:</span>
+                    <span class="info-value" th:text="${inquiry.requestedLitres} + ' L'">100 L</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Approved Price:</span>
+                    <span class="info-value" th:text="'ZMW ' + ${inquiry.pricePerLitre} + '/L'">ZMW 20.00/L</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Preferred Date:</span>
+                    <span class="info-value" th:text="${inquiry.preferredDate}">2026-05-20</span>
+                </div>
+            </div>
+
+            <!-- PO Form -->
+            <form th:action="@{/portal/company/{c}/purchase-order/create(c=${company.id})}" method="post">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                <input type="hidden" name="inquiryId" th:value="${inquiry.id}"/>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Unit Price (ZMW/L) <span class="required">*</span></label>
+                        <input type="number" name="unitPrice" step="0.01" required
+                               th:value="${inquiry.pricePerLitre}"/>
+                    </div>
+                    <div class="form-group">
+                        <label>Delivery Date <span class="required">*</span></label>
+                        <input type="date" name="deliveryDate" required
+                               th:value="${inquiry.preferredDate}"/>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Delivery Location</label>
+                    <input type="text" name="deliveryLocation"
+                           placeholder="e.g., Warehouse A, Lusaka"/>
+                </div>
+
+                <div class="btn-group">
+                    <button type="submit" class="btn btn-primary">
+                        📄 Create Purchase Order
+                    </button>
+                    <a th:href="@{/portal/company/{c}(c=${company.id})}" class="btn btn-secondary">
+                        ← Back to Dashboard
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

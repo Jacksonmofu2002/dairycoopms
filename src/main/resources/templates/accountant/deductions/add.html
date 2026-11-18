@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Add Deduction Type - DairyCoop Finance</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,700;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+    <style>
+        *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+        :root{
+            --navy:#0b1120;--green:#00c16a;--green-dim:#00a358;
+            --amber:#f59e0b;--red:#f43f5e;--blue:#3b82f6;
+            --bg:#f0f2f8;--white:#fff;--border:#e2e8f0;
+            --ink:#0f172a;--ink2:#334155;--muted:#64748b;
+            --shadow:0 2px 12px rgba(11,17,32,.08);
+        }
+        body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;display:flex;flex-direction:column}
+
+        /* Topbar */
+
+        /* Content */
+        .content{padding:28px;max-width:900px;margin:0 auto}
+        .pg-eyebrow{font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--green-dim);margin-bottom:4px}
+        .pg-title{font-family:'Playfair Display',serif;font-size:26px;color:var(--ink);margin-bottom:6px}
+        .pg-desc{font-size:13.5px;color:var(--muted);margin-bottom:24px}
+
+        /* Alerts */
+        .alert-err{background:#fff1f2;border-left:4px solid var(--red);color:#9f1239;padding:11px 14px;border-radius:0 10px 10px 0;font-size:13px;margin-bottom:18px}
+
+        /* Info Box */
+        .info-box{background:#dbeafe;border:1px solid#bfdbfe;border-radius:10px;padding:14px 16px;margin-bottom:24px;display:flex;gap:12px}
+        .info-box svg{width:20px;height:20px;color:#1e40af;flex-shrink:0;margin-top:1px}
+        .info-title{font-weight:600;font-size:12.5px;color:#1e3a8a;margin-bottom:4px}
+        .info-text{font-size:12px;color:#1e3a8a;line-height:1.5}
+
+        /* Form Card */
+        .form-card{background:#fff;border-radius:14px;border:1px solid var(--border);overflow:hidden;box-shadow:var(--shadow)}
+        .form-head{padding:18px 24px;border-bottom:1px solid var(--border);background:#f8fafc}
+        .form-title{font-size:16px;font-weight:700;color:var(--ink)}
+        .form-sub{font-size:12px;color:var(--muted);margin-top:2px}
+        .form-body{padding:24px}
+        .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+        .form-group{margin-bottom:20px}
+        .form-group-full{grid-column:1 / -1}
+        .flbl{display:block;font-size:11px;font-weight:700;text-transform:uppercase;color:var(--ink2);margin-bottom:6px}
+        .req{color:var(--red)}
+        .finp,.ftxt{width:100%;padding:10px 13px;border:1.5px solid var(--border);border-radius:9px;font-size:13.5px;font-family:inherit}
+        .finp:focus,.ftxt:focus{outline:none;border-color:var(--green)}
+        .ftxt{resize:vertical;min-height:80px}
+        .hint{font-size:11px;color:var(--muted);margin-top:4px}
+
+        /* Checkbox */
+        .check-wrap{background:#f8fafc;border:1.5px solid var(--border);border-radius:9px;padding:12px;display:flex;gap:10px;cursor:pointer;transition:.13s}
+        .check-wrap:hover{border-color:var(--green);background:#f0f7f2}
+        .check-wrap input{width:18px;height:18px;margin-top:2px;cursor:pointer;accent-color:var(--green)}
+        .check-content{flex:1}
+        .check-label{font-size:13px;font-weight:600;color:var(--ink);display:block;margin-bottom:2px}
+        .check-desc{font-size:11px;color:var(--muted)}
+
+        /* Form Footer */
+        .form-foot{padding:18px 24px;border-top:1px solid var(--border);background:#f8fafc;display:flex;gap:12px;justify-content:flex-end}
+        .btn-cancel{background:#fff;border:1.5px solid var(--border);color:var(--ink2);padding:9px 16px;border-radius:8px;font-weight:600;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:6px;font-family:inherit}
+        .btn-cancel:hover{background:#f1f5f9}
+        .btn-submit{background:var(--green-dim);color:#fff;border:none;padding:9px 20px;border-radius:8px;font-weight:700;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:6px}
+        .btn-submit:hover{background:#007a42}
+
+        /* Floating nav */
+    </style>
+    <link rel="stylesheet" th:href="@{/css/accountant-base.css}"/>
+    <link rel="stylesheet" th:href="@{/css/accountant-sidebar.css}"/>
+</head>
+<body>
+
+
+<div th:replace="~{fragments/accountant-nav :: nav(active='deductions', pageTitle='Add Deduction')}"></div>
+
+<!-- Main Content -->
+<div class="sb-page">
+    <!-- Error Alert -->
+    <div th:if="${errorMessage}" class="alert-err" th:text="${errorMessage}"></div>
+
+    <!-- Page Header -->
+    <div class="pg-eyebrow">COOPERATIVE EXPENSES</div>
+    <h1 class="pg-title">Create New Expense Type</h1>
+    <div class="pg-desc">Configure an expense paid from COFA during monthly salary processing</div>
+
+    <!-- Form Card -->
+    <form th:action="@{/accountant/deductions/add}" th:object="${deductionType}" method="post">
+        <div class="form-card">
+            <div class="form-head">
+                <div class="form-title">Expense Details</div>
+                <div class="form-sub">Provide the details for this cooperative expense</div>
+            </div>
+            <div class="form-body">
+                <div class="form-grid">
+                    <!-- Name -->
+                    <div class="form-group">
+                        <label class="flbl" for="name">EXPENSE NAME<span class="req">*</span></label>
+                        <input type="text" id="name" th:field="*{name}" class="finp" placeholder="e.g., Cow Maintenance Fund" required maxlength="100"/>
+                        <div class="hint">A unique name that clearly describes this expense</div>
+                    </div>
+
+                    <!-- Rate -->
+                    <div class="form-group">
+                        <label class="flbl" for="rate">EXPENSE RATE (%)<span class="req">*</span></label>
+                        <input type="number" id="rate" th:field="*{rate}" class="finp" step="0.01" min="0.01" max="100" placeholder="5.00" required/>
+                        <div class="hint">Percentage amount to pay from COFA (0.01 - 100)</div>
+                    </div>
+
+                    <!-- Description (Full Width) -->
+                    <div class="form-group form-group-full">
+                        <label class="flbl" for="description">DESCRIPTION</label>
+                        <textarea id="description" th:field="*{description}" class="ftxt" placeholder="Explain the purpose of this expense..."></textarea>
+                        <div class="hint">Optional: Provide details about how this expense is used</div>
+                    </div>
+
+                    <!-- Checkboxes (Full Width) -->
+                    <div class="form-group form-group-full">
+                        <label class="check-wrap">
+                            <input type="checkbox" th:field="*{recurring}" checked/>
+                            <div class="check-content">
+                                <span class="check-label">Recurring Monthly Expense</span>
+                            </div>
+                        </label>
+                    </div>
+
+                    <div class="form-group form-group-full">
+                        <label class="check-wrap">
+                            <input type="checkbox" th:field="*{active}" checked/>
+                            <div class="check-content">
+                                <span class="check-label">Active (Pay This Month)</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-foot">
+                <a th:href="@{/accountant/deductions}" class="btn-cancel">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>Cancel
+                </a>
+                <button type="submit" class="btn-submit">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <polyline points="20 6 9 17 4 12"/>
+                    </svg>Create Expense Type
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+
+</body>
+</html>

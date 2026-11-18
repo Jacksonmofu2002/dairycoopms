@@ -1,0 +1,1496 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Salaries &amp; Payments - DairyCoop Finance</title>
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap/dist/css/bootstrap.min.css}"/>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,700;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+    <style>
+        /* ── Page-specific (shared base is in accountant-base.css) ─── */
+
+        /* Tabs */
+        .tab-bar{display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:24px;overflow-x:auto}
+        .tab-btn{padding:11px 22px;font-size:13px;font-weight:700;border:none;background:none;cursor:pointer;color:var(--muted);font-family:inherit;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .16s;white-space:nowrap;flex-shrink:0}
+        .tab-btn.active{color:var(--green-dim);border-bottom-color:var(--green-dim)}
+        .tab-btn:hover:not(.active){color:var(--ink2)}
+        .tab-content{display:none}
+        .tab-content.active{display:block}
+
+        /* Stats strip (4-up KPI row, different from shared .kpi) */
+        .stat-strip{display:grid;gap:14px;margin-bottom:24px}
+        .stat{background:#fff;border-radius:14px;padding:18px 20px;border:1px solid var(--border);box-shadow:var(--shadow);position:relative;overflow:hidden}
+        .stat::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:3px 3px 0 0}
+        .s-amber::before{background:linear-gradient(90deg,var(--amber),#fbbf24)}
+        .s-green::before{background:linear-gradient(90deg,#00c16a,#34d399)}
+        .s-blue::before{background:linear-gradient(90deg,#3b82f6,#60a5fa)}
+        .s-red::before{background:linear-gradient(90deg,#f43f5e,#fb7185)}
+        .stat-num{font-size:28px;font-weight:800;color:var(--ink);line-height:1;margin-bottom:5px}
+        .s-amber .stat-num{color:var(--amber)}
+        .s-green .stat-num{color:#00a358}
+        .s-blue .stat-num{color:#2563eb}
+        .s-red .stat-num{color:#e11d48}
+        .stat-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);margin-bottom:4px}
+        .stat-sub{font-size:11px;color:var(--muted)}
+
+        /* Process / action button */
+        .btn-process{background:linear-gradient(135deg,#00a358,#00c16a);color:#fff;border:none;padding:9px 18px;border-radius:9px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;transition:opacity .15s}
+        .btn-process:hover{opacity:.88}
+        .btn-process:disabled{opacity:.5;cursor:not-allowed}
+
+        /* Modal overlay + box */
+        @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+        @keyframes spin{to{transform:rotate(360deg)}}
+        .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1000;display:none;align-items:center;justify-content:center;padding:24px}
+        .modal-overlay.open{display:flex}
+        .modal-box{background:#fff;border-radius:20px;width:560px;max-width:96vw;box-shadow:0 20px 60px rgba(11,17,32,.22);animation:fadeUp .22s ease;overflow:hidden}
+        .modal-heading{font-family:'Playfair Display',serif;font-size:20px;color:var(--ink)}
+
+        /* Bank preview strip */
+        .modal-bank-preview{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:14px;margin-bottom:18px}
+        .mbp-title{font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#166534;margin-bottom:8px}
+        .mbp-val{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:#065f46}
+
+        /* Pay method cards */
+        .pay-method-card:hover{border-color:var(--green-dim)!important;background:#f0fdf4!important;transform:translateY(-2px);box-shadow:0 4px 14px rgba(0,193,106,.12)}
+        .pay-method-card.selected{border-color:var(--green-dim)!important;background:#f0fdf4!important;box-shadow:0 0 0 3px rgba(0,193,106,.18)}
+
+        /* Alias: some places use pw-banner, base CSS defines pw-bar */
+        .pw-banner{background:linear-gradient(90deg,#78350f,#92400e);padding:8px 28px;display:flex;align-items:center;gap:10px;font-size:12.5px;color:#fef3c7}
+        .pw-banner a{color:#fbbf24;font-weight:700;text-decoration:underline}
+    </style>
+    <link rel="stylesheet" th:href="@{/css/accountant-base.css}"/>
+    <link rel="stylesheet" th:href="@{/css/accountant-sidebar.css}"/>
+</head>
+<body>
+
+
+<div th:replace="~{fragments/accountant-nav :: nav(active='salaries', pageTitle='Pay Salaries')}"></div>
+<div class="sb-page">
+    <div class="pw-bar" th:if="${mustChangePassword}">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        You are using a temporary password. <a th:href="@{/account/password}">Change it now</a>
+    </div>
+
+
+    <div class="pg-eyebrow">Accounts Officer</div>
+    <div class="pg-title">Salaries &amp; <em>Member Payments</em></div>
+
+    <div class="alert-ok" th:if="${successMessage != null and !#strings.isEmpty(successMessage)}">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        <span th:text="${successMessage}"></span>
+    </div>
+    <div class="alert-err" th:if="${errorMessage != null and !#strings.isEmpty(errorMessage)}">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/></svg>
+        <span th:text="${errorMessage}"></span>
+    </div>
+
+    <!-- COFA balance banner -->
+    <div th:if="${cofaBalance != null}"
+         style="border-radius:12px;padding:14px 20px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px"
+         th:style="${cofaSufficient} ? 'background:#f0fdf4;border:1.5px solid #86efac;border-radius:12px;padding:14px 20px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px' : 'background:#fff7ed;border:1.5px solid #fdba74;border-radius:12px;padding:14px 20px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px'">
+        <div style="display:flex;align-items:center;gap:10px">
+            <svg th:if="${cofaSufficient}" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#15803d" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            <svg th:unless="${cofaSufficient}" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c2410c" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/></svg>
+            <div>
+                <div style="font-size:13px;font-weight:700"
+                     th:style="${cofaSufficient} ? 'font-size:13px;font-weight:700;color:#14532d' : 'font-size:13px;font-weight:700;color:#9a3412'"
+                     th:text="${cofaSufficient} ? 'COFA has sufficient funds for all pending payments' : 'Warning: COFA balance may be insufficient for pending payments'">Status</div>
+                <div style="font-size:12px;color:#6b7280;margin-top:2px">
+                    COFA Balance: <strong th:text="'ZMW ' + ${#numbers.formatDecimal(cofaBalance,1,'COMMA',2,'POINT')}">ZMW 0.00</strong>
+                    &nbsp;·&nbsp;
+                    Total pending outflow: <strong th:text="'ZMW ' + ${#numbers.formatDecimal(totalPendingOutflow,1,'COMMA',2,'POINT')}">ZMW 0.00</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Period filter -->
+    <form th:action="@{/accountant/salaries}" method="get"
+          style="display:flex;align-items:center;gap:10px;margin-bottom:24px;flex-wrap:wrap">
+        <div>
+            <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:5px">Year</div>
+            <select name="year" class="finp" style="width:auto">
+                <option th:each="y : ${#numbers.sequence(2024,2027)}"
+                        th:value="${y}" th:text="${y}"
+                        th:selected="${y == selectedYear}">2026</option>
+            </select>
+        </div>
+        <div>
+            <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:5px">Month</div>
+            <select name="month" class="finp" style="width:auto">
+                <option th:each="m : ${#numbers.sequence(1,12)}"
+                        th:value="${m}"
+                        th:text="${m}"
+                        th:selected="${m == selectedMonth}">M</option>
+            </select>
+        </div>
+        <div style="align-self:flex-end">
+            <button type="submit" class="btn-process">View Period</button>
+        </div>
+        <div style="align-self:flex-end;margin-left:auto">
+            <button type="button" id="calcPreviewBtn"
+                    onclick="openSalaryPreview()"
+                    style="background:linear-gradient(135deg,#064e3b,#065f46);color:#fff;border:none;padding:13px 24px;border-radius:14px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;display:inline-flex;align-items:center;gap:11px;box-shadow:0 4px 18px rgba(6,78,59,.35);transition:all .22s"
+                    onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 28px rgba(6,78,59,.5)'"
+                    onmouseout="this.style.transform='';this.style.boxShadow='0 4px 18px rgba(6,78,59,.35)'">
+                    <span style="width:34px;height:34px;background:rgba(0,193,106,.2);border:1px solid rgba(0,193,106,.35);border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+                    </span>
+                <span>
+                        <span style="display:block;font-size:14px;font-weight:800;letter-spacing:.01em">Calculate Salaries</span>
+                        <span style="display:block;font-size:10px;font-weight:500;opacity:.7;margin-top:1px">Preview deductions before generating</span>
+                    </span>
+            </button>
+        </div>
+    </form>
+
+    <!-- Hidden generate form — lives OUTSIDE the GET form to avoid nested-form HTML violation -->
+    <form id="generateForm" th:action="@{/accountant/salaries/generate}" method="post" style="display:none">
+        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+        <input type="hidden" name="year"  th:value="${selectedYear}" id="genYear"/>
+        <input type="hidden" name="month" th:value="${selectedMonth}" id="genMonth"/>
+    </form>
+
+    <div class="stat-strip" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr))">
+        <div class="stat s-amber">
+            <div class="stat-num" th:text="${pendingStaffSalaries ?: 0}">0</div>
+            <div class="stat-lbl">Unpaid Staff Salaries</div>
+            <div class="stat-sub">All periods</div>
+        </div>
+        <div class="stat s-green">
+            <div class="stat-num" th:text="${salaryRecords != null ? #lists.size(salaryRecords.?[status == 'PAID']) : 0}">0</div>
+            <div class="stat-lbl">Paid This Period</div>
+        </div>
+        <div class="stat s-blue">
+            <div class="stat-num" th:text="${pendingMemberPayments ?: 0}">0</div>
+            <div class="stat-lbl">Unpaid Member Payments</div>
+            <div class="stat-sub">Milk payments</div>
+        </div>
+        <div class="stat s-amber">
+            <div class="stat-num" th:text="${staffUsers != null ? #lists.size(staffUsers) : 0}">0</div>
+            <div class="stat-lbl">Active Staff</div>
+        </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tab-bar">
+        <button class="tab-btn active" onclick="showTab('staff')">Staff Salaries</button>
+        <button class="tab-btn" onclick="showTab('members')">Member Milk Payments</button>
+        <button class="tab-btn" onclick="showTab('overdue')" style="display:flex;align-items:center;gap:7px">
+            Unpaid / Overdue
+            <span th:if="${allUnpaidSalaries != null and !#lists.isEmpty(allUnpaidSalaries)}"
+                  th:text="${#lists.size(allUnpaidSalaries)}"
+                  style="background:#f43f5e;color:#fff;font-size:10px;font-weight:800;min-width:20px;height:20px;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;padding:0 5px">0</span>
+        </button>
+        <button class="tab-btn" onclick="showTab('config')">Salary Configuration</button>
+    </div>
+
+    <!-- TAB 1: Staff Salaries -->
+    <div id="tab-staff" class="tab-content active">
+        <div class="card">
+            <div class="card-head">
+                <div>
+                    <div class="card-title">Staff Salaries</div>
+                    <div class="card-sub">
+                        Salary disbursements for
+                        <span th:text="${selectedMonth} + '/' + ${selectedYear}">month/year</span>
+                    </div>
+                </div>
+            </div>
+            <div style="overflow-x:auto">
+                <table class="tbl">
+                    <thead>
+                    <tr>
+                        <th>Staff Member</th>
+                        <th>Grade &amp; Role</th>
+                        <th>Basic Salary</th>
+                        <th>Loan Deduction</th>
+                        <th>Net Salary</th>
+                        <th>Bank Account</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="sal : ${salaryRecords}">
+                        <td>
+                            <div style="font-weight:700;font-size:14px" th:text="${sal.user.fullName}">Name</div>
+                            <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted)" th:text="${sal.user.email}">email</div>
+                        </td>
+                        <td>
+                            <!-- Executive badge for ADMIN -->
+                            <span th:if="${sal.user.role == 'ADMIN'}"
+                                  style="background:linear-gradient(135deg,#fef3c7,#fde68a);color:#78350f;font-size:10.5px;font-weight:800;padding:3px 10px;border-radius:20px;text-transform:uppercase;letter-spacing:.06em;border:1px solid #fcd34d;display:inline-block;margin-bottom:3px">
+                                    ★ Executive
+                                </span>
+                            <span th:if="${sal.user.role != 'ADMIN'}"
+                                  style="background:#f0f4ff;color:#3b82f6;font-size:10.5px;font-weight:700;padding:3px 10px;border-radius:20px;text-transform:uppercase;letter-spacing:.06em;display:inline-block;margin-bottom:3px">
+                                    Staff
+                                </span>
+                            <div style="font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em" th:text="${sal.user.role}">ROLE</div>
+                        </td>
+                        <td>
+                                <span style="font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--ink)"
+                                      th:text="'ZMW ' + ${#numbers.formatDecimal(sal.basicSalary,1,2)}">ZMW 0.00</span>
+                        </td>
+                        <td>
+                            <!-- Has loan deduction -->
+                            <div th:if="${sal.deductions != null and sal.deductions.compareTo(T(java.math.BigDecimal).ZERO) > 0}"
+                                 style="background:#fff1f2;border:1.5px solid #fecdd3;border-radius:10px;padding:9px 12px">
+                                <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#be123c;margin-bottom:3px;display:flex;align-items:center;gap:5px">
+                                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                                    Loan Deduction
+                                </div>
+                                <div style="font-family:'JetBrains Mono',monospace;font-weight:800;color:#be123c;font-size:14px"
+                                     th:text="'− ZMW ' + ${#numbers.formatDecimal(sal.deductions,1,2)}">− ZMW 0.00</div>
+                                <div style="font-size:10px;color:#9f1239;margin-top:2px" th:text="${sal.notes}">note</div>
+                            </div>
+                            <!-- No loan -->
+                            <div th:if="${sal.deductions == null or sal.deductions.compareTo(T(java.math.BigDecimal).ZERO) == 0}"
+                                 style="display:inline-flex;align-items:center;gap:5px;background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:8px;padding:5px 10px">
+                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                                <span style="font-size:11px;font-weight:700;color:#15803d">No loan — Full salary</span>
+                            </div>
+                        </td>
+                        <td>
+                            <div style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1.5px solid #86efac;border-radius:10px;padding:10px 13px;min-width:120px">
+                                <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#15803d;margin-bottom:3px">Take-Home</div>
+                                <span style="font-family:'JetBrains Mono',monospace;font-weight:800;color:#065f46;font-size:16px"
+                                      th:text="'ZMW ' + ${#numbers.formatDecimal(sal.netSalary,1,2)}">ZMW 0.00</span>
+                            </div>
+                        </td>
+                        <td style="min-width:180px">
+                            <div th:if="${sal.user.member != null and sal.user.member.accountNumber != null}"
+                                 style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:8px 10px;font-size:11.5px">
+                                <div style="font-weight:700;color:#065f46" th:text="${sal.user.member.bankName ?: '-'}">Bank</div>
+                                <div style="font-family:'JetBrains Mono',monospace;color:#065f46" th:text="${sal.user.member.accountNumber}">Acc</div>
+                            </div>
+                            <div th:if="${sal.user.member == null or sal.user.member.accountNumber == null}"
+                                 style="font-size:12px;color:#d97706;font-weight:600">No bank details</div>
+                        </td>
+                        <td>
+                                <span th:if="${sal.status == 'PAID'}"
+                                      style="background:#dcfce7;color:#166534;font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;display:inline-flex;align-items:center;gap:4px">
+                                    <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                                    Paid
+                                </span>
+                            <span th:if="${sal.status == 'UNPAID'}"
+                                  style="background:#fef3c7;color:#92400e;font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px">Unpaid</span>
+                        </td>
+                        <td>
+                            <button type="button"
+                                    th:if="${sal.status == 'UNPAID'}"
+                                    class="btn-process"
+                                    th:attr="data-id=${sal.id},data-name=${sal.user.fullName},data-amount='ZMW ' + ${#numbers.formatDecimal(sal.netSalary,1,2)},data-role=${sal.user.role},data-basic='ZMW ' + ${#numbers.formatDecimal(sal.basicSalary,1,2)},data-deduction='ZMW ' + ${#numbers.formatDecimal(sal.deductions,1,2)},data-period=${monthNames[sal.month] + ' ' + sal.year}"
+                                    onclick="openPaySalary(this)">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                                Pay Now
+                            </button>
+                            <span th:if="${sal.status == 'PAID'}"
+                                  style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted)"
+                                  th:text="${sal.referenceNo}">REF</span>
+                        </td>
+                    </tr>
+                    <tr th:if="${salaryRecords == null or #lists.isEmpty(salaryRecords)}">
+                        <td colspan="8" class="empty-state">
+                            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" stroke-width="1.5" style="display:block;margin:0 auto 10px">
+                                <rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+                            </svg>
+                            No salary records for this period.
+                            Click <strong>Generate Salary Records</strong> above to create them.
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 2: Member Milk Payments -->
+    <div id="tab-members" class="tab-content">
+
+        <!-- Generate button row -->
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px">
+            <div>
+                <div style="font-family:'Playfair Display',serif;font-size:20px;color:var(--ink)">Member Milk Payments</div>
+                <div style="font-size:12px;color:var(--muted);margin-top:3px">
+                    Showing records for
+                    <strong th:text="${monthNames[selectedMonth] + ' ' + selectedYear}">period</strong>
+                    — generate to create payment records for all approved members with deliveries
+                </div>
+            </div>
+            <form th:action="@{/accountant/salaries/generate-member-payments}" method="post" style="display:inline">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                <input type="hidden" name="year"  th:value="${selectedYear}"/>
+                <input type="hidden" name="month" th:value="${selectedMonth}"/>
+                <button type="submit"
+                        style="background:linear-gradient(135deg,#1e3a5f,#0b1120);color:#fff;border:none;padding:13px 22px;border-radius:13px;font-size:13px;font-weight:800;font-family:inherit;cursor:pointer;display:inline-flex;align-items:center;gap:10px;box-shadow:0 4px 16px rgba(11,17,32,.25);transition:all .2s"
+                        onmouseover="this.style.transform='translateY(-2px)'"
+                        onmouseout="this.style.transform=''">
+                        <span style="width:32px;height:32px;background:rgba(0,193,106,.18);border:1px solid rgba(0,193,106,.3);border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#00c16a" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                        </span>
+                    <span>
+                            <span style="display:block;font-size:13px;font-weight:800">Generate Milk Payments</span>
+                            <span style="display:block;font-size:10px;font-weight:500;opacity:.65;margin-top:1px">All approved members · deductions auto-applied</span>
+                        </span>
+                </button>
+            </form>
+        </div>
+
+        <!-- Period records table -->
+        <div class="card" style="margin-bottom:24px">
+            <div class="card-head">
+                <div>
+                    <div class="card-title" th:text="${monthNames[selectedMonth] + ' ' + selectedYear + ' — Period Records'}">Period Records</div>
+                    <div class="card-sub">Milk payment records generated for this month</div>
+                </div>
+            </div>
+            <div style="overflow-x:auto">
+                <table class="tbl">
+                    <thead>
+                    <tr>
+                        <th>Member</th>
+                        <th>Monthly Salary</th>
+                        <th>Std. Deductions</th>
+                        <th>Loan Repayment</th>
+                        <th>Net Payment</th>
+                        <th>Bank Account</th>
+                        <th>Status</th>
+                        <th>Reference</th>
+                        <th>Action</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="row : ${memberPaymentRows}">
+                        <td>
+                            <div style="font-weight:700" th:text="${row.member.name}">Name</div>
+                            <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted)" th:text="${row.member.memberNumber}">MEM</div>
+                        </td>
+                        <td>
+                                <span th:if="${row.hasPay}" style="font-family:'JetBrains Mono',monospace;font-weight:600"
+                                      th:text="'ZMW ' + ${#numbers.formatDecimal(row.gross,1,2)}">ZMW 0.00</span>
+                            <span th:if="${!row.hasPay}" style="color:var(--muted);font-size:12px">—</span>
+                        </td>
+                        <td>
+                            <!-- Standard deductions (levy, insurance, etc.) -->
+                            <span th:if="${row.hasDeduction and row.standardDeductionTotal != null and row.standardDeductionTotal.compareTo(T(java.math.BigDecimal).ZERO) > 0}"
+                                  style="background:#fff1f2;border:1px solid #fecdd3;color:#be123c;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;padding:3px 9px;border-radius:7px;display:inline-block"
+                                  th:text="'− ZMW ' + ${#numbers.formatDecimal(row.standardDeductionTotal,1,2)}">− ZMW 0.00</span>
+                            <span th:if="${!row.hasDeduction or row.standardDeductionTotal == null or row.standardDeductionTotal.compareTo(T(java.math.BigDecimal).ZERO) == 0}"
+                                  style="color:var(--muted);font-size:12px">None</span>
+                        </td>
+                        <!-- ── LOAN REPAYMENT TRACKER ─────────────────────────────── -->
+                        <td style="min-width:200px">
+                            <!-- Has active loan(s) -->
+                            <div th:if="${row.hasLoan}">
+                                <th:block th:each="loan : ${row.activeLoans}">
+                                    <div style="background:#fafafa;border:1px solid #e2e8f0;border-radius:9px;padding:9px 12px;margin-bottom:6px">
+                                        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
+                                            <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#64748b">Loan Repayment</span>
+                                            <span style="background:#dbeafe;color:#1e40af;font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px">ACTIVE</span>
+                                        </div>
+                                        <!-- Instalment amount -->
+                                        <div style="font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:800;color:#dc2626;margin-bottom:4px"
+                                             th:text="'− ZMW ' + ${#numbers.formatDecimal(loan.monthlyInstalment.min(loan.remainingBalance),1,'COMMA',2,'POINT')}">− ZMW 0.00</div>
+                                        <!-- Progress bar: remaining vs original -->
+                                        <div style="height:4px;background:#e2e8f0;border-radius:4px;margin-bottom:4px;overflow:hidden">
+                                            <div th:style="'width:' + ${#numbers.formatDecimal((loan.amount.subtract(loan.remainingBalance)).multiply(new java.math.BigDecimal('100')).divide(loan.amount, 0, T(java.math.RoundingMode).HALF_UP), 0, 0)} + '%;height:100%;background:linear-gradient(90deg,#00c16a,#00a358);border-radius:4px'"></div>
+                                        </div>
+                                        <!-- Remaining balance -->
+                                        <div style="font-size:10px;color:#64748b">
+                                            Balance: <span style="font-family:'JetBrains Mono',monospace;font-weight:700;color:#0f172a" th:text="'ZMW ' + ${#numbers.formatDecimal(loan.remainingBalance,1,'COMMA',2,'POINT')}">0.00</span>
+                                            of <span th:text="'ZMW ' + ${#numbers.formatDecimal(loan.amount,1,'COMMA',2,'POINT')}">0.00</span>
+                                        </div>
+                                    </div>
+                                </th:block>
+                            </div>
+                            <span th:if="${!row.hasLoan}" style="color:var(--muted);font-size:12px">—</span>
+                        </td>
+                        <td>
+                            <div th:if="${row.hasPay}" style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1.5px solid #86efac;border-radius:10px;padding:8px 12px">
+                                <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#15803d;margin-bottom:3px">Take-home</div>
+                                <span style="font-family:'JetBrains Mono',monospace;font-weight:800;color:#065f46;font-size:14px"
+                                      th:text="'ZMW ' + ${#numbers.formatDecimal(row.net,1,2)}">ZMW 0.00</span>
+                            </div>
+                            <span th:if="${!row.hasPay}" style="color:var(--muted);font-size:12px">—</span>
+                        </td>
+                        <td style="min-width:160px">
+                            <div th:if="${row.member.accountNumber != null}"
+                                 style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:7px 10px;font-size:11.5px">
+                                <div style="font-weight:700;color:#065f46" th:text="${row.member.bankName ?: '-'}">Bank</div>
+                                <div style="font-family:'JetBrains Mono',monospace;color:#065f46;font-size:11px" th:text="${row.member.accountNumber}">Acc</div>
+                            </div>
+                            <span th:if="${row.member.accountNumber == null}"
+                                  style="font-size:12px;color:#d97706;font-weight:600;background:#fef3c7;border:1px solid #fde68a;border-radius:7px;padding:3px 9px;display:inline-block">No bank details</span>
+                        </td>
+                        <td>
+                                <span th:if="${row.status == 'PAID'}"
+                                      style="background:#dcfce7;color:#166634;font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;display:inline-block">✓ Paid</span>
+                            <span th:if="${row.status == 'UNPAID'}"
+                                  style="background:#fef3c7;color:#92400e;font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;display:inline-block">Unpaid</span>
+                            <span th:if="${row.status == 'NOT_GENERATED'}"
+                                  style="background:#f1f5f9;color:#64748b;font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;display:inline-block">Not generated</span>
+                        </td>
+                        <td>
+                                <span style="font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--muted)"
+                                      th:text="${row.referenceNo ?: '—'}">—</span>
+                        </td>
+                        <td>
+                            <button th:if="${row.status == 'UNPAID' and row.hasPay}"
+                                    type="button"
+                                    th:data-id="${row.payment.id}"
+                                    th:data-name="${row.member.name}"
+                                    th:data-amount="${#numbers.formatDecimal(row.net,1,'COMMA',2,'POINT')}"
+                                    th:data-gross="${#numbers.formatDecimal(row.gross,1,'COMMA',2,'POINT')}"
+                                    th:data-stdded="${#numbers.formatDecimal(row.standardDeductionTotal ?: 0,1,'COMMA',2,'POINT')}"
+                                    th:data-loanded="${#numbers.formatDecimal(row.loanDeductionTotal ?: 0,1,'COMMA',2,'POINT')}"
+                                    onclick="openMemberPayModal(this.dataset.id, this.dataset.name, 'ZMW ' + this.dataset.amount, this.dataset.gross, this.dataset.stdded, this.dataset.loanded)"
+                                    style="background:linear-gradient(135deg,#00a358,#00c16a);color:#fff;border:none;padding:7px 14px;border-radius:8px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;display:inline-flex;align-items:center;gap:5px;white-space:nowrap">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                                Pay Now
+                            </button>
+                            <span th:if="${row.status == 'PAID'}" style="font-size:12px;color:var(--muted)">—</span>
+                            <span th:if="${row.status == 'NOT_GENERATED'}" style="font-size:12px;color:var(--muted)">—</span>
+                        </td>
+                    </tr>
+                    <tr th:if="${memberPaymentRows == null or #lists.isEmpty(memberPaymentRows)}">
+                        <td colspan="8" class="empty-state" style="padding:40px;text-align:center;color:var(--muted)">
+                            No approved members found in the cooperative
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- All unpaid member payments (any period) -->
+        <div th:if="${allUnpaidMemberPayments != null and !#lists.isEmpty(allUnpaidMemberPayments)}" class="card">
+            <div class="card-head">
+                <div>
+                    <div class="card-title" style="color:#c2410c">
+                        ⚠ All Unpaid Member Milk Payments
+                        <span style="background:#f43f5e;color:#fff;font-size:10px;font-weight:800;padding:2px 8px;border-radius:10px;margin-left:8px"
+                              th:text="${#lists.size(allUnpaidMemberPayments)}">0</span>
+                    </div>
+                    <div class="card-sub">Outstanding milk payment records across all periods — members are awaiting payment</div>
+                </div>
+            </div>
+            <div style="overflow-x:auto">
+                <table class="tbl">
+                    <thead>
+                    <tr>
+                        <th>Member</th>
+                        <th>Period</th>
+                        <th>Overdue</th>
+                        <th>Gross</th>
+                        <th>Deductions</th>
+                        <th>Net Payable</th>
+                        <th>Bank Account</th>
+                        <th>Action</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="pay : ${allUnpaidMemberPayments}">
+                        <td>
+                            <div style="font-weight:700;font-size:14px" th:text="${pay.member.name}">Name</div>
+                            <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted)" th:text="${pay.member.memberNumber}">MEM</div>
+                        </td>
+                        <td>
+                            <div style="background:#f1f5f9;border-radius:8px;padding:7px 11px;display:inline-block">
+                                <div style="font-family:'JetBrains Mono',monospace;font-weight:800;font-size:13px;color:var(--ink)"
+                                     th:text="${monthNames[pay.month] + '  ' + pay.year}">Jan 2026</div>
+                                <div style="font-size:10px;color:var(--muted);margin-top:2px;font-weight:600">Milk Period</div>
+                            </div>
+                        </td>
+                        <td>
+                            <th:block th:with="monthsAgo=${(todayYear * 12 + todayMonth) - (pay.year * 12 + pay.month)}">
+                                <span th:if="${monthsAgo == 0}" style="background:#fef9ee;color:#d97706;font-size:11px;font-weight:700;padding:4px 11px;border-radius:20px;border:1px solid #fde68a;display:inline-block">Current month</span>
+                                <span th:if="${monthsAgo == 1}" style="background:#fff7ed;color:#c2410c;font-size:11px;font-weight:700;padding:4px 11px;border-radius:20px;border:1px solid #fed7aa;display:inline-block">1 month overdue</span>
+                                <span th:if="${monthsAgo >= 2 and monthsAgo <= 3}" style="background:#fff1f2;color:#be123c;font-size:11px;font-weight:700;padding:4px 11px;border-radius:20px;border:1px solid #fecdd3;display:inline-block" th:text="${monthsAgo} + ' months overdue'">overdue</span>
+                                <span th:if="${monthsAgo >= 4}" style="background:#4c0519;color:#fda4af;font-size:11px;font-weight:800;padding:5px 12px;border-radius:20px;display:inline-block" th:text="${monthsAgo} + ' months overdue'">overdue</span>
+                            </th:block>
+                        </td>
+                        <td><span style="font-family:'JetBrains Mono',monospace;font-weight:600" th:text="'ZMW ' + ${#numbers.formatDecimal(pay.grossAmount,1,2)}">0.00</span></td>
+                        <td>
+                                <span th:if="${pay.totalDeductions.compareTo(T(java.math.BigDecimal).ZERO) > 0}"
+                                      style="color:#be123c;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700"
+                                      th:text="'− ZMW ' + ${#numbers.formatDecimal(pay.totalDeductions,1,2)}">− 0.00</span>
+                            <span th:if="${pay.totalDeductions.compareTo(T(java.math.BigDecimal).ZERO) == 0}" style="color:var(--muted);font-size:12px">None</span>
+                        </td>
+                        <td>
+                            <div style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1.5px solid #86efac;border-radius:10px;padding:8px 12px;display:inline-block">
+                                    <span style="font-family:'JetBrains Mono',monospace;font-weight:800;color:#065f46;font-size:14px"
+                                          th:text="'ZMW ' + ${#numbers.formatDecimal(pay.netAmount,1,2)}">0.00</span>
+                            </div>
+                        </td>
+                        <td>
+                            <div th:if="${pay.member.accountNumber != null}"
+                                 style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:7px 10px;font-size:11px">
+                                <div style="font-weight:700;color:#065f46" th:text="${pay.member.bankName ?: '-'}">Bank</div>
+                                <div style="font-family:'JetBrains Mono',monospace;color:#065f46" th:text="${pay.member.accountNumber}">Acc</div>
+                            </div>
+                            <span th:if="${pay.member.accountNumber == null}" style="font-size:11px;color:#d97706;font-weight:600">No bank details</span>
+                        </td>
+                        <td>
+                            <button type="button"
+                                    th:data-id="${pay.id}"
+                                    th:data-name="${pay.member.name}"
+                                    th:data-amount="${#numbers.formatDecimal(pay.netAmount,1,'COMMA',2,'POINT')}"
+                                    th:disabled="${pay.member.accountNumber == null}"
+                                    onclick="openMemberPayModal(this.dataset.id, this.dataset.name, 'ZMW ' + this.dataset.amount)"
+                                    style="background:linear-gradient(135deg,#00a358,#00c16a);color:#fff;border:none;padding:7px 14px;border-radius:8px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;display:inline-flex;align-items:center;gap:5px;white-space:nowrap">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                                Pay Now
+                            </button>
+                            <span th:if="${pay.member.accountNumber == null}"
+                                  style="font-size:11px;color:#d97706;font-weight:600;display:block;margin-top:4px">Add bank first</span>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 3: Unpaid / Overdue Salaries -->
+    <div id="tab-overdue" class="tab-content">
+
+        <!-- Banner when nothing is owed -->
+        <div th:if="${allUnpaidSalaries == null or #lists.isEmpty(allUnpaidSalaries)}"
+             style="background:linear-gradient(135deg,#f0fdf4,#ecfdf5);border:1.5px solid #bbf7d0;border-radius:16px;padding:40px;text-align:center;margin-bottom:24px">
+            <div style="width:52px;height:52px;background:#dcfce7;border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 14px">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <div style="font-family:'Playfair Display',serif;font-size:22px;color:#065f46;margin-bottom:6px">All salaries are up to date</div>
+            <div style="font-size:13px;color:#047857">No outstanding unpaid salary records across any period.</div>
+        </div>
+
+        <!-- Warning banner when records exist -->
+        <div th:if="${allUnpaidSalaries != null and !#lists.isEmpty(allUnpaidSalaries)}"
+             style="background:linear-gradient(135deg,#fff7ed,#fef3c7);border:1.5px solid #fed7aa;border-radius:14px;padding:16px 22px;margin-bottom:22px;display:flex;align-items:center;gap:14px">
+            <div style="width:40px;height:40px;background:#fed7aa;border-radius:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#c2410c" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            </div>
+            <div>
+                <div style="font-size:13px;font-weight:800;color:#9a3412;margin-bottom:2px">
+                    <span th:text="${#lists.size(allUnpaidSalaries)}">0</span> unpaid salary record(s) found across previous periods
+                </div>
+                <div style="font-size:12px;color:#c2410c">These staff members are owed salaries from past months. Process payments below to clear outstanding balances.</div>
+            </div>
+        </div>
+
+        <!-- Overdue records table -->
+        <div th:if="${allUnpaidSalaries != null and !#lists.isEmpty(allUnpaidSalaries)}"
+             class="card">
+            <div class="card-head">
+                <div>
+                    <div class="card-title">All Outstanding Unpaid Salaries</div>
+                    <div class="card-sub">Sorted by most recent period first — pay can be processed for any period</div>
+                </div>
+            </div>
+            <div style="overflow-x:auto">
+                <table class="tbl">
+                    <thead>
+                    <tr>
+                        <th>Staff Member</th>
+                        <th>Period</th>
+                        <th>Overdue</th>
+                        <th>Grade</th>
+                        <th>Basic Salary</th>
+                        <th>Loan Deduction</th>
+                        <th>Net Salary</th>
+                        <th>Action</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="sal : ${allUnpaidSalaries}">
+
+                        <!-- Staff member -->
+                        <td>
+                            <div style="font-weight:700;font-size:14px" th:text="${sal.user.fullName}">Name</div>
+                            <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted)" th:text="${sal.user.email}">email</div>
+                        </td>
+
+                        <!-- Period -->
+                        <td>
+                            <div style="background:#f1f5f9;border-radius:8px;padding:7px 11px;display:inline-block">
+                                <div style="font-family:'JetBrains Mono',monospace;font-weight:800;font-size:13px;color:var(--ink)"
+                                     th:text="${monthNames[sal.month] + ' ' + sal.year}">Jan 2026</div>
+                                <div style="font-size:10px;color:var(--muted);margin-top:2px;font-weight:600;text-transform:uppercase;letter-spacing:.06em">Salary Period</div>
+                            </div>
+                        </td>
+
+                        <!-- Overdue indicator -->
+                        <td>
+                            <th:block th:with="monthsAgo=${(todayYear * 12 + todayMonth) - (sal.year * 12 + sal.month)}">
+                                    <span th:if="${monthsAgo == 0}"
+                                          style="background:#fef9ee;color:#d97706;font-size:11px;font-weight:700;padding:4px 11px;border-radius:20px;border:1px solid #fde68a;display:inline-block">
+                                        Current month
+                                    </span>
+                                <span th:if="${monthsAgo == 1}"
+                                      style="background:#fff7ed;color:#c2410c;font-size:11px;font-weight:700;padding:4px 11px;border-radius:20px;border:1px solid #fed7aa;display:inline-block">
+                                        1 month overdue
+                                    </span>
+                                <span th:if="${monthsAgo >= 2 and monthsAgo <= 3}"
+                                      style="background:#fff1f2;color:#be123c;font-size:11px;font-weight:700;padding:4px 11px;border-radius:20px;border:1px solid #fecdd3;display:inline-block"
+                                      th:text="${monthsAgo} + ' months overdue'">2 months overdue</span>
+                                <span th:if="${monthsAgo >= 4}"
+                                      style="background:#4c0519;color:#fda4af;font-size:11px;font-weight:800;padding:5px 12px;border-radius:20px;display:inline-block"
+                                      th:text="${monthsAgo} + ' months overdue'">4+ months overdue</span>
+                            </th:block>
+                        </td>
+
+                        <!-- Grade -->
+                        <td>
+                                <span th:if="${sal.user.role == 'ADMIN'}"
+                                      style="background:linear-gradient(135deg,#fef3c7,#fde68a);color:#78350f;font-size:10.5px;font-weight:800;padding:3px 10px;border-radius:20px;border:1px solid #fcd34d;display:inline-block">
+                                    ★ Executive
+                                </span>
+                            <span th:if="${sal.user.role != 'ADMIN'}"
+                                  style="background:#f0f4ff;color:#3b82f6;font-size:10.5px;font-weight:700;padding:3px 10px;border-radius:20px;display:inline-block">
+                                    Staff
+                                </span>
+                        </td>
+
+                        <!-- Basic -->
+                        <td>
+                                <span style="font-family:'JetBrains Mono',monospace;font-weight:700"
+                                      th:text="'ZMW ' + ${#numbers.formatDecimal(sal.basicSalary,1,2)}">ZMW 0.00</span>
+                        </td>
+
+                        <!-- Loan deduction -->
+                        <td>
+                            <div th:if="${sal.deductions != null and sal.deductions.compareTo(T(java.math.BigDecimal).ZERO) > 0}"
+                                 style="background:#fff1f2;border:1.5px solid #fecdd3;border-radius:9px;padding:7px 11px;display:inline-block">
+                                <div style="font-family:'JetBrains Mono',monospace;font-weight:800;color:#be123c;font-size:13px"
+                                     th:text="'− ZMW ' + ${#numbers.formatDecimal(sal.deductions,1,2)}">− ZMW 0.00</div>
+                                <div style="font-size:10px;color:#9f1239;margin-top:1px">Loan instalment</div>
+                            </div>
+                            <div th:if="${sal.deductions == null or sal.deductions.compareTo(T(java.math.BigDecimal).ZERO) == 0}"
+                                 style="display:inline-flex;align-items:center;gap:5px;background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:8px;padding:5px 10px">
+                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                                <span style="font-size:11px;font-weight:700;color:#15803d">No loan</span>
+                            </div>
+                        </td>
+
+                        <!-- Net salary -->
+                        <td>
+                            <div style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1.5px solid #86efac;border-radius:10px;padding:9px 13px;display:inline-block">
+                                <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#15803d;margin-bottom:2px">Take-home</div>
+                                <span style="font-family:'JetBrains Mono',monospace;font-weight:800;color:#065f46;font-size:15px"
+                                      th:text="'ZMW ' + ${#numbers.formatDecimal(sal.netSalary,1,2)}">ZMW 0.00</span>
+                            </div>
+                        </td>
+
+                        <!-- Pay Now button -->
+                        <td>
+                            <button type="button"
+                                    class="btn-process"
+                                    th:attr="data-id=${sal.id},
+                                                 data-name=${sal.user.fullName},
+                                                 data-amount='ZMW ' + ${#numbers.formatDecimal(sal.netSalary,1,2)},
+                                                 data-role=${sal.user.role},
+                                                 data-basic='ZMW ' + ${#numbers.formatDecimal(sal.basicSalary,1,2)},
+                                                 data-deduction='ZMW ' + ${#numbers.formatDecimal(sal.deductions,1,2)},
+                                                 data-period=${monthNames[sal.month] + ' ' + sal.year}"
+                                    onclick="openPaySalary(this)"
+                                    style="white-space:nowrap">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+                                Pay Now
+                            </button>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 4: Salary Configuration -->
+    <div id="tab-config" class="tab-content">
+        <div class="card">
+            <div class="card-head">
+                <div class="card-title">Staff Salary Configuration</div>
+                <div class="card-sub">Set monthly basic salary for each staff member</div>
+            </div>
+            <div style="overflow-x:auto">
+                <table class="tbl">
+                    <thead>
+                    <tr>
+                        <th>Staff Member</th>
+                        <th>Role</th>
+                        <th>Current Basic Salary</th>
+                        <th>Update Salary</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="u : ${staffUsers}">
+                        <td>
+                            <div style="font-weight:700" th:text="${u.fullName}">Name</div>
+                            <div style="font-size:12px;color:var(--muted)" th:text="${u.email}">email</div>
+                        </td>
+                        <td>
+                                    <span style="background:#f0f4ff;color:#3b82f6;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;text-transform:uppercase"
+                                          th:text="${u.role}">ROLE</span>
+                        </td>
+                        <td>
+                                    <span th:if="${u.basicSalary != null}"
+                                          style="font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--green-dim);font-size:15px"
+                                          th:text="'ZMW ' + ${#numbers.formatDecimal(u.basicSalary,1,2)}">ZMW 0.00</span>
+                            <span th:if="${u.basicSalary == null}"
+                                  style="color:#d97706;font-weight:600;font-size:13px">Not set</span>
+                        </td>
+                        <td>
+                            <form th:action="@{/accountant/salaries/set-salary}" method="post"
+                                  style="display:flex;gap:8px;align-items:center">
+                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                <input type="hidden" name="userId" th:value="${u.id}"/>
+                                <input type="number" name="salary" class="finp"
+                                       style="width:150px;padding:8px 12px"
+                                       placeholder="e.g. 5000.00"
+                                       step="0.01" min="0"
+                                       th:value="${u.basicSalary}"/>
+                                <button type="submit" class="btn-process" style="padding:8px 16px;font-size:12px">
+                                    Save
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<!-- SALARY PREVIEW MODAL                                                     -->
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="previewModal" style="align-items:flex-start;padding:24px 0;overflow-y:auto">
+    <div style="background:#fff;border-radius:22px;width:780px;max-width:96vw;margin:auto;box-shadow:0 16px 60px rgba(11,17,32,.22);animation:fadeUp .22s ease">
+
+        <!-- Header -->
+        <div style="padding:28px 32px 20px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between;gap:16px">
+            <div style="display:flex;align-items:center;gap:14px">
+                <div style="width:48px;height:48px;background:linear-gradient(135deg,#064e3b,#065f46);border-radius:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.5"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+                </div>
+                <div>
+                    <div style="font-family:'Playfair Display',serif;font-size:24px;color:var(--ink);line-height:1.1">Salary Calculation Preview</div>
+                    <div style="font-size:12px;color:var(--muted);margin-top:3px" id="previewSubtitle">Calculating...</div>
+                </div>
+            </div>
+            <button onclick="closePreviewModal()" style="background:none;border:none;cursor:pointer;color:var(--muted);padding:4px;line-height:1;font-size:20px;margin-top:4px">✕</button>
+        </div>
+
+        <!-- Loading state -->
+        <div id="previewLoading" style="padding:52px;text-align:center;color:var(--muted)">
+            <div style="width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--green-dim);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 14px"></div>
+            <div style="font-size:13px;font-weight:600">Calculating salary breakdown...</div>
+        </div>
+
+        <!-- Content (hidden until loaded) -->
+        <div id="previewContent" style="display:none">
+
+            <!-- Summary strip -->
+            <div id="previewSummary" style="display:grid;grid-template-columns:repeat(4,1fr);gap:0;border-bottom:1px solid var(--border)"></div>
+
+            <!-- Policy reminder -->
+            <div style="margin:20px 32px 0;background:linear-gradient(135deg,#f0fdf4,#ecfdf5);border:1.5px solid #bbf7d0;border-radius:12px;padding:14px 18px;display:flex;align-items:center;gap:12px">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                <div style="font-size:12px;color:#065f46;font-weight:600">
+                    <span style="background:#dcfce7;border:1px solid #86efac;border-radius:5px;padding:1px 8px;font-family:'JetBrains Mono',monospace;margin-right:8px">Executive (Admin) → ZMW 8,000.00</span>
+                    <span style="background:#dcfce7;border:1px solid #86efac;border-radius:5px;padding:1px 8px;font-family:'JetBrains Mono',monospace;margin-right:8px">All Staff → ZMW 7,000.00</span>
+                    <span style="color:#6b7280;font-size:11px">Loan deductions auto-applied</span>
+                </div>
+            </div>
+
+            <!-- Per-person breakdown table -->
+            <div style="padding:20px 32px 24px;overflow-x:auto">
+                <table style="width:100%;border-collapse:collapse">
+                    <thead>
+                    <tr style="background:#f8fafc">
+                        <th style="text-align:left;padding:10px 14px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);border-bottom:1px solid var(--border)">Staff Member</th>
+                        <th style="text-align:left;padding:10px 14px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);border-bottom:1px solid var(--border)">Grade</th>
+                        <th style="text-align:right;padding:10px 14px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);border-bottom:1px solid var(--border)">Basic</th>
+                        <th style="text-align:center;padding:10px 14px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);border-bottom:1px solid var(--border)">Loan Deduction</th>
+                        <th style="text-align:right;padding:10px 14px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);border-bottom:1px solid var(--border)">Net Salary</th>
+                        <th style="text-align:center;padding:10px 14px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);border-bottom:1px solid var(--border)">Status</th>
+                    </tr>
+                    </thead>
+                    <tbody id="previewTableBody"></tbody>
+                </table>
+            </div>
+
+            <!-- Footer actions -->
+            <div style="padding:20px 32px 28px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:16px;background:#fafafa;border-radius:0 0 22px 22px">
+                <div id="alreadyNote" style="display:none;font-size:12px;color:#d97706;font-weight:600;background:#fef3c7;border:1px solid #fde68a;border-radius:8px;padding:8px 14px">
+                    ⚠ Some records already exist for this period and will be skipped.
+                </div>
+                <div style="flex:1"></div>
+                <button onclick="closePreviewModal()"
+                        style="background:#fff;color:var(--ink2);border:1.5px solid var(--border);padding:11px 22px;border-radius:10px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer">
+                    Cancel
+                </button>
+                <button id="confirmGenerateBtn" onclick="confirmGenerate()"
+                        style="background:linear-gradient(135deg,#064e3b,#065f46);color:#fff;border:none;padding:13px 30px;border-radius:11px;font-size:14px;font-weight:800;font-family:inherit;cursor:pointer;display:inline-flex;align-items:center;gap:9px;box-shadow:0 4px 16px rgba(6,78,59,.3);transition:all .2s"
+                        onmouseover="this.style.transform='translateY(-1px)'"
+                        onmouseout="this.style.transform=''">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                    Confirm &amp; Generate Records
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<!-- PAY SALARY MODAL — 3-step wizard                                         -->
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="payModal" style="align-items:flex-start;padding:24px 0;overflow-y:auto">
+    <div style="background:#fff;border-radius:22px;width:600px;max-width:96vw;margin:auto;box-shadow:0 20px 70px rgba(11,17,32,.22);animation:fadeUp .22s ease;overflow:hidden">
+
+        <!-- ── Step indicators ─────────────────────────────────────────── -->
+        <div style="background:linear-gradient(135deg,#0b1120,#1e3a5f);padding:24px 32px 20px;display:flex;align-items:center;gap:0">
+            <div id="si-1" style="display:flex;align-items:center;gap:9px;flex:1">
+                <div style="width:28px;height:28px;border-radius:50%;background:#00c16a;color:#fff;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0">1</div>
+                <span style="font-size:12px;font-weight:700;color:#fff">Review</span>
+            </div>
+            <div style="flex:1;height:2px;background:rgba(255,255,255,.2);margin:0 8px"></div>
+            <div id="si-2" style="display:flex;align-items:center;gap:9px;flex:1">
+                <div id="si2-dot" style="width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.15);border:2px solid rgba(255,255,255,.3);color:#475569;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0">2</div>
+                <span id="si2-label" style="font-size:12px;font-weight:600;color:rgba(255,255,255,.5)">Method</span>
+            </div>
+            <div style="flex:1;height:2px;background:rgba(255,255,255,.2);margin:0 8px"></div>
+            <div id="si-3" style="display:flex;align-items:center;gap:9px;flex:1">
+                <div id="si3-dot" style="width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.15);border:2px solid rgba(255,255,255,.3);color:#475569;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0">3</div>
+                <span id="si3-label" style="font-size:12px;font-weight:600;color:rgba(255,255,255,.5)">Confirm</span>
+            </div>
+        </div>
+
+        <!-- ── STEP 1: Breakdown Review ────────────────────────────────── -->
+        <div id="pw-step1">
+            <div style="padding:28px 32px 0">
+                <div style="font-family:'Playfair Display',serif;font-size:22px;color:var(--ink);margin-bottom:4px">Salary Breakdown</div>
+                <div style="font-size:12px;color:var(--muted)">Review the payment details before selecting a method</div>
+            </div>
+
+            <!-- Staff info bar -->
+            <div style="margin:20px 32px 0;background:#f8fafc;border:1px solid var(--border);border-radius:14px;padding:16px 20px;display:flex;align-items:center;gap:14px">
+                <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,var(--navy),#1e3a5f);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00c16a" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                </div>
+                <div>
+                    <div style="font-weight:800;font-size:15px;color:var(--ink)" id="pm-name">—</div>
+                    <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-top:2px" id="pm-role">—</div>
+                </div>
+                <div style="margin-left:auto;text-align:right">
+                    <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;font-weight:700">Period</div>
+                    <div style="font-size:13px;font-weight:800;color:var(--ink);font-family:'JetBrains Mono',monospace" id="pm-period">—</div>
+                </div>
+            </div>
+
+            <!-- Breakdown rows -->
+            <div style="margin:16px 32px 0;border-radius:14px;overflow:hidden;border:1px solid var(--border)">
+                <div style="background:#fafbfc;padding:13px 18px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border)">
+                    <span style="font-size:13px;color:var(--muted);font-weight:500">Basic Salary</span>
+                    <span style="font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--ink);font-size:14px" id="pm-basic">ZMW 0.00</span>
+                </div>
+                <div id="pm-deduction-row" style="display:none;background:#fff1f2;padding:13px 18px;display:none;justify-content:space-between;align-items:center;border-bottom:1px solid #fecdd3">
+                    <div>
+                        <span style="font-size:13px;color:#be123c;font-weight:600">Loan Deduction</span>
+                        <div style="font-size:10px;color:#9f1239;margin-top:2px;font-weight:600">Monthly instalment auto-deducted</div>
+                    </div>
+                    <span style="font-family:'JetBrains Mono',monospace;font-weight:800;color:#be123c;font-size:14px" id="pm-deduction">− ZMW 0.00</span>
+                </div>
+            </div>
+
+            <!-- Net take-home -->
+            <div style="margin:12px 32px 0;background:linear-gradient(135deg,#064e3b,#065f46);border-radius:14px;padding:20px 22px;display:flex;justify-content:space-between;align-items:center">
+                <div>
+                    <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:rgba(255,255,255,.65)">Net Take-Home</div>
+                    <div style="font-size:11px;color:#475569;margin-top:3px">Amount to be disbursed to staff</div>
+                </div>
+                <div style="font-family:'JetBrains Mono',monospace;font-size:24px;font-weight:900;color:#4ade80" id="pm-amount">ZMW 0.00</div>
+            </div>
+
+            <!-- No-loan confirmation notice -->
+            <div id="pm-no-loan-notice" style="margin:12px 32px 0;background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:12px;padding:13px 18px;display:flex;align-items:center;gap:10px">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                <span style="font-size:12px;font-weight:700;color:#15803d">No active loan — full salary will be disbursed</span>
+            </div>
+
+            <!-- Step 1 actions -->
+            <div style="padding:24px 32px 28px;display:flex;justify-content:space-between;gap:12px">
+                <button onclick="closePayModal()"
+                        style="background:#fff;color:var(--ink2);border:1.5px solid var(--border);padding:11px 22px;border-radius:10px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer">
+                    Cancel
+                </button>
+                <button onclick="goToStep(2)"
+                        style="background:linear-gradient(135deg,var(--navy),#1e3a5f);color:#fff;border:none;padding:13px 28px;border-radius:11px;font-size:14px;font-weight:800;font-family:inherit;cursor:pointer;display:inline-flex;align-items:center;gap:8px">
+                    Choose Payment Method
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- ── STEP 2: Payment Method Selection ────────────────────────── -->
+        <div id="pw-step2" style="display:none">
+            <div style="padding:28px 32px 0">
+                <div style="font-family:'Playfair Display',serif;font-size:22px;color:var(--ink);margin-bottom:4px">Select Payment Method</div>
+                <div style="font-size:12px;color:var(--muted)">Choose how the salary will be disbursed to the staff member</div>
+            </div>
+
+            <div style="padding:20px 32px 0;display:grid;grid-template-columns:1fr 1fr;gap:12px">
+
+                <!-- Bank Transfer -->
+                <div class="pay-method-card" id="mc-BANK_TRANSFER" onclick="selectMethod('BANK_TRANSFER','Bank Transfer')"
+                     style="border:2px solid var(--border);border-radius:16px;padding:20px;cursor:pointer;transition:all .18s;text-align:center;background:#fff">
+                    <div style="width:56px;height:56px;border-radius:14px;background:#eff6ff;margin:0 auto 12px;display:flex;align-items:center;justify-content:center">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#1d4ed8" stroke-width="1.8"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                    </div>
+                    <div style="font-weight:800;font-size:14px;color:var(--ink);margin-bottom:4px">Bank Transfer</div>
+                    <div style="font-size:11px;color:var(--muted)">Zanaco, Stanbic, FNB, Atlas Mara & others</div>
+                </div>
+
+                <!-- Cash -->
+                <div class="pay-method-card" id="mc-CASH" onclick="selectMethod('CASH','Cash')"
+                     style="border:2px solid var(--border);border-radius:16px;padding:20px;cursor:pointer;transition:all .18s;text-align:center;background:#fff">
+                    <div style="width:56px;height:56px;border-radius:14px;background:#f0fdf4;margin:0 auto 12px;display:flex;align-items:center;justify-content:center">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="1.8"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg>
+                    </div>
+                    <div style="font-weight:800;font-size:14px;color:var(--ink);margin-bottom:4px">Cash</div>
+                    <div style="font-size:11px;color:var(--muted)">Physical cash disbursement at office</div>
+                </div>
+
+                <!-- Airtel Money -->
+                <div class="pay-method-card" id="mc-AIRTEL_MONEY" onclick="selectMethod('AIRTEL_MONEY','Airtel Money')"
+                     style="border:2px solid var(--border);border-radius:16px;padding:20px;cursor:pointer;transition:all .18s;text-align:center;background:#fff">
+                    <div style="width:56px;height:56px;border-radius:14px;background:#fff1f2;margin:0 auto 12px;display:flex;align-items:center;justify-content:center;overflow:hidden">
+                        <!-- Airtel styled icon -->
+                        <svg viewBox="0 0 56 56" width="56" height="56" xmlns="http://www.w3.org/2000/svg">
+                            <rect width="56" height="56" fill="#FF0000" rx="14"/>
+                            <text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle"
+                                  font-family="Arial Black,Arial,sans-serif" font-weight="900"
+                                  font-size="16" fill="white" letter-spacing="-0.5">airtel</text>
+                        </svg>
+                    </div>
+                    <div style="font-weight:800;font-size:14px;color:var(--ink);margin-bottom:4px">Airtel Money</div>
+                    <div style="font-size:11px;color:var(--muted)">Send via Airtel mobile money wallet</div>
+                </div>
+
+                <!-- MTN Mobile Money -->
+                <div class="pay-method-card" id="mc-MTN_MOBILE_MONEY" onclick="selectMethod('MTN_MOBILE_MONEY','MTN Mobile Money')"
+                     style="border:2px solid var(--border);border-radius:16px;padding:20px;cursor:pointer;transition:all .18s;text-align:center;background:#fff">
+                    <div style="width:56px;height:56px;border-radius:14px;background:#fefce8;margin:0 auto 12px;display:flex;align-items:center;justify-content:center;overflow:hidden">
+                        <!-- MTN styled icon -->
+                        <svg viewBox="0 0 56 56" width="56" height="56" xmlns="http://www.w3.org/2000/svg">
+                            <rect width="56" height="56" fill="#FFCC00" rx="14"/>
+                            <text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle"
+                                  font-family="Arial Black,Arial,sans-serif" font-weight="900"
+                                  font-size="15" fill="#003366" letter-spacing="-0.5">MTN</text>
+                        </svg>
+                    </div>
+                    <div style="font-weight:800;font-size:14px;color:var(--ink);margin-bottom:4px">MTN Mobile Money</div>
+                    <div style="font-size:11px;color:var(--muted)">Send via MTN MoMo wallet</div>
+                </div>
+            </div>
+
+            <!-- Step 2 actions -->
+            <div style="padding:24px 32px 28px;display:flex;justify-content:space-between;gap:12px">
+                <button onclick="goToStep(1)"
+                        style="background:#fff;color:var(--ink2);border:1.5px solid var(--border);padding:11px 22px;border-radius:10px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;display:inline-flex;align-items:center;gap:6px">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+                    Back
+                </button>
+                <div style="font-size:12px;color:var(--muted);align-self:center">Select a method to continue</div>
+            </div>
+        </div>
+
+        <!-- ── STEP 3: Reference + Confirm ─────────────────────────────── -->
+        <div id="pw-step3" style="display:none">
+            <div style="padding:28px 32px 0">
+                <div style="display:flex;align-items:center;gap:12px;margin-bottom:4px">
+                    <div id="step3-method-icon" style="width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0"></div>
+                    <div>
+                        <div style="font-family:'Playfair Display',serif;font-size:20px;color:var(--ink);line-height:1.1">Confirm Payment</div>
+                        <div style="font-size:12px;color:var(--muted);margin-top:2px">via <strong id="step3-method-label">—</strong></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Summary strip -->
+            <div style="margin:18px 32px 0;background:#f8fafc;border:1px solid var(--border);border-radius:12px;padding:14px 18px;display:flex;justify-content:space-between;align-items:center">
+                <div>
+                    <div style="font-size:12px;color:var(--muted)">Paying to</div>
+                    <div style="font-weight:800;font-size:14px;color:var(--ink)" id="step3-name">—</div>
+                </div>
+                <div style="text-align:right">
+                    <div style="font-size:11px;color:var(--muted)">Net amount</div>
+                    <div style="font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:900;color:#065f46" id="step3-amount">ZMW 0.00</div>
+                </div>
+            </div>
+
+            <!-- Form -->
+            <form id="payForm" method="post" style="padding:18px 32px 0">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                <input type="hidden" name="method" id="pay-method-input"/>
+
+                <div style="margin-bottom:16px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px 16px;display:flex;align-items:center;gap:10px">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00a358" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                    <div>
+                        <div style="font-size:12px;font-weight:700;color:#065f46">Reference auto-generated</div>
+                        <div style="font-size:11px;color:#15803d">System will assign a unique SAL-YYYY-NNNN reference number</div>
+                    </div>
+                </div>
+
+                <div style="margin-bottom:20px">
+                    <label class="flbl" for="pm-notes">Notes (optional)</label>
+                    <textarea id="pm-notes" name="notes" class="finp" rows="2"
+                              style="resize:none" placeholder="Any additional notes for this payment..."></textarea>
+                </div>
+
+                <!-- Final confirm action -->
+                <div style="padding:0 0 28px;display:flex;justify-content:space-between;gap:12px">
+                    <button type="button" onclick="goToStep(2)"
+                            style="background:#fff;color:var(--ink2);border:1.5px solid var(--border);padding:11px 22px;border-radius:10px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;display:inline-flex;align-items:center;gap:6px">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+                        Back
+                    </button>
+                    <button type="submit" id="pay-submit-btn"
+                            style="background:linear-gradient(135deg,#064e3b,#065f46);color:#fff;border:none;padding:13px 30px;border-radius:11px;font-size:14px;font-weight:800;font-family:inherit;cursor:pointer;display:inline-flex;align-items:center;gap:9px;box-shadow:0 4px 16px rgba(6,78,59,.3)">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                        Confirm &amp; Pay Salary
+                    </button>
+                </div>
+            </form>
+        </div>
+
+    </div>
+</div>
+
+<script th:src="@{/webjars/bootstrap/dist/js/bootstrap.bundle.min.js}"></script>
+<script>
+    /* ── Date in topbar ──────────────────────────────────────────────────── */
+    const _tbDate = document.getElementById('tbDate'); if(_tbDate) _tbDate.textContent =
+        new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+
+    /* ── Tab switching ───────────────────────────────────────────────────── */
+    function showTab(tab) {
+        document.querySelectorAll('.tab-content').forEach(function(el) { el.classList.remove('active'); });
+        document.querySelectorAll('.tab-btn').forEach(function(el) { el.classList.remove('active'); });
+        document.getElementById('tab-' + tab).classList.add('active');
+        event.target.classList.add('active');
+    }
+
+    /* ══════════════════════════════════════════════════════════════════════
+       SALARY PREVIEW MODAL
+       1. User clicks "Calculate Salaries"
+       2. We fetch /accountant/salaries/preview-data?year=X&month=X
+       3. Build a per-person breakdown table in the modal
+       4. "Confirm & Generate" submits the hidden generate form
+    ══════════════════════════════════════════════════════════════════════ */
+    function openSalaryPreview() {
+        var year  = document.querySelector('select[name="year"]').value;
+        var month = document.querySelector('select[name="month"]').value;
+
+        /* Sync hidden generate form values */
+        document.getElementById('genYear').value  = year;
+        document.getElementById('genMonth').value = month;
+
+        /* Show modal in loading state */
+        document.getElementById('previewLoading').style.display = 'block';
+        document.getElementById('previewContent').style.display = 'none';
+        document.getElementById('previewModal').classList.add('open');
+
+        var monthNames = ['January','February','March','April','May','June',
+                          'July','August','September','October','November','December'];
+        document.getElementById('previewSubtitle').textContent =
+            monthNames[month - 1] + ' ' + year + ' — review before saving';
+
+        /* Fetch calculated preview */
+        fetch('/accountant/salaries/preview-data?year=' + year + '&month=' + month)
+            .then(function(r) { return r.json(); })
+            .then(function(data) { renderPreview(data, month, year); })
+            .catch(function(err) {
+                document.getElementById('previewLoading').innerHTML =
+                    '<div style="color:#be123c;font-weight:600;font-size:13px">Failed to load preview. Please try again.</div>';
+            });
+    }
+
+    function fmtZMW(n) {
+        return 'ZMW ' + parseFloat(n).toLocaleString('en-ZM', {minimumFractionDigits:2, maximumFractionDigits:2});
+    }
+
+    function renderPreview(data, month, year) {
+        if (!data || data.length === 0) {
+            document.getElementById('previewLoading').innerHTML =
+                '<div style="color:var(--muted);font-size:13px;padding:40px;text-align:center">No active staff found.</div>';
+            return;
+        }
+
+        var totalBasic = 0, totalDeductions = 0, totalNet = 0;
+        var withLoan = 0, alreadyCount = 0;
+        data.forEach(function(r) {
+            totalBasic      += parseFloat(r.basicSalary);
+            totalDeductions += parseFloat(r.loanDeduction);
+            totalNet        += parseFloat(r.netSalary);
+            if (r.hasLoan)          withLoan++;
+            if (r.alreadyGenerated) alreadyCount++;
+        });
+
+        /* Summary strip */
+        var summaryHTML = [
+            { label: 'Total Staff',        val: data.length,          sub: 'Active',                color: '#3b82f6' },
+            { label: 'With Loan Deduction', val: withLoan,             sub: 'Auto-applied',          color: '#f43f5e' },
+            { label: 'Total Net Outgoing',  val: fmtZMW(totalNet),     sub: 'All staff combined',    color: '#00a358' },
+            { label: 'Loan Deductions',     val: fmtZMW(totalDeductions), sub: 'Total withheld',     color: '#f59e0b' }
+        ].map(function(s, i) {
+            return '<div style="padding:18px 22px;border-right:' + (i<3?'1px solid var(--border)':'none') + '">' +
+                   '<div style="font-family:\'Playfair Display\',serif;font-size:24px;font-weight:700;color:' + s.color + ';line-height:1">' + s.val + '</div>' +
+                   '<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-top:4px">' + s.label + '</div>' +
+                   '<div style="font-size:11px;color:var(--muted);margin-top:2px">' + s.sub + '</div></div>';
+        }).join('');
+        document.getElementById('previewSummary').innerHTML = summaryHTML;
+
+        /* Per-person rows */
+        var rowsHTML = data.map(function(r) {
+            var gradeBadge = r.executive
+                ? '<span style="background:linear-gradient(135deg,#fef3c7,#fde68a);color:#78350f;font-size:10px;font-weight:800;padding:2px 9px;border-radius:20px;border:1px solid #fcd34d;display:inline-block">★ Executive</span>'
+                : '<span style="background:#eff6ff;color:#1d4ed8;font-size:10px;font-weight:700;padding:2px 9px;border-radius:20px;border:1px solid #bfdbfe;display:inline-block">Staff</span>';
+
+            var deductionCell = r.hasLoan
+                ? '<div style="display:inline-flex;flex-direction:column;align-items:center;gap:3px">' +
+                  '<span style="background:#fff1f2;border:1.5px solid #fecdd3;color:#be123c;font-family:\'JetBrains Mono\',monospace;font-size:12.5px;font-weight:800;padding:4px 11px;border-radius:8px">− ' + fmtZMW(r.loanDeduction) + '</span>' +
+                  '<span style="font-size:9px;color:#9f1239;font-weight:600;text-transform:uppercase;letter-spacing:.06em">Loan instalment</span></div>'
+                : '<div style="display:inline-flex;align-items:center;gap:5px;background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:8px;padding:5px 10px">' +
+                  '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>' +
+                  '<span style="font-size:11px;font-weight:700;color:#15803d">No loan</span></div>';
+
+            var statusCell = r.alreadyGenerated
+                ? '<span style="background:#fef9ee;color:#d97706;font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;border:1px solid #fde68a">Already exists</span>'
+                : '<span style="background:#f0fdf4;color:#15803d;font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;border:1px solid #bbf7d0">Will generate</span>';
+
+            return '<tr style="border-bottom:1px solid #f1f5f9">' +
+                '<td style="padding:14px 14px;vertical-align:middle">' +
+                    '<div style="font-weight:700;font-size:13.5px;color:var(--ink)">' + r.name + '</div>' +
+                    '<div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-top:2px">' + r.role + '</div>' +
+                '</td>' +
+                '<td style="padding:14px;vertical-align:middle">' + gradeBadge + '</td>' +
+                '<td style="padding:14px;vertical-align:middle;text-align:right">' +
+                    '<span style="font-family:\'JetBrains Mono\',monospace;font-weight:700;font-size:13px;color:var(--ink)">' + fmtZMW(r.basicSalary) + '</span>' +
+                '</td>' +
+                '<td style="padding:14px;vertical-align:middle;text-align:center">' + deductionCell + '</td>' +
+                '<td style="padding:14px;vertical-align:middle;text-align:right">' +
+                    '<div style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1.5px solid #86efac;border-radius:10px;padding:8px 13px;display:inline-block">' +
+                    '<div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#15803d">Take-home</div>' +
+                    '<div style="font-family:\'JetBrains Mono\',monospace;font-weight:800;color:#065f46;font-size:15px">' + fmtZMW(r.netSalary) + '</div>' +
+                    '</div>' +
+                '</td>' +
+                '<td style="padding:14px;vertical-align:middle;text-align:center">' + statusCell + '</td>' +
+                '</tr>';
+        }).join('');
+        document.getElementById('previewTableBody').innerHTML = rowsHTML;
+
+        /* Show already-exists warning if needed */
+        document.getElementById('alreadyNote').style.display = alreadyCount > 0 ? 'block' : 'none';
+
+        document.getElementById('previewLoading').style.display = 'none';
+        document.getElementById('previewContent').style.display  = 'block';
+    }
+
+    function confirmGenerate() {
+        document.getElementById('confirmGenerateBtn').textContent = 'Generating...';
+        document.getElementById('confirmGenerateBtn').disabled = true;
+        document.getElementById('generateForm').submit();
+    }
+
+    function closePreviewModal() {
+        document.getElementById('previewModal').classList.remove('open');
+    }
+
+    /* Close preview modal on backdrop click */
+    document.addEventListener('click', function(e) {
+        var pm = document.getElementById('previewModal');
+        if (pm.classList.contains('open') && e.target === pm) closePreviewModal();
+    });
+
+    /* ══════════════════════════════════════════════════════════════════════
+       PAY SALARY WIZARD — 3 steps
+       Step 1: Breakdown review (loan check)
+       Step 2: Payment method cards (Bank, Cash, Airtel, MTN)
+       Step 3: Reference + confirm → POST form
+    ══════════════════════════════════════════════════════════════════════ */
+    var _selectedMethod = null;
+
+    /* Method icon SVGs for step 3 header */
+    var methodIcons = {
+        'BANK_TRANSFER': '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1d4ed8" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>',
+        'CASH':          '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2"/></svg>',
+        'AIRTEL_MONEY':  '<svg viewBox="0 0 40 40" width="40" height="40"><rect width="40" height="40" fill="#FF0000" rx="10"/><text x="50%" y="56%" dominant-baseline="middle" text-anchor="middle" font-family="Arial Black,Arial" font-weight="900" font-size="11" fill="white">airtel</text></svg>',
+        'MTN_MOBILE_MONEY': '<svg viewBox="0 0 40 40" width="40" height="40"><rect width="40" height="40" fill="#FFCC00" rx="10"/><text x="50%" y="56%" dominant-baseline="middle" text-anchor="middle" font-family="Arial Black,Arial" font-weight="900" font-size="12" fill="#003366">MTN</text></svg>'
+    };
+    var methodBg = {
+        'BANK_TRANSFER': '#eff6ff',
+        'CASH':          '#f0fdf4',
+        'AIRTEL_MONEY':  '#fff1f2',
+        'MTN_MOBILE_MONEY': '#fefce8'
+    };
+
+    function openPaySalary(btn) {
+        var hasDeduction = false;
+        var deduction = btn.getAttribute('data-deduction') || '';
+
+        /* Populate step 1 */
+        document.getElementById('pm-name').textContent   = btn.getAttribute('data-name');
+        document.getElementById('pm-role').textContent   = btn.getAttribute('data-role');
+        document.getElementById('pm-basic').textContent  = btn.getAttribute('data-basic');
+        document.getElementById('pm-amount').textContent = btn.getAttribute('data-amount');
+        document.getElementById('step3-name').textContent   = btn.getAttribute('data-name');
+        document.getElementById('step3-amount').textContent = btn.getAttribute('data-amount');
+
+        /* Period label */
+        var periodAttr = btn.getAttribute('data-period') || '';
+        document.getElementById('pm-period').textContent = periodAttr || 'Current Period';
+
+        /* Loan deduction row */
+        var dr = document.getElementById('pm-deduction-row');
+        if (deduction && deduction !== 'ZMW 0.00' && deduction !== 'ZMW 0,00' && deduction !== 'ZMW 0.0' && parseFloat(deduction.replace(/[^0-9.]/g,'')) > 0) {
+            document.getElementById('pm-deduction').textContent = '− ' + deduction;
+            dr.style.display = 'flex';
+            document.getElementById('pm-no-loan-notice').style.display = 'none';
+            hasDeduction = true;
+        } else {
+            dr.style.display = 'none';
+            document.getElementById('pm-no-loan-notice').style.display = 'flex';
+        }
+
+        /* Set form action */
+        document.getElementById('payForm').action = '/accountant/salaries/' + btn.getAttribute('data-id') + '/pay';
+        document.getElementById('pm-notes').value = '';
+        _selectedMethod = null;
+
+        /* Reset method cards */
+        document.querySelectorAll('.pay-method-card').forEach(function(c) { c.classList.remove('selected'); });
+
+        /* Show modal at step 1 */
+        goToStep(1);
+        document.getElementById('payModal').classList.add('open');
+    }
+
+    function goToStep(n) {
+        /* Validate step 2 → 3 */
+        if (n === 3 && !_selectedMethod) {
+            alert('Please select a payment method first.');
+            return;
+        }
+
+        document.getElementById('pw-step1').style.display = n === 1 ? 'block' : 'none';
+        document.getElementById('pw-step2').style.display = n === 2 ? 'block' : 'none';
+        document.getElementById('pw-step3').style.display = n === 3 ? 'block' : 'none';
+
+        /* Step indicators */
+        var dots = ['si2-dot','si3-dot'];
+        var labels = ['si2-label','si3-label'];
+        [2,3].forEach(function(i) {
+            var dot   = document.getElementById('si' + i + '-dot');
+            var label = document.getElementById('si' + i + '-label');
+            if (n >= i) {
+                dot.style.background  = '#00c16a';
+                dot.style.border      = 'none';
+                dot.style.color       = '#fff';
+                label.style.color     = '#fff';
+                label.style.fontWeight = '700';
+            } else {
+                dot.style.background  = 'rgba(255,255,255,.15)';
+                dot.style.border      = '2px solid rgba(255,255,255,.3)';
+                dot.style.color       = 'rgba(255,255,255,.5)';
+                label.style.color     = 'rgba(255,255,255,.5)';
+                label.style.fontWeight = '600';
+            }
+        });
+    }
+
+    function selectMethod(value, label) {
+        _selectedMethod = value;
+        document.getElementById('pay-method-input').value = value;
+
+        /* Highlight selected card */
+        document.querySelectorAll('.pay-method-card').forEach(function(c) { c.classList.remove('selected'); });
+        document.getElementById('mc-' + value).classList.add('selected');
+
+        /* Update step 3 header */
+        document.getElementById('step3-method-label').textContent = label;
+        var iconEl = document.getElementById('step3-method-icon');
+        iconEl.style.background = methodBg[value] || '#f8fafc';
+        iconEl.innerHTML = methodIcons[value] || '';
+
+        /* Update reference placeholder */
+
+        /* Auto-advance to step 3 */
+        setTimeout(function() { goToStep(3); }, 220);
+    }
+
+    function closePayModal() {
+        document.getElementById('payModal').classList.remove('open');
+    }
+
+    /* Confirm button loading state on submit */
+    document.getElementById('payForm').addEventListener('submit', function() {
+        var btn = document.getElementById('pay-submit-btn');
+        btn.textContent = 'Processing...';
+        btn.disabled = true;
+    });
+
+    /* Close on backdrop click */
+    document.addEventListener('click', function(e) {
+        var modal = document.getElementById('payModal');
+        if (modal.classList.contains('open') && e.target === modal) closePayModal();
+        var pm = document.getElementById('previewModal');
+        if (pm.classList.contains('open') && e.target === pm) closePreviewModal();
+    });
+</script>
+
+<!-- ── Member Milk Payment Modal ───────────────────────────────────────────── -->
+<div class="modal-overlay" id="memberPayModal" onclick="if(event.target===this)closeMemberPayModal()">
+    <div class="modal-box" style="max-width:500px;display:flex;flex-direction:column;max-height:90vh;overflow:hidden">
+
+        <!-- Fixed header -->
+        <div style="padding:20px 24px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;flex-shrink:0">
+            <div style="width:42px;height:42px;background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00a358" stroke-width="2.5"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>
+            </div>
+            <div>
+                <div style="font-family:'Playfair Display',serif;font-size:18px;color:var(--ink)">Member Milk Payment</div>
+                <div style="font-size:12px;color:var(--muted);margin-top:1px" id="mp-member-name">—</div>
+            </div>
+            <button type="button" onclick="closeMemberPayModal()" style="margin-left:auto;background:none;border:none;cursor:pointer;color:var(--muted);padding:4px">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+
+        <!-- Scrollable body -->
+        <div style="overflow-y:auto;flex:1;min-height:0;padding:18px 24px 0">
+            <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.13em;color:var(--muted);margin-bottom:10px">Salary Breakdown</div>
+
+            <div style="background:#f8fafc;border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:16px">
+                <!-- Gross -->
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:11px 14px;border-bottom:1px solid var(--border-light)">
+                    <div>
+                        <div style="font-size:12px;font-weight:700;color:var(--ink)">Monthly Salary</div>
+                        <div style="font-size:10px;color:var(--muted)">Fixed cooperative salary — ZMW 3,000</div>
+                    </div>
+                    <div style="font-family:'JetBrains Mono',monospace;font-weight:800;font-size:15px;color:var(--ink)" id="mp-gross">ZMW 0.00</div>
+                </div>
+                <!-- Standard deductions -->
+                <div id="mp-stdded-row" style="display:flex;align-items:center;justify-content:space-between;padding:11px 14px;border-bottom:1px solid var(--border-light)">
+                    <div>
+                        <div style="font-size:12px;font-weight:700;color:#be123c">Cooperative Deductions</div>
+                        <div style="font-size:10px;color:var(--muted)">Levy, insurance, other</div>
+                    </div>
+                    <div style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:14px;color:#be123c" id="mp-stdded">− ZMW 0.00</div>
+                </div>
+                <!-- Loan repayment -->
+                <div id="mp-loan-row" style="display:none;align-items:center;justify-content:space-between;padding:11px 14px;border-bottom:1px solid var(--border-light);background:#fffbeb">
+                    <div>
+                        <div style="font-size:12px;font-weight:700;color:#c2410c">Loan Repayment → COFA</div>
+                        <div style="font-size:10px;color:#92400e">Monthly instalment deducted, credited to cooperative fund</div>
+                    </div>
+                    <div style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:14px;color:#c2410c" id="mp-loanded">− ZMW 0.00</div>
+                </div>
+                <!-- Net total -->
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:13px 14px;background:linear-gradient(135deg,#f0fdf4,#dcfce7)">
+                    <div>
+                        <div style="font-size:12px;font-weight:800;color:#065f46">Net Payment to Member</div>
+                        <div style="font-size:10px;color:#15803d">Gross − all deductions</div>
+                    </div>
+                    <div style="font-family:'JetBrains Mono',monospace;font-weight:800;font-size:20px;color:#065f46" id="mp-amount">ZMW 0.00</div>
+                </div>
+            </div>
+
+            <!-- COFA note when loan is present -->
+            <div id="mp-cofa-note" style="display:none;background:#fff7ed;border:1px solid #fed7aa;border-radius:9px;padding:10px 13px;margin-bottom:16px;font-size:12px;color:#92400e;align-items:flex-start;gap:8px">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#c2410c" stroke-width="2.5" style="flex-shrink:0;margin-top:1px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                <span>The loan repayment amount stays in COFA — only the net payment leaves the cooperative fund.</span>
+            </div>
+
+            <form id="memberPayForm" method="post">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+                <div style="margin-bottom:14px">
+                    <label style="display:block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--ink2);margin-bottom:8px">Payment Method <span style="color:var(--red)">*</span></label>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                        <label style="display:flex;align-items:center;gap:8px;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;cursor:pointer;font-size:12.5px;font-weight:600;transition:all .14s" class="pay-method-card">
+                            <input type="radio" name="method" value="Bank Transfer" required style="accent-color:var(--green-dim)"/> Bank Transfer
+                        </label>
+                        <label style="display:flex;align-items:center;gap:8px;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;cursor:pointer;font-size:12.5px;font-weight:600;transition:all .14s" class="pay-method-card">
+                            <input type="radio" name="method" value="Cash" style="accent-color:var(--green-dim)"/> Cash
+                        </label>
+                        <label style="display:flex;align-items:center;gap:8px;padding:9px 12px;border:1.5px solid #ff4d2d22;border-radius:8px;cursor:pointer;font-size:12.5px;font-weight:600;transition:all .14s" class="pay-method-card">
+                            <input type="radio" name="method" value="Airtel Money" style="accent-color:#ff4d2d"/> <span style="color:#ff4d2d">Airtel Money</span>
+                        </label>
+                        <label style="display:flex;align-items:center;gap:8px;padding:9px 12px;border:1.5px solid #ffc30022;border-radius:8px;cursor:pointer;font-size:12.5px;font-weight:600;transition:all .14s" class="pay-method-card">
+                            <input type="radio" name="method" value="MTN Mobile Money" style="accent-color:#ffc300"/> <span style="color:#b8860b">MTN MoMo</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div style="margin-bottom:8px">
+                    <label style="display:block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--ink2);margin-bottom:6px">Notes (optional)</label>
+                    <textarea name="notes" class="finp" rows="2" placeholder="Any additional notes..."></textarea>
+                </div>
+            </form>
+        </div>
+
+        <!-- Pinned footer — always visible -->
+        <div style="padding:14px 24px 20px;border-top:1px solid var(--border);background:#fff;flex-shrink:0;display:flex;gap:10px;justify-content:flex-end">
+            <button type="button" onclick="closeMemberPayModal()" style="background:#fff;color:var(--ink2);border:1.5px solid var(--border);padding:10px 20px;border-radius:8px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer">Cancel</button>
+            <button type="submit" form="memberPayForm" style="background:linear-gradient(135deg,#00a358,#00c16a);color:#fff;border:none;padding:10px 22px;border-radius:8px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;display:inline-flex;align-items:center;gap:7px;box-shadow:0 3px 10px rgba(0,163,88,.28)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                Confirm Payment
+            </button>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    function openMemberPayModal(id, name, netAmount, gross, stdDed, loanDed) {
+        document.getElementById('mp-member-name').textContent = name;
+        document.getElementById('mp-amount').textContent = netAmount;
+        document.getElementById('memberPayForm').action = '/accountant/salaries/member-payments/' + id + '/pay';
+
+        // Populate breakdown if extended data is passed
+        if (gross) {
+            document.getElementById('mp-gross').textContent = 'ZMW ' + gross;
+            // Standard deductions
+            var stdRow = document.getElementById('mp-stdded-row');
+            var stdVal = parseFloat((stdDed || '0').replace(/,/g, ''));
+            stdRow.style.display = stdVal > 0 ? 'flex' : 'none';
+            document.getElementById('mp-stdded').textContent = '− ZMW ' + (stdDed || '0.00');
+            // Loan deductions
+            var loanVal = parseFloat((loanDed || '0').replace(/,/g, ''));
+            var loanRow = document.getElementById('mp-loan-row');
+            var cofaNote = document.getElementById('mp-cofa-note');
+            if (loanVal > 0) {
+                loanRow.style.display = 'flex';
+                document.getElementById('mp-loanded').textContent = '− ZMW ' + loanDed;
+                if (cofaNote) cofaNote.style.display = 'flex';
+            } else {
+                loanRow.style.display = 'none';
+                if (cofaNote) cofaNote.style.display = 'none';
+            }
+        }
+
+        document.getElementById('memberPayModal').classList.add('open');
+    }
+    function closeMemberPayModal() {
+        document.getElementById('memberPayModal').classList.remove('open');
+    }
+</script>
+</div>
+</body>
+</html>

@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<body>
+<!--
+  DairyCoop Member Portal — Shared Sidebar + Topbar fragment.
+  Include with:
+      <div th:replace="~{fragments/member-nav :: nav(active='dashboard')}"></div>
+
+  The fragment is self-contained: outputs <aside class="sidebar"> and <div class="topbar">.
+  Each template then wraps its content in <div class="content">.
+
+  Valid active values:
+  dashboard | cows | loans | deliveries | payments | salary-history
+-->
+<div th:fragment="nav(active)">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <div class="sb-logo">
+            <div class="sb-logo-icon">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0a1f0e" stroke-width="2.5">
+                    <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                    <path d="M2 17l10 5 10-5"/>
+                    <path d="M2 12l10 5 10-5"/>
+                </svg>
+            </div>
+            <div>
+                <div class="sb-logo-name">DairyCoop</div>
+                <div style="font-size:9px;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:.14em;margin-top:1px">Member Portal</div>
+            </div>
+        </div>
+
+        <div class="sb-profile" th:if="${member != null}">
+            <div class="sb-avatar"
+                 th:text="${member.name != null ? #strings.substring(member.name, 0, 1).toUpperCase() : 'M'}">M</div>
+            <div style="min-width:0">
+                <div class="sb-name" th:text="${member.name}">Member Name</div>
+                <div>
+                <span class="sb-status-badge approved" th:if="${member.status == 'APPROVED'}">
+                    <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                    Active Member
+                </span>
+                    <span class="sb-status-badge pending" th:if="${member.status == 'PENDING'}">Pending</span>
+                    <span class="sb-status-badge rejected" th:if="${member.status == 'REJECTED'}">Rejected</span>
+                </div>
+                <div style="font-size:10px;color:rgba(255,255,255,.35);margin-top:3px;font-family:monospace"
+                     th:text="${member.memberNumber}">MEM-001</div>
+            </div>
+        </div>
+
+        <nav class="sb-nav">
+            <div class="sb-section">My Portal</div>
+
+            <a th:href="@{/member/dashboard}"
+               th:classappend="${active == 'dashboard'} ? ' active' : ''"
+               class="sb-link">
+                <svg class="sb-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="7" height="7" rx="1"/>
+                    <rect x="14" y="3" width="7" height="7" rx="1"/>
+                    <rect x="14" y="14" width="7" height="7" rx="1"/>
+                    <rect x="3" y="14" width="7" height="7" rx="1"/>
+                </svg>
+                Dashboard
+            </a>
+
+            <a th:href="@{/member/cows}"
+               th:classappend="${active == 'cows'} ? ' active' : ''"
+               class="sb-link">
+                <svg class="sb-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 10h.01M15 10h.01M9.5 15c.7.6 1.5 1 2.5 1s1.8-.4 2.5-1"/>
+                    <path d="M20 8.54V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v2.54"/>
+                    <path d="M4 14v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/>
+                    <circle cx="4" cy="11" r="2"/>
+                    <circle cx="20" cy="11" r="2"/>
+                </svg>
+                My Cows
+            </a>
+
+            <a th:href="@{/member/deliveries}"
+               th:classappend="${active == 'deliveries'} ? ' active' : ''"
+               class="sb-link">
+                <svg class="sb-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M19 9V6a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v3"/>
+                    <path d="M3 11v6a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-6a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4z"/>
+                </svg>
+                Milk Deliveries
+            </a>
+
+            <div class="sb-section">Finance</div>
+
+            <a th:href="@{/member/salary-history}"
+               th:classappend="${active == 'salary-history'} ? ' active' : ''"
+               class="sb-link">
+                <svg class="sb-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                    <line x1="16" y1="13" x2="8" y2="13"/>
+                    <line x1="16" y1="17" x2="8" y2="17"/>
+                </svg>
+                Salary &amp; Payments
+            </a>
+
+            <a th:href="@{/member/loans}"
+               th:classappend="${active == 'loans'} ? ' active' : ''"
+               class="sb-link">
+                <svg class="sb-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="2" y="5" width="20" height="14" rx="2"/>
+                    <line x1="2" y1="10" x2="22" y2="10"/>
+                </svg>
+                My Loans
+            </a>
+
+            <a th:href="@{/member/payments}"
+               th:classappend="${active == 'payments'} ? ' active' : ''"
+               class="sb-link">
+                <svg class="sb-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M12 8v4l3 3"/>
+                </svg>
+                Loan Payments
+            </a>
+
+        </nav>
+
+        <div class="sb-footer">
+            <form th:action="@{/logout}" method="post">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                <button type="submit" class="sb-logout">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                        <polyline points="16 17 21 12 16 7"/>
+                        <line x1="21" y1="12" x2="9" y2="12"/>
+                    </svg>
+                    Sign Out
+                </button>
+            </form>
+        </div>
+    </aside>
+
+    <!-- NOTE: topbar is NOT in this fragment — each template has its own topbar
+         inside <div class="main"> so it scrolls correctly with the page content -->
+
+
+    <script th:src="@{/js/dairycoop-live.js}"></script>
+</div><!-- end th:fragment -->
+</body>
+</html>

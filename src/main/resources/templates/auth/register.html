@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Staff Access - DairyCoop MS</title>
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap/dist/css/bootstrap.min.css}"/>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Fraunces:wght@600&display=swap');
+        *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+        body{font-family:'Plus Jakarta Sans',sans-serif;min-height:100vh;background:#f0f2f5;display:flex;align-items:center;justify-content:center;padding:24px}
+        .card{background:#fff;border-radius:20px;box-shadow:0 8px 40px rgba(0,0,0,0.10);width:100%;max-width:460px;overflow:hidden}
+        .card-head{background:linear-gradient(135deg,#0d3d1a,#1a6b2e);padding:32px 36px}
+        .card-head-icon{width:52px;height:52px;background:rgba(255,255,255,0.12);border-radius:14px;display:flex;align-items:center;justify-content:center;margin-bottom:16px}
+        .card-head h2{font-family:'Fraunces',serif;font-size:22px;font-weight:600;color:#fff;margin-bottom:6px}
+        .card-head p{font-size:13px;color:rgba(255,255,255,0.6)}
+        .card-body{padding:32px 36px}
+        .info-box{background:#f0f9ff;border:1px solid #bae6fd;border-radius:12px;padding:18px 20px;margin-bottom:24px;font-size:13.5px;color:#0369a1;line-height:1.7}
+        .step{display:flex;align-items:flex-start;gap:12px;margin-bottom:14px}
+        .step:last-child{margin-bottom:0}
+        .step-num{width:24px;height:24px;border-radius:50%;background:#1a6b2e;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+        .step-text{font-size:13.5px;color:#374151;line-height:1.6}
+        .btn-back{display:block;width:100%;padding:13px;background:#1a6b2e;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer;text-align:center;text-decoration:none;transition:all .2s}
+        .btn-back:hover{background:#0f4a1e;color:#fff;transform:translateY(-1px)}
+        .divider{height:1px;background:#e5e7eb;margin:20px 0}
+        .member-link{text-align:center;font-size:13px;color:#6b7280}
+        .member-link a{color:#1a6b2e;font-weight:600;text-decoration:none}
+        .member-link a:hover{text-decoration:underline}
+    </style>
+</head>
+<body>
+<div class="card">
+    <div class="card-head">
+        <div class="card-head-icon">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                <circle cx="12" cy="7" r="4"/>
+            </svg>
+        </div>
+        <h2>Staff Account Access</h2>
+        <p>Staff accounts are managed by the system administrator</p>
+    </div>
+    <div class="card-body">
+
+        <div class="info-box">
+            <strong style="display:block;margin-bottom:10px;color:#0c4a6e">How to get your account:</strong>
+            <div class="step">
+                <div class="step-num">1</div>
+                <div class="step-text">The system administrator creates your account and assigns your role</div>
+            </div>
+            <div class="step">
+                <div class="step-num">2</div>
+                <div class="step-text">You receive your email and temporary password directly from the admin</div>
+            </div>
+            <div class="step">
+                <div class="step-num">3</div>
+                <div class="step-text">Log in with those credentials - you can change your password anytime from your dashboard</div>
+            </div>
+        </div>
+
+        <p style="font-size:13px;color:#6b7280;margin-bottom:20px;text-align:center">
+            Already have your credentials? Go back and sign in.
+        </p>
+
+        <a th:href="@{/login}" class="btn-back">Back to Login</a>
+
+        <div class="divider"></div>
+
+        <div class="member-link">
+            Cooperative member? <a th:href="@{/member/register}">Create member account</a>
+        </div>
+
+    </div>
+</div>
+<script th:src="@{/webjars/bootstrap/dist/js/bootstrap.bundle.min.js}"></script>
+</body>
+</html>

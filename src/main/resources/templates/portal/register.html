@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Register — DairyCoop Portal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+    <style>
+        *{box-sizing:border-box;margin:0;padding:0}
+        body{font-family:'Plus Jakarta Sans',sans-serif;background:#f4f6f4;min-height:100vh;display:flex;flex-direction:column}
+        /* Top bar */
+        .topbar{background:#fff;border-bottom:1px solid #e5e7e5;padding:0 28px;height:56px;display:flex;align-items:center;justify-content:space-between}
+        .logo{display:flex;align-items:center;gap:9px;text-decoration:none}
+        .logo-dot{width:10px;height:10px;background:#1a6b2e;border-radius:50%}
+        .logo-text{font-size:15px;font-weight:700;color:#1a2b1a}
+        .back-link{font-size:13px;color:#6b7280;text-decoration:none;display:flex;align-items:center;gap:4px}
+        .back-link:hover{color:#1a6b2e}
+        /* Card */
+        .page{flex:1;display:flex;align-items:center;justify-content:center;padding:32px 16px}
+        .card{background:#fff;border-radius:16px;border:1px solid #e5e7e5;width:100%;max-width:480px;padding:36px}
+        .card-head{margin-bottom:28px}
+        .card-head h2{font-size:22px;font-weight:700;color:#1a2b1a;margin-bottom:4px}
+        .card-head p{font-size:13px;color:#6b7280}
+        /* Fields */
+        .field{margin-bottom:16px}
+        .flbl{display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:6px}
+        .req{color:#ef4444;margin-left:2px}
+        .finp{width:100%;padding:11px 14px;border:1.5px solid #e5e7e5;border-radius:9px;font-size:14px;font-family:inherit;color:#111827;background:#fff;outline:none;transition:border .18s}
+        .finp:focus{border-color:#1a6b2e;box-shadow:0 0 0 3px rgba(26,107,46,.08)}
+        .finp::placeholder{color:#9ca3af;font-size:13px}
+        .two-col{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+        /* Alert */
+        .alert-err{background:#fef2f2;border:1px solid #fecaca;color:#dc2626;padding:11px 14px;border-radius:9px;margin-bottom:18px;font-size:13px;display:flex;align-items:center;gap:8px}
+        /* Button */
+        .btn{width:100%;padding:13px;background:#1a6b2e;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;margin-top:4px;transition:background .18s}
+        .btn:hover{background:#155a26}
+        /* Footer note */
+        .note{text-align:center;margin-top:16px;font-size:12px;color:#9ca3af}
+        .note a{color:#1a6b2e;text-decoration:none;font-weight:600}
+        .note a:hover{text-decoration:underline}
+    </style>
+</head>
+<body>
+
+<div class="topbar">
+    <a class="logo" th:href="@{/portal}">
+        <div class="logo-dot"></div>
+        <div class="logo-text">DairyCoop Portal</div>
+    </a>
+    <div style="display:flex;align-items:center;gap:12px">
+        <a th:href="@{/login}" style="font-size:12px;color:#9ca3af;text-decoration:none">Staff / Admin Login →</a>
+        <a class="back-link" th:href="@{/portal}">← Back</a>
+    </div>
+</div>
+
+<div class="page">
+    <div class="card">
+
+        <div class="card-head">
+            <h2>Register Your Company</h2>
+            <p>Fill in your details to start submitting milk purchase inquiries.</p>
+        </div>
+
+        <div class="alert-err" th:if="${errorMessage}">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+            <span th:text="${errorMessage}">Error</span>
+        </div>
+
+        <form th:action="@{/portal/register}" method="post">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+            <div class="field">
+                <label class="flbl" for="name">Company Name<span class="req">*</span></label>
+                <input type="text" id="name" name="name" class="finp"
+                       placeholder="e.g. Parmalat Zambia Ltd" required autofocus/>
+            </div>
+
+            <div class="two-col">
+                <div class="field">
+                    <label class="flbl" for="contactPerson">Contact Person<span class="req">*</span></label>
+                    <input type="text" id="contactPerson" name="contactPerson" class="finp"
+                           placeholder="Full name" required/>
+                </div>
+                <div class="field">
+                    <label class="flbl" for="phone">Phone<span class="req">*</span></label>
+                    <input type="tel" id="phone" name="phone" class="finp"
+                           placeholder="+260 97..." required/>
+                </div>
+            </div>
+
+            <div class="field">
+                <label class="flbl" for="email">Business Email<span class="req">*</span></label>
+                <input type="email" id="email" name="email" class="finp"
+                       placeholder="procurement@company.com" required/>
+            </div>
+
+            <div class="field">
+                <label class="flbl" for="address">Address</label>
+                <input type="text" id="address" name="address" class="finp"
+                       placeholder="e.g. Plot 123, Cairo Road, Lusaka"/>
+            </div>
+
+            <button type="submit" class="btn">Register &amp; Enter Portal</button>
+        </form>
+
+        <div class="note">
+            Already registered? <a th:href="@{/portal}">Find your company →</a>
+        </div>
+
+    </div>
+</div>
+
+</body>
+</html>

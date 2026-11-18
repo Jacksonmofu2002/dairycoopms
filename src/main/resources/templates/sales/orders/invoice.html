@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title th:text="${'Invoice ' + (order.referenceNo != null ? order.referenceNo : '')}">Invoice</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap-icons/font/bootstrap-icons.min.css}"/>
+    <style>
+        *{box-sizing:border-box;margin:0;padding:0}
+        body{font-family:'Plus Jakarta Sans',sans-serif;background:#e8f4fd;min-height:100vh;padding:0 16px 48px}
+        /* ── Shared Sales Topnav (keep identical on every sales/* page) ── */
+        .topnav{background:linear-gradient(135deg,#0f2747 0%,#1b3a63 100%);border-bottom:1px solid rgba(255,255,255,0.08);padding:0 28px;height:64px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 4px 20px rgba(15,39,71,0.45);gap:20px}
+        .nav-brand{display:flex;align-items:center;gap:12px;flex-shrink:0;text-decoration:none}
+        .nav-logo{width:40px;height:40px;background:linear-gradient(135deg,#3b82f6,#1d4ed8);border-radius:10px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:18px;flex-shrink:0}
+        .nav-title{font-size:18px;font-weight:700;color:#fff;white-space:nowrap}
+        .nav-title span{color:rgba(255,255,255,0.9)}
+        .nav-links{display:flex;align-items:center;gap:2px;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none;flex:1;min-width:0}
+        .nav-links::-webkit-scrollbar{display:none}
+        .nav-link{padding:9px 13px;border-radius:8px;color:rgba(255,255,255,0.85);text-decoration:none;font-size:13.5px;font-weight:500;display:flex;align-items:center;gap:7px;transition:all .2s;position:relative;white-space:nowrap;flex-shrink:0}
+        .nav-link:hover{background:rgba(255,255,255,0.15);color:#fff}
+        .nav-link.active{background:rgba(255,255,255,0.2);color:#fff}
+        .nav-link i{font-size:15px}
+        .nav-badge{position:absolute;top:4px;right:4px;background:#ef4444;color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:10px;min-width:18px;text-align:center}
+        .nav-right{display:flex;align-items:center;gap:16px;flex-shrink:0}
+        .nav-user{display:flex;align-items:center;gap:10px;padding:6px 12px 6px 6px;background:#f8fafc;border-radius:24px;border:1px solid #e2e8f0}
+        .nav-avatar{width:32px;height:32px;background:linear-gradient(135deg,#3b82f6,#1d4ed8);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:600;flex-shrink:0}
+        .nav-uname{font-size:13px;font-weight:500;color:#334155;white-space:nowrap}
+        .btn-logout{background:none;border:1px solid #fecaca;color:#dc2626;padding:8px 14px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:6px;transition:all .2s;white-space:nowrap}
+        .btn-logout:hover{background:#fef2f2}
+        @media(max-width:900px){.nav-uname{display:none}}
+        .action-bar{max-width:780px;margin:32px auto 20px;display:flex;align-items:center;justify-content:space-between}
+        .btn-back{display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid #cbd5e1;color:#475569;padding:9px 18px;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none;font-family:inherit;cursor:pointer;transition:all .15s}
+        .btn-print{display:inline-flex;align-items:center;gap:6px;background:#0369a1;border:none;color:#fff;padding:9px 18px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:background .15s}
+        .invoice{background:#fff;max-width:780px;margin:0 auto;border-radius:4px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.12)}
+        .inv-band{background:#0369a1;height:8px}
+        .inv-header{padding:36px 48px 28px;display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #e2f0fb}
+        .inv-company-name{font-size:26px;font-weight:800;color:#0369a1;letter-spacing:-.5px;margin-bottom:4px}
+        .inv-company-sub{font-size:12px;color:#64748b;text-transform:uppercase;letter-spacing:.1em}
+        .inv-number-box{text-align:right}
+        .inv-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:#94a3b8;margin-bottom:6px}
+        .inv-number{font-size:22px;font-weight:800;color:#0f172a}
+        .inv-date{font-size:12px;color:#64748b;margin-top:4px}
+        .inv-status-row{padding:10px 48px;border-bottom:1px solid #e2f0fb;display:flex;align-items:center;gap:8px}
+        .status-paid{display:inline-flex;align-items:center;gap:6px;background:#dcfce7;color:#166534;font-size:12px;font-weight:700;padding:5px 14px;border-radius:20px}
+        .status-pending{display:inline-flex;align-items:center;gap:6px;background:#fef9c3;color:#854d0e;font-size:12px;font-weight:700;padding:5px 14px;border-radius:20px}
+        .inv-parties{display:grid;grid-template-columns:1fr 1fr;padding:28px 48px;gap:40px;border-bottom:1px solid #e2f0fb}
+        .party-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:#0369a1;margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid #bae6fd}
+        .party-name{font-size:15px;font-weight:700;color:#0f172a;margin-bottom:5px}
+        .party-detail{font-size:13px;color:#64748b;margin-bottom:3px}
+        .inv-details{display:grid;grid-template-columns:repeat(3,1fr);padding:20px 48px;background:#f0f9ff;border-bottom:1px solid #bae6fd;gap:20px}
+        .detail-item-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#0369a1;margin-bottom:5px}
+        .detail-item-val{font-size:13px;font-weight:600;color:#0f172a}
+        .inv-table-wrap{padding:28px 48px 0}
+        .inv-table{width:100%;border-collapse:collapse}
+        .inv-table thead th{background:#0369a1;color:#fff;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:12px 16px;text-align:left}
+        .inv-table thead th:nth-child(2), .inv-table thead th:nth-child(3), .inv-table thead th:nth-child(4){text-align:right}
+        .inv-table tbody tr:nth-child(even) td{background:#f0f9ff}
+        .inv-table tbody td{padding:14px 16px;font-size:13px;color:#374151;border-bottom:1px solid #e2f0fb;vertical-align:top}
+        .inv-table tbody td:nth-child(2), .inv-table tbody td:nth-child(3), .inv-table tbody td:nth-child(4){text-align:right}
+        .item-desc{font-weight:600;color:#0f172a;margin-bottom:2px}
+        .item-sub{font-size:11px;color:#94a3b8}
+        .inv-footer-wrap{padding:24px 48px 36px;display:flex;justify-content:flex-end}
+        .totals-table{width:280px}
+        .tot-row{display:flex;justify-content:space-between;padding:7px 0;font-size:13px;color:#64748b;border-bottom:1px solid #f1f5f9}
+        .tot-row.grand{border-top:2px solid #0369a1;border-bottom:none;margin-top:6px;padding-top:12px;font-size:16px;font-weight:800;color:#0369a1}
+        .inv-bottom{padding:20px 48px;background:#f0f9ff;border-top:2px solid #bae6fd;display:flex;align-items:center;justify-content:space-between}
+        .inv-note{font-size:12px;color:#64748b}
+        .inv-note strong{color:#0369a1}
+        @media print{
+            body{background:#fff;padding:0}
+            .topnav{display:none!important}
+            .action-bar{display:none!important}
+            .invoice{box-shadow:none;border-radius:0;max-width:100%}
+        }
+    </style>
+</head>
+<body>
+
+<div th:replace="~{fragments/sales-nav :: nav(active='orders')}"></div>
+
+<!-- Action bar -->
+<div class="action-bar">
+    <a class="btn-back" th:href="@{/sales/orders}">← Back to Orders</a>
+    <div style="display:flex;gap:10px">
+        <button class="btn-print" onclick="window.print()">🖨 Print / Save PDF</button>
+    </div>
+</div>
+
+<div class="invoice">
+    <div class="inv-band"></div>
+
+    <div class="inv-header">
+        <div>
+            <div class="inv-company-name">DairyCoop</div>
+            <div class="inv-company-sub">Dairy Cooperative Management System</div>
+        </div>
+        <div class="inv-number-box">
+            <div class="inv-label">Invoice Number</div>
+            <div class="inv-number" th:text="${order.referenceNo != null ? order.referenceNo : '-'}">INV-2026-0001</div>
+            <div class="inv-date"
+                 th:text="${order.saleDate != null ? 'Date: ' + order.saleDate.format(T(java.time.format.DateTimeFormatter).ofPattern('dd MMMM yyyy')) : '-'}">
+                Date: 04 May 2026
+            </div>
+        </div>
+    </div>
+
+    <div class="inv-status-row">
+        <span class="status-paid" th:if="${order.paymentStatus == 'RECEIVED'}">✓ PAID</span>
+        <span class="status-pending" th:if="${order.paymentStatus == 'PENDING'}">⏳ AWAITING PAYMENT</span>
+    </div>
+
+    <div class="inv-parties">
+        <div>
+            <div class="party-label">Bill To</div>
+            <div class="party-name" th:text="${order.processingCompany != null ? order.processingCompany.name : '—'}">Parmalat Zambia Ltd</div>
+            <div class="party-detail" th:text="${order.processingCompany != null ? order.processingCompany.contactPerson : '—'}">Divine Kabanda</div>
+            <div class="party-detail" th:text="${order.processingCompany != null ? order.processingCompany.email : '—'}">email@company.com</div>
+            <div class="party-detail" th:text="${order.processingCompany != null ? order.processingCompany.phone : '—'}">+260 97...</div>
+        </div>
+        <div>
+            <div class="party-label">Issued By</div>
+            <div class="party-name">Dairy Cooperative</div>
+            <div class="party-detail">Cooperative Management System</div>
+            <div class="party-detail">Zambia</div>
+        </div>
+    </div>
+
+    <div class="inv-details">
+        <div>
+            <div class="detail-item-label">Reference No</div>
+            <div class="detail-item-val" th:text="${order.referenceNo != null ? order.referenceNo : '-'}">INQ-2026-0001</div>
+        </div>
+        <div>
+            <div class="detail-item-label">Delivery Date</div>
+            <div class="detail-item-val"
+                 th:text="${order.saleDate != null ? order.saleDate.format(T(java.time.format.DateTimeFormatter).ofPattern('dd MMM yyyy')) : '-'}">
+                04 May 2026
+            </div>
+        </div>
+        <div>
+            <div class="detail-item-label">Due Date</div>
+            <div class="detail-item-val"
+                 th:if="${order.paymentStatus == 'RECEIVED' and order.paymentReceivedAt != null}"
+                 th:text="${order.paymentReceivedAt != null ? order.paymentReceivedAt.format(T(java.time.format.DateTimeFormatter).ofPattern('dd MMM yyyy')) : '-'}">
+                04 May 2026
+            </div>
+            <div class="detail-item-val" th:if="${!(order.paymentStatus == 'RECEIVED' and order.paymentReceivedAt != null)}">Upon receipt</div>
+        </div>
+    </div>
+
+    <div class="inv-table-wrap">
+        <table class="inv-table">
+            <thead>
+            <tr>
+                <th>Description</th>
+                <th>Quantity</th>
+                <th>Unit Price</th>
+                <th>Amount</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td>
+                    <div class="item-desc">Fresh Milk Supply</div>
+                    <div class="item-sub"
+                         th:text="${order.saleDate != null ? 'Delivered: ' + order.saleDate.format(T(java.time.format.DateTimeFormatter).ofPattern('dd MMM yyyy')) : 'Delivered: -'}">
+                        Delivered: 04 May 2026
+                    </div>
+                </td>
+
+                <td th:text="${order.quantityLitres != null ? #numbers.formatDecimal(order.quantityLitres,1,2) + ' L' : '0 L'}">300.00 L</td>
+
+                <td th:text="${order.pricePerLitre != null ? 'ZMW ' + #numbers.formatDecimal(order.pricePerLitre,1,2) : 'ZMW 0.00'}">ZMW 20.00</td>
+
+                <td><strong th:text="${order.totalRevenue != null ? 'ZMW ' + #numbers.formatDecimal(order.totalRevenue,1,2) : 'ZMW 0.00'}">ZMW 6,000.00</strong></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="inv-footer-wrap">
+        <div class="totals-table">
+            <div class="tot-row"><span>Subtotal</span><span th:text="${order.totalRevenue != null ? 'ZMW ' + #numbers.formatDecimal(order.totalRevenue,1,2) : 'ZMW 0.00'}">ZMW 6,000.00</span></div>
+            <div class="tot-row"><span>Tax (0%)</span><span>ZMW 0.00</span></div>
+            <div class="tot-row grand"><span>TOTAL DUE</span><span th:text="${order.totalRevenue != null ? 'ZMW ' + #numbers.formatDecimal(order.totalRevenue,1,2) : 'ZMW 0.00'}">ZMW 6,000.00</span></div>
+        </div>
+    </div>
+
+    <div class="inv-bottom">
+        <div class="inv-note">
+            <strong>Thank you for your business.</strong><br>
+            For inquiries contact the Sales Department.
+        </div>
+    </div>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Request Milk Supply - Dairy Cooperative</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        :root { --primary: #166534; --primary-dark: #0f4a1e; }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background: #f8fafc; }
+        .form-card { background: white; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); padding: 40px; max-width: 700px; margin: 0 auto; }
+        .form-card h2 { color: var(--primary-dark); font-weight: 700; }
+        .section-header { font-size: 0.875rem; font-weight: 600; color: var(--primary); text-transform: uppercase; margin: 24px 0 16px; padding-bottom: 8px; border-bottom: 2px solid #e2e8f0; }
+        .btn-primary { background: var(--primary); border-color: var(--primary); }
+        .required::after { content: " *"; color: #ef4444; }
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-light bg-white shadow-sm">
+    <div class="container">
+        <a class="navbar-brand" th:href="@{/portal}" style="font-weight:700;color:#166534;"><i class="bi bi-droplet-fill text-success me-2"></i>Dairy Cooperative</a>
+        <div class="navbar-nav flex-row">
+            <a class="nav-link me-3" th:href="@{/portal}">Home</a>
+            <a class="nav-link active me-3" th:href="@{/portal/inquiry}">Request Milk</a>
+            <a class="nav-link" th:href="@{/portal/status}">Check Status</a>
+        </div>
+    </div>
+</nav>
+
+<div class="container py-5">
+    <div class="form-card">
+        <div class="text-center mb-4">
+            <div class="d-inline-flex align-items-center justify-content-center bg-success bg-opacity-10 rounded-circle mb-3" style="width:64px;height:64px;">
+                <i class="bi bi-send text-success" style="font-size:28px;"></i>
+            </div>
+            <h2>Request Milk Supply</h2>
+            <p class="text-muted">Our sales team will review your request within 24 hours.</p>
+        </div>
+
+        <div th:if="${successMessage}" class="alert alert-success"><i class="bi bi-check-circle-fill me-2"></i><span th:text="${successMessage}"></span></div>
+        <div th:if="${errorMessage}" class="alert alert-danger"><i class="bi bi-exclamation-triangle-fill me-2"></i><span th:text="${errorMessage}"></span></div>
+
+        <form th:action="@{/portal/inquiry}" method="post">
+            <div class="section-header"><i class="bi bi-building me-2"></i>Company Information</div>
+            <div class="mb-3">
+                <label class="form-label required">Company Name</label>
+                <input type="text" class="form-control" name="companyName" placeholder="e.g., Parmalat Zambia Ltd" required>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label required">Contact Person</label>
+                    <input type="text" class="form-control" name="contactPerson" placeholder="Full name" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Position</label>
+                    <input type="text" class="form-control" name="position" placeholder="e.g., Procurement Manager">
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label required">Email</label>
+                    <input type="email" class="form-control" name="email" placeholder="company@example.com" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label required">Phone</label>
+                    <input type="tel" class="form-control" name="phone" placeholder="+260 97 123 4567" required>
+                </div>
+            </div>
+
+            <div class="section-header"><i class="bi bi-droplet me-2"></i>Order Details</div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label required">Quantity (Litres)</label>
+                    <input type="number" class="form-control" name="requestedLitres" min="100" step="0.01" placeholder="Minimum 100" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label required">Preferred Date</label>
+                    <input type="date" class="form-control" id="preferredDate" name="preferredDate" required>
+                </div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Supply Frequency</label>
+                <select class="form-select" name="frequency">
+                    <option value="ONE_TIME" selected>One-Time Order</option>
+                    <option value="DAILY">Daily</option>
+                    <option value="WEEKLY">Weekly</option>
+                    <option value="MONTHLY">Monthly</option>
+                </select>
+            </div>
+            <div class="mb-4">
+                <label class="form-label">Additional Requirements</label>
+                <textarea class="form-control" name="message" rows="3" placeholder="Any special requirements..."></textarea>
+            </div>
+            <div class="d-grid">
+                <button type="submit" class="btn btn-primary btn-lg"><i class="bi bi-send me-2"></i>Submit Inquiry</button>
+            </div>
+            <p class="text-center text-muted mt-3"><small>Already submitted? <a th:href="@{/portal/status}" class="text-success">Check status</a></small></p>
+        </form>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    const d = new Date(); d.setDate(d.getDate() + 2);
+    document.getElementById('preferredDate').min = d.toISOString().split('T')[0];
+</script>
+</body>
+</html>

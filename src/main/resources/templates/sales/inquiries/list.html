@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inquiries - DairyCoop Sales</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        /* ── Shared Sales Topnav (keep identical on every sales/* page) ── */
+        .topnav{background:linear-gradient(135deg,#0f2747 0%,#1b3a63 100%);border-bottom:1px solid rgba(255,255,255,0.08);padding:0 22px;height:64px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 4px 20px rgba(15,39,71,0.45);gap:14px}
+        .nav-brand{display:flex;align-items:center;gap:10px;flex-shrink:0;text-decoration:none}
+        .nav-logo{width:38px;height:38px;background:linear-gradient(135deg,#3b82f6,#1d4ed8);border-radius:10px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:17px;flex-shrink:0}
+        .nav-title{font-size:17px;font-weight:700;color:#fff;white-space:nowrap}
+        .nav-title span{color:rgba(255,255,255,0.9)}
+        .nav-links{display:flex;align-items:center;gap:1px;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none;flex:1;min-width:0}
+        .nav-links::-webkit-scrollbar{display:none}
+        .nav-link{padding:8px 10px;border-radius:8px;color:rgba(255,255,255,0.85);text-decoration:none;font-size:12.5px;font-weight:500;display:flex;align-items:center;gap:5px;transition:all .2s;position:relative;white-space:nowrap;flex-shrink:0}
+        .nav-link:hover{background:rgba(255,255,255,0.15);color:#fff}
+        .nav-link.active{background:rgba(255,255,255,0.2);color:#fff}
+        .nav-link i{font-size:14px}
+        .nav-badge{position:absolute;top:3px;right:3px;background:#ef4444;color:#fff;font-size:9px;font-weight:700;padding:2px 5px;border-radius:9px;min-width:16px;text-align:center}
+        .nav-right{display:flex;align-items:center;gap:10px;flex-shrink:0}
+        .nav-user{display:flex;align-items:center;gap:8px;padding:5px 10px 5px 5px;background:#f8fafc;border-radius:24px;border:1px solid #e2e8f0;max-width:170px}
+        .nav-avatar{width:28px;height:28px;background:linear-gradient(135deg,#3b82f6,#1d4ed8);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:600;flex-shrink:0}
+        .nav-uname{font-size:12.5px;font-weight:500;color:#334155;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .btn-logout{background:none;border:1px solid #fecaca;color:#dc2626;padding:7px 12px;border-radius:8px;font-size:12.5px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:6px;transition:all .2s;white-space:nowrap;flex-shrink:0}
+        .btn-logout:hover{background:#fef2f2}
+        @media(max-width:1480px){.nav-uname{display:none}.nav-user{max-width:none}}
+        :root { --primary: #3b82f6; --primary-dark: #1d4ed8; }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background: #f8fafc; }
+        .card { border-radius: 16px; border: 1px solid #e2e8f0; }
+        .table th { font-weight: 600; color: #64748b; font-size: 0.75rem; text-transform: uppercase; }
+        .badge-PENDING { background: #fef3c7; color: #92400e; }
+        .badge-APPROVED { background: #dbeafe; color: #1e40af; }
+        .badge-REJECTED { background: #fee2e2; color: #991b1b; }
+        .badge-PO_CREATED { background: #ede9fe; color: #5b21b6; }
+        .badge-PO_SUBMITTED { background: #dbeafe; color: #1e3a8a; }
+        .badge-PO_APPROVED { background: #fef9c3; color: #713f12; }
+        .badge-DELIVERED { background: #d1fae5; color: #065f46; }
+        .badge-INVOICED { background: #e0e7ff; color: #3730a3; }
+        .badge-PAID { background: #dcfce7; color: #166534; }
+        .filter-btn { border: 1px solid #e2e8f0; background: white; padding: 8px 16px; border-radius: 8px; }
+        .filter-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+        /* ── Search & pagination ──────────────────────────────────────── */
+        .inq-search-wrap{position:relative;min-width:260px}
+        .inq-search-wrap i{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#94a3b8;font-size:14px;pointer-events:none}
+        #inqSearch{width:100%;padding:9px 12px 9px 34px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;color:#0f172a;background:#fff;outline:none;transition:border-color .13s}
+        #inqSearch:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(59,130,246,.12)}
+        .inq-empty-search{text-align:center;padding:36px 24px;color:#94a3b8;font-size:13.5px}
+        .inq-pagination{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 20px;border-top:1px solid #e2e8f0;flex-wrap:wrap}
+        .inq-page-info{font-size:12px;color:#94a3b8}
+        .inq-page-btns{display:flex;align-items:center;gap:6px}
+        .inq-page-btn{min-width:30px;height:30px;padding:0 8px;border:1.5px solid #e2e8f0;background:#fff;color:#475569;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .13s}
+        .inq-page-btn:hover:not(:disabled){background:#f1f5f9;border-color:var(--primary)}
+        .inq-page-btn.active{background:var(--primary);border-color:var(--primary);color:#fff}
+        .inq-page-btn:disabled{opacity:.4;cursor:not-allowed}
+    </style>
+</head>
+<body>
+<div th:replace="~{fragments/sales-nav :: nav(active='inquiries')}"></div>
+
+<div class="container-fluid py-4" style="max-width:1400px;">
+    <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show">
+        <i class="bi bi-check-circle me-2"></i><span th:text="${successMessage}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show">
+        <i class="bi bi-exclamation-circle me-2"></i><span th:text="${errorMessage}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <h4 class="mb-0" style="font-weight:700;">Milk Inquiries</h4>
+        <div class="btn-group">
+            <a th:href="@{/sales/inquiries}" class="filter-btn" th:classappend="${status == null || status == 'ALL'} ? 'active' : ''">All <span th:text="${totalCount}">10</span></a>
+            <a th:href="@{/sales/inquiries(status='PENDING')}" class="filter-btn" th:classappend="${status == 'PENDING'} ? 'active' : ''">Pending <span th:text="${pendingCount}">5</span></a>
+            <a th:href="@{/sales/inquiries(status='APPROVED')}" class="filter-btn" th:classappend="${status == 'APPROVED'} ? 'active' : ''">Approved <span th:text="${approvedCount}">3</span></a>
+            <a th:href="@{/sales/inquiries(status='REJECTED')}" class="filter-btn" th:classappend="${status == 'REJECTED'} ? 'active' : ''">Rejected <span th:text="${rejectedCount}">2</span></a>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body p-0">
+            <div class="p-3 border-bottom" th:unless="${#lists.isEmpty(inquiries)}">
+                <div class="inq-search-wrap">
+                    <i class="bi bi-search"></i>
+                    <input type="text" id="inqSearch" placeholder="Search reference, company, contact, email..." autocomplete="off"/>
+                </div>
+            </div>
+            <table class="table table-hover mb-0" id="inqTable">
+                <thead>
+                <tr><th>Reference</th><th>Company</th><th>Contact</th><th>Quantity</th><th>Preferred Date</th><th>Submitted</th><th>Status</th><th></th></tr>
+                </thead>
+                <tbody id="inqTbody">
+                <tr th:each="inq : ${inquiries}"
+                    class="inq-row"
+                    th:data-search="${#strings.toLowerCase(inq.referenceNo + ' ' + inq.companyName + ' ' + inq.contactPerson + ' ' + inq.email + ' ' + inq.status)}">
+                    <td><code th:text="${inq.referenceNo}">INQ-2026-0001</code></td>
+                    <td th:text="${inq.companyName}">Parmalat</td>
+                    <td>
+                        <span th:text="${inq.contactPerson}">John</span><br>
+                        <small class="text-muted" th:text="${inq.email}">email</small>
+                    </td>
+                    <td th:text="${#numbers.formatDecimal(inq.requestedLitres, 1, 0)} + ' L'">500 L</td>
+                    <td th:text="${inq.preferredDate.format(T(java.time.format.DateTimeFormatter).ofPattern('dd MMM yyyy'))}">15 Apr</td>
+                    <td th:text="${inq.submittedAt.format(T(java.time.format.DateTimeFormatter).ofPattern('dd MMM HH:mm'))}">15 Apr 10:30</td>
+                    <td><span class="badge" th:classappend="'badge-' + ${inq.status}" th:text="${inq.status}">PENDING</span></td>
+                    <td>
+                        <a th:href="@{/sales/inquiries/{id}(id=${inq.id})}" class="btn btn-sm btn-outline-primary">
+                            <span th:if="${inq.status.name() == 'PENDING'}">Review</span>
+                            <span th:unless="${inq.status.name() == 'PENDING'}">View</span>
+                        </a>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(inquiries)}">
+                    <td colspan="8" class="text-center text-muted py-5">
+                        <i class="bi bi-inbox" style="font-size:3rem;"></i>
+                        <p class="mt-2 mb-0">No inquiries found</p>
+                    </td>
+                </tr>
+                <tr id="inqNoMatch" style="display:none">
+                    <td colspan="8" class="inq-empty-search">No inquiries match your search.</td>
+                </tr>
+                </tbody>
+            </table>
+            <div class="inq-pagination" th:unless="${#lists.isEmpty(inquiries)}">
+                <div class="inq-page-info" id="inqPageInfo"></div>
+                <div class="inq-page-btns" id="inqPageBtns"></div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    (function(){
+        var PAGE_SIZE = 10;
+        var tbody = document.getElementById('inqTbody');
+        if (!tbody) return;
+
+        var allRows = Array.prototype.slice.call(tbody.querySelectorAll('tr.inq-row'));
+        if (allRows.length === 0) return;
+
+        var noMatchRow = document.getElementById('inqNoMatch');
+        var searchInput = document.getElementById('inqSearch');
+        var pageInfo = document.getElementById('inqPageInfo');
+        var pageBtns = document.getElementById('inqPageBtns');
+        var currentPage = 1;
+
+        function getFiltered(){
+            var q = (searchInput && searchInput.value ? searchInput.value.trim().toLowerCase() : '');
+            if (!q) return allRows;
+            return allRows.filter(function(r){
+                return (r.dataset.search || '').indexOf(q) !== -1;
+            });
+        }
+
+        function render(){
+            var filtered = getFiltered();
+            var totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+            if (currentPage > totalPages) currentPage = totalPages;
+            if (currentPage < 1) currentPage = 1;
+
+            allRows.forEach(function(r){ r.style.display = 'none'; });
+
+            if (filtered.length === 0) {
+                if (noMatchRow) noMatchRow.style.display = '';
+            } else {
+                if (noMatchRow) noMatchRow.style.display = 'none';
+                var start = (currentPage - 1) * PAGE_SIZE;
+                filtered.slice(start, start + PAGE_SIZE).forEach(function(r){ r.style.display = ''; });
+            }
+
+            if (pageInfo) {
+                if (filtered.length === 0) {
+                    pageInfo.textContent = 'No results';
+                } else {
+                    var s = (currentPage - 1) * PAGE_SIZE + 1;
+                    var e = Math.min(currentPage * PAGE_SIZE, filtered.length);
+                    pageInfo.textContent = 'Showing ' + s + '–' + e + ' of ' + filtered.length;
+                }
+            }
+
+            if (pageBtns) {
+                pageBtns.innerHTML = '';
+                if (totalPages > 1) {
+                    var prev = document.createElement('button');
+                    prev.type = 'button';
+                    prev.className = 'inq-page-btn';
+                    prev.textContent = '‹';
+                    prev.disabled = currentPage === 1;
+                    prev.onclick = function(){ currentPage--; render(); };
+                    pageBtns.appendChild(prev);
+
+                    for (var p = 1; p <= totalPages; p++) {
+                        var btn = document.createElement('button');
+                        btn.type = 'button';
+                        btn.className = 'inq-page-btn' + (p === currentPage ? ' active' : '');
+                        btn.textContent = p;
+                        (function(pg){ btn.onclick = function(){ currentPage = pg; render(); }; })(p);
+                        pageBtns.appendChild(btn);
+                    }
+
+                    var next = document.createElement('button');
+                    next.type = 'button';
+                    next.className = 'inq-page-btn';
+                    next.textContent = '›';
+                    next.disabled = currentPage === totalPages;
+                    next.onclick = function(){ currentPage++; render(); };
+                    pageBtns.appendChild(next);
+                }
+            }
+        }
+
+        if (searchInput) {
+            searchInput.addEventListener('input', function(){
+                currentPage = 1;
+                render();
+            });
+        }
+
+        render();
+    })();
+</script>
+</body>
+</html>

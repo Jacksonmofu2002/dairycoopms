@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Ready for Purchase Order — DairyCoop Portal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+    <style>
+        *{box-sizing:border-box;margin:0;padding:0}
+        body{font-family:'Plus Jakarta Sans',sans-serif;background:#f4f6f4;min-height:100vh;color:#0f172a}
+        .topbar{background:#fff;border-bottom:1px solid #e5e7e5;padding:0 28px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+        .logo{display:flex;align-items:center;gap:9px;text-decoration:none}
+        .logo-dot{width:10px;height:10px;background:#1a6b2e;border-radius:50%}
+        .logo-text{font-size:15px;font-weight:700;color:#1a2b1a}
+        .co-chip{display:flex;align-items:center;gap:8px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:20px;padding:5px 12px 5px 6px}
+        .co-chip-av{width:24px;height:24px;background:#1a6b2e;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#fff}
+        .co-chip-name{font-size:12px;font-weight:700;color:#166534}
+        .btn-back{display:inline-flex;align-items:center;gap:5px;background:#fff;border:1px solid #e5e7e5;color:#6b7280;padding:7px 13px;border-radius:8px;font-size:12px;font-weight:600;text-decoration:none;transition:all .15s}
+        .btn-back:hover{background:#f4f6f4;color:#1a2b1a}
+        .main{max-width:1100px;margin:0 auto;padding:28px 24px}
+        .pg-head{margin-bottom:24px}
+        .pg-head h1{font-size:20px;font-weight:700;color:#1a2b1a;margin-bottom:4px}
+        .pg-head p{font-size:13px;color:#6b7280}
+        .alert-info{background:#eff6ff;border:1px solid #dbeafe;color:#1e40af;padding:14px 18px;border-radius:9px;margin-bottom:20px;font-size:13px}
+        .alert-err{background:#fef2f2;border:1px solid #fecaca;color:#dc2626;padding:12px 16px;border-radius:9px;margin-bottom:18px;font-size:13px;display:flex;align-items:center;gap:8px}
+        .card{background:#fff;border:1px solid #e5e7e5;border-radius:14px;overflow:hidden}
+        .tbl{width:100%;border-collapse:collapse;font-size:13px}
+        .tbl thead th{background:#f8faf8;color:#9ca3af;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:11px 16px;border-bottom:1px solid #f1f5f9;text-align:left;white-space:nowrap}
+        .tbl tbody td{padding:13px 16px;border-bottom:1px solid #f9fafb;vertical-align:middle}
+        .tbl tbody tr:last-child td{border-bottom:none}
+        .tbl tbody tr:hover td{background:#fafcfa}
+        .ref{font-family:'Courier New',monospace;font-size:11px;font-weight:700;background:#f1f5f9;padding:3px 7px;border-radius:5px;color:#374151}
+        .act{display:inline-flex;align-items:center;gap:5px;padding:7px 13px;border-radius:8px;font-size:12px;font-weight:700;border:none;cursor:pointer;font-family:inherit;text-decoration:none;transition:all .15s}
+        .act-green{background:#1a6b2e;color:#fff}
+        .act-green:hover{background:#155a26;color:#fff}
+        .empty{text-align:center;padding:60px 24px;color:#9ca3af}
+        .empty svg{width:48px;height:48px;opacity:0.3;margin-bottom:12px}
+        .empty p{margin-top:8px;font-size:13px}
+    </style>
+</head>
+<body>
+
+<!-- Top Bar -->
+<div class="topbar">
+    <a th:href="@{/portal/company/{id}(id=${company.id})}" class="logo">
+        <div class="logo-dot"></div>
+        <span class="logo-text">DairyCoop Portal</span>
+    </a>
+    <div class="co-chip">
+        <div class="co-chip-av" th:text="${#strings.substring(company.name,0,1).toUpperCase()}">P</div>
+        <span class="co-chip-name" th:text="${company.name}">Parmalat</span>
+    </div>
+</div>
+
+<!-- Main Content -->
+<main class="main">
+    <div style="margin-bottom:16px">
+        <a th:href="@{/portal/company/{id}(id=${company.id})}" class="btn-back">
+            ← Back to Dashboard
+        </a>
+    </div>
+
+    <div class="pg-head">
+        <h1>✅ Approved Inquiries - Ready for Purchase Order</h1>
+        <p>Create purchase order</p>
+    </div>
+
+    <!-- Alerts -->
+    <div th:if="${errorMessage}" class="alert-err">
+        ✗ <span th:text="${errorMessage}"></span>
+    </div>
+
+    <div th:if="${!#lists.isEmpty(inquiries)}" class="alert-info">
+        ℹ️ <strong>Good news!</strong> You have <strong th:text="${inquiries.size()}">3</strong> approved inquiries ready for purchase orders.
+        Create a PO to formalize your order and proceed to delivery.
+    </div>
+
+    <!-- Inquiries Table -->
+    <div class="card">
+        <table class="tbl">
+            <thead>
+            <tr>
+                <th>Reference</th>
+                <th>Quantity</th>
+                <th>Unit Price</th>
+                <th>Total Amount</th>
+                <th>Preferred Date</th>
+                <th>Approved</th>
+                <th></th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:if="${#lists.isEmpty(inquiries)}">
+                <td colspan="7">
+                    <div class="empty">
+                        <svg fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                        </svg>
+                        <p><strong>No approved inquiries</strong></p>
+                        <p>All your approved inquiries already have purchase orders</p>
+                    </div>
+                </td>
+            </tr>
+            <tr th:each="inq : ${inquiries}">
+                <td>
+                    <span class="ref" th:text="${inq.referenceNo}">INQ-2026-0001</span>
+                </td>
+                <td>
+                    <strong th:text="${#numbers.formatDecimal(inq.requestedLitres, 1, 2)} + ' L'">1,000.00 L</strong>
+                </td>
+                <td th:text="'ZMW ' + ${#numbers.formatDecimal(inq.pricePerLitre, 1, 2)}">ZMW 10.00</td>
+                <td>
+                    <strong style="color:#166534"
+                            th:text="'ZMW ' + ${#numbers.formatDecimal(inq.requestedLitres * inq.pricePerLitre, 1, 2)}">ZMW 10,000.00</strong>
+                </td>
+                <td th:text="${#temporals.format(inq.preferredDate, 'dd MMM yyyy')}">20 May 2026</td>
+                <td>
+                    <div style="font-size:11px;color:#9ca3af">
+                        <span th:text="${#temporals.format(inq.processedAt, 'dd MMM yyyy')}">14 May 2026</span><br>
+                        <span th:text="'by ' + ${inq.processedBy.fullName}">by Sarah Mwansa</span>
+                    </div>
+                </td>
+                <td style="text-align:right">
+                    <a th:href="@{/portal/company/{companyId}/purchase-orders/create(companyId=${company.id},inquiryId=${inq.id})}"
+                       class="act act-green">
+                        Create PO →
+                    </a>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</main>
+
+</body>
+</html>

@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Purchase Order - DairyCoop Sales</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        /* ── Shared Sales Topnav (keep identical on every sales/* page) ── */
+        .topnav{background:linear-gradient(135deg,#0f2747 0%,#1b3a63 100%);border-bottom:1px solid rgba(255,255,255,0.08);padding:0 22px;height:64px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 4px 20px rgba(15,39,71,0.45);gap:14px}
+        .nav-brand{display:flex;align-items:center;gap:10px;flex-shrink:0;text-decoration:none}
+        .nav-logo{width:38px;height:38px;background:linear-gradient(135deg,#3b82f6,#1d4ed8);border-radius:10px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:17px;flex-shrink:0}
+        .nav-title{font-size:17px;font-weight:700;color:#fff;white-space:nowrap}
+        .nav-title span{color:rgba(255,255,255,0.9)}
+        .nav-links{display:flex;align-items:center;gap:1px;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none;flex:1;min-width:0}
+        .nav-links::-webkit-scrollbar{display:none}
+        .nav-link{padding:8px 10px;border-radius:8px;color:rgba(255,255,255,0.85);text-decoration:none;font-size:12.5px;font-weight:500;display:flex;align-items:center;gap:5px;transition:all .2s;position:relative;white-space:nowrap;flex-shrink:0}
+        .nav-link:hover{background:rgba(255,255,255,0.15);color:#fff}
+        .nav-link.active{background:rgba(255,255,255,0.2);color:#fff}
+        .nav-link i{font-size:14px}
+        .nav-badge{position:absolute;top:3px;right:3px;background:#ef4444;color:#fff;font-size:9px;font-weight:700;padding:2px 5px;border-radius:9px;min-width:16px;text-align:center}
+        .nav-right{display:flex;align-items:center;gap:10px;flex-shrink:0}
+        .nav-user{display:flex;align-items:center;gap:8px;padding:5px 10px 5px 5px;background:#f8fafc;border-radius:24px;border:1px solid #e2e8f0;max-width:170px}
+        .nav-avatar{width:28px;height:28px;background:linear-gradient(135deg,#3b82f6,#1d4ed8);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:600;flex-shrink:0}
+        .nav-uname{font-size:12.5px;font-weight:500;color:#334155;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .btn-logout{background:none;border:1px solid #fecaca;color:#dc2626;padding:7px 12px;border-radius:8px;font-size:12.5px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:6px;transition:all .2s;white-space:nowrap;flex-shrink:0}
+        .btn-logout:hover{background:#fef2f2}
+        @media(max-width:1480px){.nav-uname{display:none}.nav-user{max-width:none}}
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:system-ui,-apple-system,sans-serif;background:#f8fafc;min-height:100vh}
+        .main{max-width:1000px;margin:32px auto;padding:0 32px}
+
+        /* PROFESSIONAL PO DOCUMENT */
+        .po-document{background:#fff;border-radius:12px;border:1px solid #e2e8f0;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08)}
+
+        /* HEADER */
+        .po-header{background:linear-gradient(135deg,#1e40af 0%,#3b82f6 100%);padding:40px;color:#fff}
+        .po-header-top{display:flex;justify-content:space-between;align-items:start;margin-bottom:24px}
+        .company-info h1{font-size:32px;font-weight:800;margin-bottom:8px;letter-spacing:-0.5px}
+        .company-info p{font-size:14px;opacity:0.9;line-height:1.6}
+        .po-badge{background:rgba(255,255,255,0.2);padding:12px 20px;border-radius:8px;border:2px solid rgba(255,255,255,0.3)}
+        .po-badge-label{font-size:11px;opacity:0.8;margin-bottom:4px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px}
+        .po-badge-number{font-size:24px;font-weight:800}
+        .po-meta{display:flex;gap:32px}
+        .po-meta-item{display:flex;flex-direction:column}
+        .po-meta-label{font-size:11px;opacity:0.7;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px}
+        .po-meta-value{font-size:15px;font-weight:600}
+
+        /* BODY */
+        .po-body{padding:40px}
+
+        /* PARTIES */
+        .parties{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:32px}
+        .party-box{border:2px solid #e2e8f0;border-radius:10px;padding:20px;background:#f8fafc}
+        .party-title{font-size:12px;font-weight:700;color:#3b82f6;text-transform:uppercase;margin-bottom:12px;letter-spacing:0.5px}
+        .party-name{font-size:18px;font-weight:700;color:#0f172a;margin-bottom:8px}
+        .party-detail{font-size:14px;color:#64748b;margin-bottom:4px;line-height:1.5}
+
+        /* ORDER TABLE */
+        .order-section{margin-bottom:32px}
+        .section-title{font-size:14px;font-weight:700;color:#0f172a;text-transform:uppercase;margin-bottom:16px;padding-bottom:8px;border-bottom:2px solid #3b82f6;letter-spacing:0.5px}
+        .order-table{width:100%;border-collapse:collapse;border:2px solid #e2e8f0;border-radius:8px;overflow:hidden}
+        .order-table thead{background:#f1f5f9}
+        .order-table th{padding:14px 16px;text-align:left;font-size:12px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:0.3px}
+        .order-table td{padding:16px;border-top:1px solid #e2e8f0;font-size:14px}
+        .order-table tbody tr:hover{background:#f8fafc}
+        .text-right{text-align:right}
+        .item-desc{color:#64748b;font-size:13px;margin-top:4px}
+
+        /* TOTALS */
+        .totals{max-width:400px;margin-left:auto;margin-top:24px}
+        .total-row{display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid #e2e8f0;font-size:14px}
+        .total-row.grand{background:#f1f5f9;padding:16px;border-radius:8px;font-size:16px;font-weight:700;color:#0f172a;border:2px solid #3b82f6;margin-top:8px}
+        .total-label{color:#64748b}
+        .total-value{font-weight:600;color:#0f172a}
+        .grand .total-label{color:#0f172a}
+        .grand .total-value{color:#3b82f6;font-size:20px}
+
+        /* TERMS */
+        .terms-section{background:#f8fafc;border:2px solid #e2e8f0;border-radius:10px;padding:24px;margin-bottom:32px}
+        .terms-title{font-size:13px;font-weight:700;color:#0f172a;margin-bottom:12px;text-transform:uppercase;letter-spacing:0.5px}
+        .terms-list{list-style:none;padding:0}
+        .terms-list li{padding:8px 0;padding-left:20px;position:relative;font-size:13px;color:#475569;line-height:1.6}
+        .terms-list li:before{content:"•";position:absolute;left:0;color:#3b82f6;font-weight:700}
+
+        /* FOOTER */
+        .po-footer{padding:32px 40px;background:#f8fafc;border-top:2px solid #e2e8f0}
+        .signatures{display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-bottom:24px}
+        .signature-box{border-top:2px solid #cbd5e1;padding-top:12px}
+        .signature-label{font-size:12px;color:#64748b;font-weight:600}
+        .signature-name{font-size:14px;font-weight:700;color:#0f172a;margin-top:4px}
+        .footer-note{text-align:center;font-size:12px;color:#94a3b8;padding-top:20px;border-top:1px solid #e2e8f0}
+
+        /* ACTIONS */
+        .actions{margin-top:24px;display:flex;gap:12px;justify-content:center}
+        .btn{padding:14px 28px;border-radius:8px;font-size:14px;font-weight:600;border:none;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:8px;transition:all .2s}
+        .btn-success{background:#22c55e;color:#fff;box-shadow:0 2px 8px rgba(34,197,94,0.3)}
+        .btn-success:hover{background:#16a34a;transform:translateY(-1px);box-shadow:0 4px 12px rgba(34,197,94,0.4)}
+        .btn-danger{background:#ef4444;color:#fff;box-shadow:0 2px 8px rgba(239,68,68,0.3)}
+        .btn-danger:hover{background:#dc2626;transform:translateY(-1px);box-shadow:0 4px 12px rgba(239,68,68,0.4)}
+        .btn-secondary{background:#f1f5f9;color:#475569;border:2px solid #cbd5e1}
+        .btn-secondary:hover{background:#e2e8f0}
+
+        @media print{
+            .topnav,.actions{display:none}
+            .main{margin:0;padding:0}
+            .po-document{border:none;box-shadow:none}
+        }
+    </style>
+</head>
+<body>
+
+<div th:replace="~{fragments/sales-nav :: nav(active='purchase-orders')}"></div>
+
+<div class="main">
+    <div class="po-document">
+        <!-- HEADER -->
+        <div class="po-header">
+            <div class="po-header-top">
+                <div class="company-info">
+                    <h1>DAIRYCOOP</h1>
+                    <p>Zambia Dairy Cooperative<br>
+                        Plot 123, Cooperative Road<br>
+                        Lusaka, Zambia<br>
+                        Tel: +260 211 123456 | Email: sales@dairycoop.zm</p>
+                </div>
+                <div class="po-badge">
+                    <div class="po-badge-label">Purchase Order</div>
+                    <div class="po-badge-number" th:text="${po.poNumber}">PO-2026-001</div>
+                </div>
+            </div>
+            <div class="po-meta">
+                <div class="po-meta-item">
+                    <div class="po-meta-label">Date Issued</div>
+                    <div class="po-meta-value" th:text="${#temporals.format(po.poDate, 'dd MMM yyyy')}">17 May 2026</div>
+                </div>
+                <div class="po-meta-item">
+                    <div class="po-meta-label">Delivery Date</div>
+                    <div class="po-meta-value" th:text="${#temporals.format(po.deliveryDate, 'dd MMM yyyy')}">20 May 2026</div>
+                </div>
+                <div class="po-meta-item">
+                    <div class="po-meta-label">Reference</div>
+                    <div class="po-meta-value" th:text="${po.inquiry?.referenceNo ?: po.poNumber}">INQ-2026-001</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- BODY -->
+        <div class="po-body">
+            <!-- PARTIES -->
+            <div class="parties">
+                <div class="party-box">
+                    <div class="party-title">📦 Vendor (From)</div>
+                    <div class="party-name">DairyCoop Zambia</div>
+                    <div class="party-detail">Plot 123, Cooperative Road</div>
+                    <div class="party-detail">Lusaka, Zambia</div>
+                    <div class="party-detail">TPIN: 1234567890</div>
+                    <div class="party-detail">📞 +260 211 123456</div>
+                    <div class="party-detail">✉️ sales@dairycoop.zm</div>
+                </div>
+                <div class="party-box">
+                    <div class="party-title">🏢 Buyer (Bill To)</div>
+                    <div class="party-name" th:text="${po.companyName}">Company Name</div>
+                    <div class="party-detail" th:text="${po.deliveryAddress} ?: 'Address not specified'">Address</div>
+                    <div class="party-detail"><strong>Contact:</strong> <span th:text="${po.contactPerson}">Person</span></div>
+                    <div class="party-detail">📞 <span th:text="${po.phone}">Phone</span></div>
+                    <div class="party-detail">✉️ <span th:text="${po.email}">email@example.com</span></div>
+                </div>
+            </div>
+
+            <!-- ORDER DETAILS -->
+            <div class="order-section">
+                <h2 class="section-title">📋 Order Details</h2>
+                <table class="order-table">
+                    <thead>
+                    <tr>
+                        <th style="width:50px">#</th>
+                        <th>Product Description</th>
+                        <th class="text-right" style="width:120px">Quantity</th>
+                        <th class="text-right" style="width:120px">Unit Price</th>
+                        <th class="text-right" style="width:140px">Amount (ZMW)</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr>
+                        <td>1</td>
+                        <td>
+                            <strong>Fresh Milk Supply</strong>
+                            <div class="item-desc">Grade A pasteurized milk, delivered fresh</div>
+                        </td>
+                        <td class="text-right"><strong th:text="${po.quantityLitres}">100</strong> Litres</td>
+                        <td class="text-right" th:text="'ZMW ' + ${#numbers.formatDecimal(po.unitPrice, 1, 2)}">ZMW 20.00</td>
+                        <td class="text-right"><strong th:text="'ZMW ' + ${#numbers.formatDecimal(po.totalAmount, 1, 2)}">ZMW 2,000.00</strong></td>
+                    </tr>
+                    </tbody>
+                </table>
+
+                <!-- TOTALS -->
+                <div class="totals">
+                    <div class="total-row">
+                        <span class="total-label">Subtotal</span>
+                        <span class="total-value" th:text="'ZMW ' + ${#numbers.formatDecimal(po.totalAmount, 1, 2)}">ZMW 2,000.00</span>
+                    </div>
+                    <div class="total-row">
+                        <span class="total-label">VAT (16%)</span>
+                        <span class="total-value" th:text="'ZMW ' + ${#numbers.formatDecimal(po.totalAmount * 0.16, 1, 2)}">ZMW 320.00</span>
+                    </div>
+                    <div class="total-row grand">
+                        <span class="total-label">TOTAL AMOUNT</span>
+                        <span class="total-value" th:text="'ZMW ' + ${#numbers.formatDecimal(po.totalAmount * 1.16, 1, 2)}">ZMW 2,320.00</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TERMS & CONDITIONS -->
+            <div class="terms-section">
+                <h3 class="terms-title">⚖️ Terms & Conditions</h3>
+                <ul class="terms-list">
+                    <li>Payment due within 30 days of delivery confirmation</li>
+                    <li>Products must meet quality standards as per Zambia Bureau of Standards (ZABS)</li>
+                    <li>Delivery must be made to the specified address on the scheduled date</li>
+                    <li>Temperature control must be maintained at 2-4°C during transport</li>
+                    <li>Any quality issues must be reported within 24 hours of delivery</li>
+                    <li>This Purchase Order is subject to DairyCoop's standard terms and conditions</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- FOOTER -->
+        <div class="po-footer">
+            <div class="signatures">
+                <div class="signature-box">
+                    <div class="signature-label">Authorized By (DairyCoop)</div>
+                    <div class="signature-name">Sales Department</div>
+                    <div style="font-size:11px;color:#94a3b8;margin-top:4px" th:text="'Date: ' + ${#temporals.format(po.poDate, 'dd MMM yyyy')}">Date: 17 May 2026</div>
+                </div>
+                <div class="signature-box">
+                    <div class="signature-label">Accepted By (Buyer)</div>
+                    <div class="signature-name" th:text="${po.contactPerson}">Contact Person</div>
+                    <div style="font-size:11px;color:#94a3b8;margin-top:4px">Signature: _________________</div>
+                </div>
+            </div>
+            <div class="footer-note">
+                This is a computer-generated document and does not require a physical signature. For any inquiries, please contact sales@dairycoop.zm
+            </div>
+        </div>
+    </div>
+
+    <!-- ACTIONS -->
+    <div class="actions">
+        <a th:href="@{/sales/purchase-orders}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Back to List
+        </a>
+
+        <div th:if="${po.status.name() == 'SUBMITTED'}" data-action-panel>
+            <form th:action="@{/sales/purchase-orders/{id}/approve(id=${po.id})}" method="post" style="display:inline">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                <button type="button" class="btn btn-success"
+                        onclick="dcAjax(this,{action:'disable_panel',loadingText:'Approving...'})">
+                    <i class="bi bi-check-circle"></i> Approve Order
+                </button>
+            </form>
+
+            <form th:action="@{/sales/purchase-orders/{id}/reject(id=${po.id})}" method="post" style="display:inline">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                <input type="hidden" name="reason" id="rejectReason"/>
+                <button type="button" class="btn btn-danger"
+                        onclick="if(!askReason())return; dcAjax(this,{action:'disable_panel',loadingText:'Rejecting...'})">
+                    <i class="bi bi-x-circle"></i> Reject Order
+                </button>
+            </form>
+        </div>
+
+        <button onclick="window.print()" class="btn btn-secondary">
+            <i class="bi bi-printer"></i> Print / Save as PDF
+        </button>
+    </div>
+</div>
+
+<script>
+    function confirmReject(event) {
+        const reason = prompt('Enter rejection reason:');
+        if (!reason || reason.trim() === '') {
+            return false;
+        }
+        document.getElementById('rejectReason').value = reason;
+        return true;
+    }
+    function askReason() {
+        const reason = prompt('Enter rejection reason:');
+        if (!reason || reason.trim() === '') return false;
+        document.getElementById('rejectReason').value = reason;
+        return true;
+    }
+</script>
+
+<script th:src="@{/js/ajax-actions.js}"></script>
+</body>
+</html>

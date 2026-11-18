@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title th:text="'Receipt ' + ${inquiry.receiptNo} + ' - DairyCoop'">Receipt - DairyCoop</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,700;1,400&family=JetBrains+Mono:wght@400;500;600&family=Roboto+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+    <link rel="stylesheet" th:href="@{/css/accountant-base.css}"/>
+    <link rel="stylesheet" th:href="@{/css/accountant-sidebar.css}"/>
+    <style>
+        /* ── Receipt page shell ─────────────────────────────── */
+        .receipt-page{flex:1;display:flex;flex-direction:column;align-items:center;padding:28px 16px 40px;background:var(--bg)}
+        .receipt-toolbar{width:100%;max-width:480px;display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px}
+        .btn-back-link{display:inline-flex;align-items:center;gap:7px;color:var(--ink2);text-decoration:none;font-size:13px;font-weight:600;padding:8px 14px;border:1.5px solid var(--border);border-radius:9px;background:#fff;transition:background .13s}
+        .btn-back-link:hover{background:#f1f5f9}
+        .btn-print-dc{display:inline-flex;align-items:center;gap:7px;background:linear-gradient(135deg,#00c16a,#00a358);color:#fff;border:none;padding:9px 18px;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;transition:opacity .15s}
+        .btn-print-dc:hover{opacity:.88}
+
+        /* ── The receipt card — intentionally monospace / printed feel ── */
+        .receipt{width:100%;max-width:420px;background:#fff;border:2px dashed #1a1a1a;box-shadow:0 12px 40px rgba(11,17,32,.14);font-family:'Roboto Mono','Courier New',monospace;line-height:1.45;border-radius:4px;overflow:hidden}
+        .rec-head{border-bottom:2px solid #1a1a1a;padding:22px 20px;text-align:center;background:#fff}
+        .store-name{font-size:17px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#0b1120;margin-bottom:3px}
+        .store-tagline{font-size:11px;color:#64748b;letter-spacing:.5px;margin-bottom:14px}
+        .divider{border-top:1px dashed #1a1a1a;margin:12px 0}
+        .receipt-title{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;color:#0b1120}
+        .receipt-badge{display:inline-block;background:#00a358;color:#fff;padding:5px 14px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px;border-radius:3px}
+        .receipt-no{font-size:11px;color:#475569;margin-top:4px}
+        /* Body */
+        .rec-body{padding:20px}
+        .section-header{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;margin:18px 0 10px;padding-bottom:7px;border-bottom:1.5px solid #1a1a1a;color:#0b1120}
+        .receipt-row{display:flex;justify-content:space-between;font-size:12px;padding:7px 0;border-bottom:1px solid #f1f5f9}
+        .receipt-row.spacer{border-bottom:none;padding:4px 0}
+        .receipt-row:last-of-type{border-bottom:none}
+        .receipt-label{color:#475569;font-weight:500;text-transform:uppercase;font-size:10.5px;letter-spacing:.3px}
+        .receipt-value{text-align:right;font-weight:600;color:#0b1120}
+        .receipt-value.mono{font-size:10.5px;letter-spacing:.5px}
+        /* Company box */
+        .company-box{margin:14px 0;padding:13px;background:#f8fafc;border:1px solid #e2e8f0;font-size:12px;line-height:1.55;border-radius:4px}
+        .company-name{font-weight:700;text-transform:uppercase;margin-bottom:4px;font-size:12px;color:#0b1120}
+        .company-detail{font-size:11px;color:#64748b}
+        /* Item line */
+        .item-line{display:flex;justify-content:space-between;font-size:12px;padding:9px 0;border-bottom:1px solid #f1f5f9}
+        .item-description{flex:1;font-weight:600;color:#0b1120}
+        .item-qty{text-align:center;width:60px;font-size:11px;color:#475569}
+        /* Totals */
+        .totals-section{margin-top:18px;padding-top:14px;border-top:2px solid #1a1a1a;border-bottom:2px double #1a1a1a}
+        .total-row{display:flex;justify-content:space-between;font-size:15px;font-weight:700;padding:13px 0;color:#0b1120}
+        /* Paid stamp */
+        .paid-stamp{text-align:center;margin:18px 0 8px}
+        .stamp{display:inline-block;border:2.5px solid #00a358;color:#00a358;padding:8px 22px;font-weight:700;text-transform:uppercase;font-size:12px;letter-spacing:1px;transform:rotate(-6deg);border-radius:3px}
+        /* Footer */
+        .receipt-footer{text-align:center;padding:16px;font-size:11px;color:#64748b;line-height:1.7;border-top:1px dashed #1a1a1a}
+        .thank-you{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;color:#0b1120}
+        .receipt-ref{font-size:10px;letter-spacing:.5px;margin-top:8px;color:#334155}
+        .timestamp{font-size:10px;color:#94a3b8;margin-top:4px}
+
+        /* ── Print ──────────────────────────────────────────── */
+        @media print{
+            .receipt-toolbar,.topbar,.fn-wrap,.btn-print-dc{display:none!important}
+            body{background:#fff}
+            .receipt-page{padding:0;background:#fff}
+            .receipt{box-shadow:none;max-width:100%;width:400px;margin:0 auto;border:2px dashed #000}
+        }
+    </style>
+</head>
+<body>
+
+<div th:replace="~{fragments/accountant-nav :: nav(active='receipts', pageTitle='Receipt')}"></div>
+
+<div class="main">
+    <div class="receipt-page">
+
+        <div class="receipt-toolbar">
+            <a th:href="@{/accountant/milk-payments}" class="btn-back-link">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+                Back to Milk Payments
+            </a>
+            <button class="btn-print-dc" onclick="window.print()">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                Print Receipt
+            </button>
+        </div>
+
+        <div class="receipt">
+            <div class="rec-head">
+                <div class="store-name">DAIRYCOOP</div>
+                <div class="store-tagline">Cooperative Dairy Farmers of Zambia</div>
+                <div class="divider"></div>
+                <div class="receipt-title">Payment Receipt</div>
+                <div class="receipt-badge">✓ PAID IN FULL</div>
+                <div class="divider"></div>
+                <div class="receipt-no" th:text="'Receipt: ' + ${inquiry.receiptNo}">RCP-2026-0001</div>
+            </div>
+
+            <div class="rec-body">
+                <div class="section-header">Transaction Details</div>
+                <div class="receipt-row">
+                    <span class="receipt-label">Date</span>
+                    <span class="receipt-value" th:text="${inquiry.paidAt != null ? #temporals.format(inquiry.paidAt, 'dd/MM/yyyy') : '-'}">18/04/2026</span>
+                </div>
+                <div class="receipt-row">
+                    <span class="receipt-label">Time</span>
+                    <span class="receipt-value" th:text="${inquiry.paidAt != null ? #temporals.format(inquiry.paidAt, 'HH:mm:ss') : '-'}">14:30:00</span>
+                </div>
+                <div class="receipt-row spacer"></div>
+                <div class="receipt-row">
+                    <span class="receipt-label">Invoice Ref</span>
+                    <span class="receipt-value mono" th:text="${inquiry.invoiceNo}">INV-2026-0001</span>
+                </div>
+                <div class="receipt-row">
+                    <span class="receipt-label">Inquiry Ref</span>
+                    <span class="receipt-value mono" th:text="${inquiry.referenceNo}">INQ-2026-0001</span>
+                </div>
+
+                <div class="section-header">Buyer Information</div>
+                <div class="company-box">
+                    <div class="company-name" th:text="${inquiry.companyName}">Parmalat Zambia Ltd</div>
+                    <div class="company-detail" th:text="${inquiry.contactPerson}">John Doe</div>
+                    <div class="company-detail" th:text="${inquiry.email}">john@parmalat.com</div>
+                    <div class="company-detail" th:text="${inquiry.phone}">+260 97 123 4567</div>
+                </div>
+
+                <div class="section-header">Item Details</div>
+                <div class="item-line">
+                    <span class="item-description">Fresh Milk Supply</span>
+                    <span class="item-qty" th:text="${#numbers.formatDecimal(inquiry.requestedLitres, 1, 'COMMA', 2, 'POINT')} + ' L'">500.00 L</span>
+                </div>
+                <div class="receipt-row">
+                    <span class="receipt-label">Unit Price</span>
+                    <span class="receipt-value">ZMW <span th:text="${#numbers.formatDecimal(inquiry.pricePerLitre, 1, 'COMMA', 4, 'POINT')}">5.5000</span>/L</span>
+                </div>
+
+                <div class="totals-section">
+                    <div class="total-row">
+                        <span>TOTAL AMOUNT</span>
+                        <span>ZMW <span th:text="${#numbers.formatDecimal(inquiry.totalAmount, 1, 'COMMA', 2, 'POINT')}">2,750.00</span></span>
+                    </div>
+                </div>
+
+                <div class="section-header">Processed By</div>
+                <div class="receipt-row">
+                    <span class="receipt-label">Accountant</span>
+                    <span class="receipt-value" th:text="${inquiry.paymentConfirmedBy != null ? inquiry.paymentConfirmedBy.fullName : '-'}">Jane Accountant</span>
+                </div>
+
+                <div class="paid-stamp">
+                    <div class="stamp">✓ PAID IN FULL</div>
+                </div>
+
+                <div class="receipt-footer">
+                    <div class="thank-you">Thank You</div>
+                    <p>Payment received and credited to<br/>the Cooperative Fund Account (COFA)</p>
+                    <div class="receipt-ref" th:text="'Ref: ' + ${inquiry.receiptNo}">Ref: RCP-2026-0001</div>
+                    <div class="timestamp" th:text="${inquiry.paidAt != null ? #temporals.format(inquiry.paidAt, 'dd MMM yyyy HH:mm') : '-'}">18 Apr 2026 14:30</div>
+                    <p style="margin-top:14px;font-size:9px;letter-spacing:.5px">— — — End of Receipt — — —</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+</body>
+</html>

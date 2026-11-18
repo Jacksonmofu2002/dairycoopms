@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Delivery History - DairyCoop MS</title>
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap/dist/css/bootstrap.min.css}"/>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fraunces:ital,wght@0,600;1,400&display=swap" rel="stylesheet"/>
+    <style>
+        :root{--green:#1a6b2e;--green-dark:#0f4a1e;--green-light:#f0fdf4;--ink:#111827;--ink2:#374151;--muted:#6b7280;--line:#e5e7eb;--bg:#f6f7f5;--white:#fff}
+        *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+        body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh}
+
+        /* TOP NAV */
+        .topnav{height:58px;background:var(--green-dark);display:flex;align-items:center;padding:0 32px;position:sticky;top:0;z-index:100;gap:0}
+        .nav-brand{font-family:'Fraunces',serif;font-size:17px;color:#fff;margin-right:36px;white-space:nowrap;letter-spacing:.02em}
+        .nav-brand span{color:#86efac;font-style:italic}
+        .nav-links{display:flex;align-items:center;gap:2px;flex:1}
+        .nav-link{color:rgba(255,255,255,.5);text-decoration:none;font-size:13px;font-weight:500;padding:7px 14px;border-radius:7px;transition:all .15s;display:flex;align-items:center;gap:7px;white-space:nowrap}
+        .nav-link:hover{color:#fff;background:rgba(255,255,255,.1)}
+        .nav-link.active{color:#fff;background:rgba(134,239,172,.15);border:1px solid rgba(134,239,172,.25)}
+        .nav-dot{width:6px;height:6px;border-radius:50%;background:#fbbf24;flex-shrink:0}
+        .nav-right{display:flex;align-items:center;gap:10px;margin-left:auto}
+        .nav-user{display:flex;align-items:center;gap:8px;color:rgba(255,255,255,.65);font-size:13px}
+        .nav-avatar{width:30px;height:30px;background:#86efac;border-radius:7px;display:flex;align-items:center;justify-content:center;font-family:'Fraunces',serif;font-size:13px;color:var(--green-dark);font-weight:700}
+        .nav-logout{color:rgba(255,100,100,.7);background:none;border:none;font-size:13px;font-family:inherit;cursor:pointer;padding:6px 10px;border-radius:6px;transition:all .15s}
+        .nav-logout:hover{color:#f87171;background:rgba(239,68,68,.1)}
+
+        /* PW BANNER */
+        .pw-banner{background:#78350f;padding:9px 32px;display:flex;align-items:center;gap:10px;font-size:13px;color:#fef3c7}
+        .pw-banner a,.pw-banner button{color:#fbbf24;font-weight:600;background:none;border:none;text-decoration:underline;cursor:pointer;font-family:inherit;font-size:13px}
+
+        /* PAGE */
+        .page{padding:32px 36px}
+
+        /* PAGE HEADER */
+        .pg-head{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:32px;padding-bottom:22px;border-bottom:1px solid var(--line)}
+        .pg-eyebrow{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.15em;color:var(--green);margin-bottom:5px}
+        .pg-title{font-family:'Fraunces',serif;font-size:30px;color:var(--ink);line-height:1.15}
+        .pg-title em{font-style:italic;color:var(--green)}
+
+        /* STAT STRIP */
+        .stat-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-bottom:28px}
+        .stat{background:var(--white);padding:20px 24px;position:relative}
+        .stat-num{font-family:'Fraunces',serif;font-size:38px;color:var(--ink);line-height:1;margin-bottom:4px}
+        .stat-num.green{color:var(--green)}
+        .stat-num.amber{color:#d97706}
+        .stat-num.blue{color:#0891b2;font-size:22px;padding-top:8px}
+        .stat-lbl{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)}
+
+        /* CARDS */
+        .card{background:var(--white);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+        .card-head{padding:18px 24px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between}
+        .card-title{font-family:'Fraunces',serif;font-size:18px;color:var(--ink)}
+        .card-sub{font-size:12px;color:var(--muted)}
+
+        /* FORM */
+        .form-body{padding:28px 32px}
+        .flbl{display:block;font-size:12px;font-weight:600;color:var(--ink2);margin-bottom:7px;letter-spacing:.01em}
+        .req{color:#ef4444}
+        .finp{width:100%;padding:12px 15px;border:1.5px solid var(--line);border-radius:10px;font-size:14px;font-family:inherit;color:var(--ink);background:#fafafa;outline:none;transition:all .2s}
+        .finp:focus{border-color:var(--green);background:var(--white);box-shadow:0 0 0 3px rgba(26,107,46,.08)}
+        .finp::placeholder{color:#9ca3af}
+        .finp:disabled{background:#f3f4f6;color:var(--muted);cursor:not-allowed}
+        .hint{font-size:11.5px;color:var(--muted);margin-top:5px}
+
+        /* PRICE DISPLAY */
+        .price-display{background:var(--green-light);border:1px solid #bbf7d0;border-radius:10px;padding:13px 16px;display:flex;align-items:center;justify-content:space-between}
+        .price-lbl{font-size:12px;font-weight:600;color:#166534}
+        .price-val{font-family:'Fraunces',serif;font-size:22px;font-weight:600;color:var(--green)}
+
+        /* TOTAL PREVIEW */
+        .total-preview{background:#f0fdf4;border:1.5px solid #86efac;border-radius:12px;padding:16px 20px;margin:16px 0;display:flex;align-items:center;justify-content:space-between}
+        .total-lbl{font-size:13px;color:#166534;font-weight:500}
+        .total-val{font-family:'Fraunces',serif;font-size:26px;font-weight:600;color:var(--green)}
+
+        /* SUBMIT */
+        .btn-submit{background:var(--green);color:#fff;border:none;padding:13px 32px;border-radius:10px;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:8px}
+        .btn-submit:hover{background:var(--green-dark);transform:translateY(-1px);box-shadow:0 6px 20px rgba(26,107,46,.25)}
+        .btn-ghost{background:var(--white);color:var(--ink2);border:1.5px solid var(--line);padding:9px 18px;border-radius:9px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:6px;transition:all .15s}
+        .btn-ghost:hover{border-color:var(--ink2);color:var(--ink)}
+
+        /* TABLE */
+        .tbl{width:100%;border-collapse:collapse}
+        .tbl thead th{background:#f9fafb;color:var(--muted);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:11px 20px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+        .tbl tbody td{padding:14px 20px;font-size:13.5px;border-bottom:1px solid #f3f4f6;vertical-align:middle;white-space:nowrap}
+        .tbl tbody tr:last-child td{border-bottom:none}
+        .tbl tbody tr:hover td{background:#fafcfa}
+        .val-member{font-weight:600;color:var(--ink)}
+        .val-litres{font-weight:700;color:#0891b2}
+        .val-zmw{font-weight:700;color:var(--green)}
+        .val-muted{font-size:13px;color:var(--muted)}
+        .empty-state{text-align:center;padding:48px 20px;color:var(--muted);font-size:13.5px}
+
+        /* ALERTS */
+        .alert-ok{background:#f0fdf4;border-left:3px solid #16a34a;color:#166534;padding:13px 16px;border-radius:0 10px 10px 0;font-size:13.5px;display:flex;align-items:center;gap:10px;margin-bottom:24px}
+        .alert-err{background:#fef2f2;border-left:3px solid #dc2626;color:#991b1b;padding:13px 16px;border-radius:0 10px 10px 0;font-size:13.5px;display:flex;align-items:center;gap:10px;margin-bottom:24px}
+    </style>
+
+</head>
+<body>
+
+<!-- TOP NAV -->
+<nav class="topnav">
+    <div class="nav-brand">Dairy<span>Coop</span></div>
+    <div class="nav-links"><a th:href="@{/collection/dashboard}" class="nav-link">Overview</a><a th:href="@{/collection/record}" class="nav-link"><span class="nav-dot"></span>Record Delivery</a><a th:href="@{/collection/history}" class="nav-link active">History</a></div>
+    <div class="nav-right">
+        <div class="nav-user">
+            <div class="nav-avatar" th:text="${#strings.substring(user.fullName,0,1).toUpperCase()}">C</div>
+            <span th:text="${user.fullName}">Officer</span>
+        </div>
+        <form th:action="@{/logout}" method="post" style="display:inline">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            <button type="submit" class="nav-logout">Sign out</button>
+        </form>
+    </div>
+</nav>
+
+<!-- PW Banner -->
+<div class="pw-banner" th:if="${mustChangePassword}">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+    You are using a temporary password.
+    <a th:href="@{/account/password}">Change it now</a> &nbsp;or&nbsp;
+    <form th:action="@{/account/dismiss-banner}" method="post" style="display:inline">
+        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+        <button type="submit">dismiss</button>
+    </form>
+</div>
+<div class="page">
+    <div class="pg-head">
+        <div>
+            <div class="pg-eyebrow">Collection Officer</div>
+            <div class="pg-title">Delivery History</div>
+        </div>
+        <span id="pgDate" style="font-size:12px;color:var(--muted);font-family:'Inter',monospace"></span>
+    </div>
+
+    <!-- Confirmation banners -->
+    <div th:if="${unconfirmedCount != null and unconfirmedCount gt 0}"
+         style="background:#fffbeb;border:1px solid #fcd34d;border-radius:12px;padding:13px 20px;margin-bottom:20px;display:flex;align-items:center;gap:12px">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2.5" style="flex-shrink:0">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+        </svg>
+        <span style="font-size:13.5px;font-weight:600;color:#92400e">
+            <span th:text="${unconfirmedCount}">0</span> deliveries awaiting member confirmation
+        </span>
+        <span style="font-size:13px;color:#b45309">
+            | <span th:text="${confirmedCount}">0</span> confirmed
+        </span>
+    </div>
+    <div th:if="${confirmedCount != null and confirmedCount gt 0 and unconfirmedCount == 0}"
+         style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:13px 20px;margin-bottom:20px;display:flex;align-items:center;gap:12px">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5" style="flex-shrink:0"><polyline points="20 6 9 17 4 12"/></svg>
+        <span style="font-size:13.5px;font-weight:600;color:#166534">
+            All <span th:text="${confirmedCount}">0</span> deliveries in this period confirmed by members
+        </span>
+    </div>
+
+    <!-- Date range filter + record button -->
+    <div style="display:flex;align-items:flex-end;gap:12px;margin-bottom:22px;flex-wrap:wrap">
+        <form th:action="@{/collection/history}" method="get"
+              style="display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap">
+            <div>
+                <div style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px">From</div>
+                <input type="date" name="from" class="finp" style="width:auto" th:value="${fromDate}"/>
+            </div>
+            <div>
+                <div style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px">To</div>
+                <input type="date" name="to" class="finp" style="width:auto" th:value="${toDate}"/>
+            </div>
+            <button type="submit" class="btn-submit" style="padding:10px 22px;font-size:13px">Filter</button>
+        </form>
+        <a th:href="@{/collection/record}" class="btn-submit" style="padding:10px 18px;font-size:13px;text-decoration:none;margin-left:auto">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Record Delivery
+        </a>
+    </div>
+
+    <!-- Summary stats -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px">
+        <div class="card" style="padding:18px 22px">
+            <div style="font-family:'Fraunces',serif;font-size:30px;font-weight:600;color:#1a6b2e" th:text="${totalCount} ?: 0">0</div>
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#6b7280;margin-top:4px">Total Deliveries</div>
+        </div>
+        <div class="card" style="padding:18px 22px">
+            <div style="font-family:'Fraunces',serif;font-size:24px;font-weight:600;color:#0891b2;padding-top:4px"
+                 th:text="${totalLitres != null ? #numbers.formatDecimal(totalLitres,1,2) + ' L' : '0.00 L'}">0.00 L</div>
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#6b7280;margin-top:4px">Total Litres</div>
+        </div>
+        <div class="card" style="padding:18px 22px">
+            <div style="font-family:'Fraunces',serif;font-size:30px;font-weight:600;color:#16a34a" th:text="${confirmedCount} ?: 0">0</div>
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#6b7280;margin-top:4px">Member Confirmed</div>
+        </div>
+        <div class="card" style="padding:18px 22px">
+            <div style="font-family:'Fraunces',serif;font-size:30px;font-weight:600;color:#d97706" th:text="${unconfirmedCount} ?: 0">0</div>
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#6b7280;margin-top:4px">Awaiting Confirm</div>
+        </div>
+    </div>
+
+    <!-- Full deliveries table -->
+    <div class="card">
+        <div class="card-head">
+            <div class="card-title">Delivery Records</div>
+            <span class="card-sub"
+                  th:text="'Showing ' + ${totalCount} + ' records'">0 records</span>
+        </div>
+        <div style="width:100%">
+            <table class="tbl">
+                <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Member</th>
+                    <th>Member No</th>
+                    <th>Litres</th>
+                    <th>Price / L</th>
+                    <th>Total Value</th>
+                    <th>Time</th>
+                    <th>Recorded By</th>
+                    <th>Member Confirmed</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="d : ${deliveries}">
+                    <td style="font-weight:500;white-space:nowrap"
+                        th:text="${d.deliveryDate.format(T(java.time.format.DateTimeFormatter).ofPattern('EEE dd MMM yyyy'))}">Date</td>
+                    <td><span class="val-member" th:text="${d.member.name}">Name</span></td>
+                    <td><span class="val-muted" th:text="${d.member.memberNumber}">MEM-001</span></td>
+                    <td><span class="val-litres" th:text="${#numbers.formatDecimal(d.quantityLitres,1,2)} + ' L'">0.00 L</span></td>
+                    <td><span class="val-muted" th:text="'ZMW ' + ${#numbers.formatDecimal(d.pricePerLitreAtDelivery,1,4)}">ZMW 0.00</span></td>
+                    <td><span class="val-zmw" th:text="'ZMW ' + ${#numbers.formatDecimal(d.quantityLitres.multiply(d.pricePerLitreAtDelivery),1,2)}">ZMW 0.00</span></td>
+                    <td><span class="val-muted" th:text="${d.deliveryDateTime.format(T(java.time.format.DateTimeFormatter).ofPattern('HH:mm'))}">00:00</span></td>
+                    <td><span class="val-muted" th:text="${d.recordedBy != null ? d.recordedBy.fullName : '-'}">Officer</span></td>
+                    <td>
+                            <span th:if="${d.confirmedByMember}"
+                                  style="background:#dcfce7;color:#16a34a;font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;display:inline-flex;align-items:center;gap:4px;white-space:nowrap">
+                                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                                Confirmed
+                                <span style="font-weight:400;font-size:10px"
+                                      th:text="${d.confirmedAt != null ? d.confirmedAt.format(T(java.time.format.DateTimeFormatter).ofPattern('HH:mm')) : ''}"></span>
+                            </span>
+                        <span th:if="${!d.confirmedByMember}"
+                              style="background:#fef3c7;color:#d97706;font-size:11px;font-weight:600;padding:4px 12px;border-radius:20px">
+                                Pending
+                            </span>
+                    </td>
+                </tr>
+                <tr th:if="${deliveries == null or #lists.isEmpty(deliveries)}">
+                    <td colspan="9" class="empty-state">
+                        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" stroke-width="1.5" style="display:block;margin:0 auto 10px">
+                            <path d="M19 9V6a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v3"/>
+                            <path d="M3 11v6a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-6a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4z"/>
+                        </svg>
+                        No deliveries found for this period
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+<script th:src="@{/webjars/bootstrap/dist/js/bootstrap.bundle.min.js}"></script>
+<script>
+    document.getElementById('pgDate').textContent =
+        new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+</script>
+</body>
+</html>

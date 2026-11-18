@@ -1,0 +1,254 @@
+/* ================================================================
+   DairyCoop Finance — Sidebar Layout
+   Architecture:
+     - .sb        → position:fixed, left sidebar (#1b1f2e navy)
+     - .sb-topbar → position:fixed, white bar above content
+     - .sb-page   → margin-left + padding-top, holds page content
+   Fragment provides .sb and .sb-topbar.
+   Each template wraps its content in <div class="sb-page">.
+   ================================================================ */
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+    --green:#00c16a;
+    --green-dim:#00a358;
+    --sb-w:210px;
+    --topbar-h:50px;
+    --sb-bg:#1b1f2e;
+    --bg:#f2f4f8;
+    --white:#ffffff;
+    --border:#e2e8f0;
+    --border-light:#f1f5f9;
+    --ink:#0f172a;
+    --ink2:#334155;
+    --muted:#64748b;
+    --amber:#f59e0b;
+    --red:#f43f5e;
+    --blue:#3b82f6;
+    --navy:#0b1120;
+    --shadow:0 1px 3px rgba(11,17,32,.06),0 4px 12px rgba(11,17,32,.04);
+    --shadow-md:0 4px 16px rgba(11,17,32,.08);
+    --shadow-lg:0 8px 32px rgba(11,17,32,.12);
+}
+
+body{
+    font-family:'Outfit',sans-serif;
+    background:var(--bg);
+    color:var(--ink);
+    min-height:100vh;
+}
+
+/* ── Sidebar — fixed left ───────────────────────────────────────── */
+.sb{
+    position:fixed;
+    top:0;left:0;
+    width:var(--sb-w);
+    height:100vh;
+    background:var(--sb-bg);
+    display:flex;
+    flex-direction:column;
+    z-index:300;
+    overflow-y:auto;
+    overflow-x:hidden;
+}
+.sb::-webkit-scrollbar{width:3px}
+.sb::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:3px}
+
+/* Brand */
+.sb-brand{
+    display:flex;align-items:center;gap:9px;
+    padding:16px 14px;
+    border-bottom:1px solid rgba(255,255,255,.07);
+    flex-shrink:0;text-decoration:none;
+}
+.sb-brand-icon{
+    width:30px;height:30px;
+    background:linear-gradient(135deg,#00c16a,#00a358);
+    border-radius:8px;
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.sb-brand-name{font-size:13px;font-weight:800;color:#fff;line-height:1;}
+.sb-brand-sub{font-size:8.5px;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:.12em;display:block;margin-top:2px;}
+
+/* Nav */
+.sb-nav{flex:1;padding:8px 8px;}
+.sb-section{
+    font-size:9px;font-weight:700;text-transform:uppercase;
+    letter-spacing:.15em;color:rgba(255,255,255,.28);
+    padding:10px 8px 4px;margin-top:4px;
+}
+.sb-item{
+    display:flex;align-items:center;gap:8px;
+    padding:8px 10px;border-radius:7px;
+    color:rgba(255,255,255,.62);
+    text-decoration:none;font-size:12px;font-weight:600;
+    cursor:pointer;
+    transition:background .12s,color .12s;
+    margin-bottom:1px;
+    border:none;background:none;width:100%;
+    font-family:inherit;
+    border-left:2px solid transparent;
+}
+.sb-item:hover{background:rgba(255,255,255,.06);color:#fff;}
+.sb-item svg{flex-shrink:0;opacity:.5;transition:opacity .12s;}
+.sb-item:hover svg{opacity:.85}
+.sb-item.active{
+    background:rgba(0,193,106,.13);
+    color:#fff;
+    border-left-color:#00c16a;
+}
+.sb-item.active svg{opacity:1;stroke:#00c16a;}
+.sb-badge{
+    margin-left:auto;
+    background:#ef4444;color:#fff;
+    font-size:9px;font-weight:800;
+    min-width:16px;height:16px;border-radius:8px;
+    display:inline-flex;align-items:center;justify-content:center;
+    padding:0 4px;flex-shrink:0;
+}
+.sb-divider{height:1px;background:rgba(255,255,255,.07);margin:8px 10px;}
+
+/* User strip */
+.sb-user{padding:8px 8px 12px;flex-shrink:0;}
+.sb-user-inner{
+    display:flex;align-items:center;gap:8px;
+    padding:8px 10px;border-radius:7px;
+    background:rgba(255,255,255,.05);
+}
+.sb-av{
+    width:26px;height:26px;
+    background:linear-gradient(135deg,#00c16a,#00a358);
+    border-radius:6px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:10px;font-weight:800;color:#fff;flex-shrink:0;
+}
+.sb-uname{font-size:11px;font-weight:700;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.sb-urole{font-size:8.5px;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:.06em;}
+.sb-logout{
+    margin-left:auto;flex-shrink:0;
+    width:24px;height:24px;border-radius:5px;
+    border:none;background:none;
+    color:rgba(255,255,255,.3);cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    transition:background .12s,color .12s;
+}
+.sb-logout:hover{background:rgba(239,68,68,.18);color:#ef4444;}
+
+/* ── Topbar — fixed, starts at sidebar edge ─────────────────────── */
+.sb-topbar{
+    position:fixed;
+    top:0;
+    left:var(--sb-w);
+    right:0;
+    height:var(--topbar-h);
+    background:var(--white);
+    border-bottom:1px solid var(--border);
+    display:flex;align-items:center;
+    padding:0 22px;gap:12px;
+    z-index:200;
+}
+.sb-crumb{
+    flex:1;display:flex;align-items:center;gap:6px;
+    font-size:12px;color:var(--muted);
+}
+.sb-crumb-page{font-weight:700;color:var(--ink);font-size:13px;}
+.sb-crumb-sep{opacity:.3}
+.sb-topbar-right{display:flex;align-items:center;gap:6px;flex-shrink:0;}
+.sb-topbar-date{
+    font-family:'JetBrains Mono',monospace;
+    font-size:10px;color:var(--muted);
+    background:#f8fafc;border:1px solid var(--border);
+    padding:4px 9px;border-radius:5px;white-space:nowrap;
+}
+.sb-sep{width:1px;height:20px;background:var(--border);}
+.sb-topbar-user{display:flex;align-items:center;gap:7px;}
+.sb-topbar-av{
+    width:24px;height:24px;
+    background:linear-gradient(135deg,#00c16a,#00a358);
+    border-radius:6px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:9.5px;font-weight:800;color:#fff;flex-shrink:0;
+}
+.sb-topbar-name{font-size:11px;font-weight:700;color:var(--ink);white-space:nowrap;}
+.sb-topbar-role{font-size:8.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;}
+.sb-topbar-btn{
+    width:28px;height:28px;border-radius:6px;
+    border:none;background:none;
+    display:flex;align-items:center;justify-content:center;
+    color:var(--muted);cursor:pointer;
+    transition:background .12s,color .12s;text-decoration:none;
+}
+.sb-topbar-btn:hover{background:#f1f5f9;color:var(--ink);}
+.sb-topbar-btn.danger:hover{background:#fff1f2;color:#ef4444;}
+
+/* ── Page content — offset sidebar + topbar ─────────────────────── */
+.sb-page{
+    margin-left:var(--sb-w);
+    padding-top:var(--topbar-h);
+    min-height:100vh;
+    /* Consistent content padding on all sides */
+    padding-left:26px;
+    padding-right:26px;
+    padding-bottom:32px;
+}
+/* pw-bar / pw-banner must break out of the sb-page padding to go full-width */
+.pw-bar,.pw-banner{
+    background:linear-gradient(90deg,#78350f,#92400e);
+    padding:7px 0;font-size:12px;color:#fef3c7;
+    display:flex;align-items:center;gap:10px;
+    /* stretch to full width ignoring parent padding */
+    margin-left:-26px;
+    margin-right:-26px;
+    padding-left:26px;
+    padding-right:26px;
+    margin-top:0;
+}
+.pw-bar a,.pw-banner a{color:#fbbf24;font-weight:700;text-decoration:underline;}
+/* pg-wrap is kept as an alias for templates that already use it */
+.pg-wrap{padding:0;}
+
+/* ── Print ──────────────────────────────────────────────────────── */
+@media print{
+    .sb,.sb-topbar{display:none!important}
+    .sb-page{margin-left:0;padding-top:0;}
+    body{background:#fff;}
+}
+
+/* ── Nav transitions ────────────────────────────────────────────── */
+
+/* Smooth all sidebar link states */
+.sb-item{
+    transition:background .18s ease, color .18s ease,
+               border-left-color .18s ease, transform .12s ease;
+}
+.sb-item:hover{transform:translateX(2px)}
+.sb-item.active{transform:translateX(2px)}
+
+/* Active border slides in from left */
+@keyframes activeBorderIn{
+    from{border-left-color:transparent;background:transparent}
+    to{border-left-color:var(--sb-item-active-border);background:var(--sb-item-active-bg)}
+}
+.sb-item.active{animation:activeBorderIn .22s ease forwards}
+
+/* ── Click ripple on nav links ──────────────────────────────────── */
+.sb-item{position:relative;overflow:hidden}
+.sb-ripple{
+    position:absolute;
+    border-radius:50%;
+    background:rgba(0,193,106,.25);
+    transform:scale(0);
+    animation:rippleOut .5s linear;
+    pointer-events:none;
+}
+@keyframes rippleOut{
+    to{transform:scale(4);opacity:0}
+}
+
+/* ── Page content fade on navigation ───────────────────────────── */
+@keyframes pageIn{
+    from{opacity:0;transform:translateY(8px)}
+    to{opacity:1;transform:none}
+}
+.sb-page{animation:pageIn .25s ease}
